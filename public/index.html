@@ -279,19 +279,115 @@
         </div>
     </div>
 
+    <!-- Side Drawer Backdrop -->
+    <div id="side-drawer-backdrop" class="hidden fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"></div>
+
+    <!-- Side Drawer Navigation -->
+    <aside id="side-drawer" class="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+        <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                    C
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 leading-tight">Corporate Portal</h3>
+                    <p class="text-xs text-gray-500">Navigation & Tools</p>
+                </div>
+            </div>
+            <button type="button" id="close-side-drawer-btn" class="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Drawer Navigation Items -->
+        <!-- Drawer Navigation Items -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-2">
+            <button type="button" id="drawer-drafts-btn" class="w-full flex items-center px-4 py-3.5 text-left rounded-xl text-gray-800 hover:bg-amber-50 hover:text-amber-800 transition font-medium border border-transparent hover:border-amber-200 group">
+                <div class="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center mr-3 group-hover:bg-amber-600 group-hover:text-white transition shadow-xs">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="font-bold text-sm text-gray-900 group-hover:text-amber-800">Draft Management</div>
+                    <div class="text-xs text-gray-500 font-normal">Save, load drafts & switch corporate reports</div>
+                </div>
+            </button>
+
+            <button type="button" id="drawer-history-btn" class="w-full flex items-center px-4 py-3.5 text-left rounded-xl text-gray-800 hover:bg-blue-50 hover:text-blue-700 transition font-medium border border-transparent hover:border-blue-200 group">
+                <div class="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mr-3 group-hover:bg-blue-600 group-hover:text-white transition shadow-xs">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="font-bold text-sm text-gray-900 group-hover:text-blue-700">History</div>
+                    <div class="text-xs text-gray-500 font-normal">Audit log of added, edited & removed corporates</div>
+                </div>
+            </button>
+
+            <button type="button" id="drawer-companies-btn" class="w-full flex items-center px-4 py-3.5 text-left rounded-xl text-gray-800 hover:bg-purple-50 hover:text-purple-700 transition font-medium border border-transparent hover:border-purple-200 group">
+                <div class="w-9 h-9 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center mr-3 group-hover:bg-purple-600 group-hover:text-white transition shadow-xs">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="font-bold text-sm text-gray-900 group-hover:text-purple-700">Manage Companies</div>
+                    <div class="text-xs text-gray-500 font-normal">Add, edit & view saved companies & logos</div>
+                </div>
+            </button>
+
+            <button type="button" id="drawer-start-new-btn" class="w-full flex items-center px-4 py-3.5 text-left rounded-xl text-gray-800 hover:bg-gray-100 transition font-medium border border-transparent group">
+                <div class="w-9 h-9 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center mr-3 group-hover:bg-gray-700 group-hover:text-white transition shadow-xs">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="font-bold text-sm text-gray-900">Start New Report</div>
+                    <div class="text-xs text-gray-500 font-normal">Reset form and start fresh</div>
+                </div>
+            </button>
+        </div>
+
+        <div class="p-4 border-t border-gray-200 bg-gray-50">
+            <div class="text-xs text-gray-500 mb-2 truncate" id="drawer-user-email">Not signed in</div>
+            <button type="button" id="drawer-sign-out-btn" class="w-full btn-secondary !py-2 text-xs">Sign Out</button>
+        </div>
+    </aside>
+
     <!-- Main App Container (now hidden by default) -->
     <div id="main-app-container" class="container mx-auto max-w-4xl p-4 sm:p-8" style="display: none;">
-        <!-- Header -->
-        <header class="mb-8">
-            <h1 class="text-4xl font-bold text-gray-800">Financial Statement Generator</h1>
-            <p class="text-lg text-gray-600">Based on BRANDSPOINT LLC Report</p>
-        </header>
+        <!-- Top Nav Bar with Top Left Hamburger Button -->
+        <header class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                <button type="button" id="hamburger-menu-btn" class="p-2.5 rounded-xl bg-white border border-gray-300 shadow-sm hover:bg-gray-50 text-gray-700 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer" title="Open Navigation Menu">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight">Financial Statement Generator</h1>
+                    <p class="text-xs sm:text-sm text-gray-500">Based on Corporate Annual Report Standards</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button type="button" id="open-drafts-top-btn" class="inline-flex items-center px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition shadow-xs cursor-pointer" title="Draft Management">
+                    <svg class="w-4 h-4 mr-1.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+                    </svg>
+                    <span>Drafts</span>
+                </button>
+                <button type="button" id="open-history-top-btn" class="inline-flex items-center px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition shadow-xs cursor-pointer" title="Corporate Audit History">
+                    <svg class="w-4 h-4 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>History</span>
+                </button>
 
-        <!-- New Draft Management Card -->
-        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-8">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h2 class="text-2xl font-semibold text-gray-800">Draft Management</h2>
-                
                 <div class="relative">
                     <button type="button" id="settings-btn" class="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -300,59 +396,50 @@
                         </svg>
                     </button>
                     
-                    <div id="settings-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-20 py-1 border border-gray-200">
-                        <button type="button" id="open-companies-modal-btn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <div id="settings-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl z-20 py-1 border border-gray-200">
+                        <button type="button" id="open-drafts-menu-btn" class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+                            </svg>
+                            Draft Management
+                        </button>
+                        <button type="button" id="open-history-menu-btn" class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 flex items-center border-t border-gray-100">
+                            <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Corporate History
+                        </button>
+                        <button type="button" id="open-companies-modal-btn" class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 flex items-center border-t border-gray-100">
+                            <svg class="w-4 h-4 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
                             Manage Companies
                         </button>
-                        </div>
+                    </div>
                 </div>
-                </div>
-            
-            <!-- New User Session Info -->
-            <div id="user-session" class="hidden mb-4 p-4 bg-gray-50 rounded-lg shadow-inner flex justify-between items-center">
-                <span id="user-email" class="text-sm font-medium text-gray-700"></span>
-                <button type="button" id="sign-out-btn" class="btn-secondary btn-sm !py-1 !px-3">Sign Out</button>
             </div>
+        </header>
 
-            <div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="draft-name-input" class="block text-sm font-medium text-gray-700">Draft Name</label>
-                        <input type="text" id="draft-name-input" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="e.g., Q4 Report - In Progress">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">&nbsp;</label>
-                        <button type="button" id="save-draft-btn" class="btn-green w-full">Save as Draft</button>
-                    </div>
-                </div>
-                
-                <hr class="my-4">
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="load-draft-select" class="block text-sm font-medium text-gray-700">Load Existing Draft</label>
-                        <select id="load-draft-select" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="">-- No drafts found --</option>
-                        </select>
-                    </div>
-                    <div class="flex items-end space-x-2">
-                        <button type="button" id="load-draft-btn" class="btn-primary w-1/2">Load</button>
-                        <button type="button" id="delete-draft-btn" class="btn-red w-1/2">Delete</button>
-                    </div>
-                </div>
-                
-                <hr class="my-4">
-
-                <div>
-                    <label for="company-selector" class="block text-sm font-medium text-gray-700">Select Company to Start New Report</label>
-                    <select id="company-selector" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">-- No companies found --</option>
-                    </select>
-                </div>
-                <hr class="my-4">
-                
-                <button type="button" id="start-new-btn" class="btn-secondary w-full">Start New Form</button>
-                <div id="draft-message-box" class="mt-4 p-4 rounded-lg bg-green-100 text-green-700" style="display: none;"></div>
+        <!-- Compact Top Action & Status Bar (Replaces bulky static draft card) -->
+        <div class="bg-white p-3.5 sm:px-6 rounded-2xl shadow-md mb-6 border border-gray-100 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center flex-wrap gap-2">
+                <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    <svg class="w-3.5 h-3.5 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    Current Corporate: <strong id="current-active-company-label" class="ml-1 font-bold">BRANDSPOINT LLC</strong>
+                </span>
+                <span id="active-draft-name-badge" class="hidden text-xs text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-lg">
+                    Draft: <strong id="active-draft-name-text" class="text-gray-800 font-mono"></strong>
+                </span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button type="button" id="quick-save-draft-btn" class="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700 transition shadow-xs cursor-pointer">
+                    <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    Save Draft
+                </button>
+                <button type="button" id="open-draft-modal-top-btn" class="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition shadow-xs cursor-pointer">
+                    <svg class="w-3.5 h-3.5 mr-1.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+                    Draft Management
+                </button>
             </div>
         </div>
 
@@ -383,8 +470,14 @@
                             <input type="text" id="company-name" value="BRANDSPOINT LLC" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label for="company-name-ar" class="block text-sm font-medium text-gray-700">Company Name (Arabic)</label>
-                            <input type="text" id="company-name-ar" value="براندز بوينت ذ م م" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-right" dir="rtl">
+                            <div class="flex items-center justify-between">
+                                <label for="company-name-ar" class="block text-sm font-medium text-gray-700">Company Name (Arabic)</label>
+                                <label class="inline-flex items-center text-xs text-gray-600 cursor-pointer">
+                                    <input type="checkbox" id="include-company-name-ar" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 mr-1">
+                                    <span>Include in Header</span>
+                                </label>
+                            </div>
+                            <input type="text" id="company-name-ar" value="" placeholder="e.g. براندز بوينت ذ م م" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-right" dir="rtl">
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -413,45 +506,104 @@
                     </div>
                     
 <div class="col-span-2">
-    <label class="block text-sm font-medium text-gray-700 mb-2">Company Letterhead (Image)</label>
+    <div class="flex items-center justify-between mb-2">
+        <label class="block text-sm font-medium text-gray-700">Company Letterhead (Image)</label>
+        <div id="letterhead-toggle-container" class="hidden items-center space-x-2">
+            <label class="inline-flex items-center text-xs font-semibold text-blue-700 cursor-pointer bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 hover:bg-blue-100 transition">
+                <input type="checkbox" id="use-letterhead-checkbox" checked class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1.5">
+                <span>Use Letterhead in Report</span>
+            </label>
+            <button type="button" id="remove-letterhead-btn" class="text-xs text-red-600 hover:text-red-800 hover:underline px-1">Remove</button>
+        </div>
+    </div>
     
     <input type="file" id="company-letterhead" accept="image/*" 
-           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4">
+           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-3">
     
-    <div id="letterhead-controls" class="hidden mb-4 p-3 bg-gray-50 rounded-lg border">
-        <label for="letterhead-slider" class="block text-sm font-medium text-gray-700 flex justify-between">
-            <span>Adjust Letterhead Size</span>
-            <span id="slider-value" class="text-blue-600 font-bold">70mm</span>
-        </label>
-        <input type="range" id="letterhead-slider" min="40" max="190" value="70" step="5"
-               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+    <div id="letterhead-controls" class="hidden mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+        <div>
+            <label for="letterhead-slider" class="block text-sm font-medium text-gray-700 flex justify-between">
+                <span>Adjust Letterhead Size</span>
+                <span id="slider-value" class="text-blue-600 font-bold">70mm</span>
+            </label>
+            <input type="range" id="letterhead-slider" min="40" max="190" value="70" step="5"
+                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+        </div>
+
+        <!-- Page Placement Selection -->
+        <div class="pt-2 border-t border-gray-200">
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Apply Letterhead to Pages:</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <select id="letterhead-page-option" class="block w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 py-1.5 px-2 bg-white">
+                    <option value="all">All Pages</option>
+                    <option value="first">First Page Only (Page 1)</option>
+                    <option value="custom">Specific Pages (e.g. 1, 3)</option>
+                </select>
+                <div id="letterhead-custom-pages-container" class="hidden">
+                    <input type="text" id="letterhead-custom-pages" placeholder="e.g. 1, 3 or 1-3" 
+                           class="block w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 py-1.5 px-2">
+                </div>
+            </div>
+            <p id="letterhead-custom-pages-hint" class="hidden text-xs text-gray-500 mt-1">Enter comma-separated page numbers or ranges (e.g., <code>1, 3</code> or <code>1-3</code>).</p>
+        </div>
     </div>
 
     <p class="text-xs text-gray-500 mb-1">Preview (How it will look on top of the page):</p>
     <div class="bg-white border border-gray-300 h-32 flex items-start justify-center overflow-hidden rounded-lg relative" style="background-image: linear-gradient(#f3f4f6 1px, transparent 1px); background-size: 100% 10px;">
-        <img id="letterhead-preview" src="" alt="Letterhead Preview" class="hidden mt-2 shadow-sm" style="width: 70mm; max-height: 100px; object-fit: contain;">
+        <img id="letterhead-preview" src="" alt="Letterhead Preview" onerror="this.classList.add('hidden')" class="hidden mt-2 shadow-sm transition" style="width: 70mm; max-height: 100px; object-fit: contain;">
         <span id="no-preview-text" class="text-gray-400 text-sm mt-10">No letterhead uploaded</span>
+        <div id="letterhead-disabled-badge" class="hidden absolute top-2 right-2 bg-gray-600 text-white text-xs px-2 py-0.5 rounded shadow">Disabled</div>
     </div>
 </div>
 <div class="col-span-2 mt-6 border-t pt-4">
-    <label class="block text-sm font-medium text-gray-700 mb-2">Company Stamp (Image)</label>
-    <p class="text-xs text-gray-500 mb-2">Upload a transparent PNG of your stamp. It will appear on the bottom of every page.</p>
+    <div class="flex items-center justify-between mb-1">
+        <label class="block text-sm font-medium text-gray-700">Company Stamp (Image)</label>
+        <div id="stamp-toggle-container" class="hidden items-center space-x-2">
+            <label class="inline-flex items-center text-xs font-semibold text-purple-700 cursor-pointer bg-purple-50 px-2.5 py-1 rounded-md border border-purple-200 hover:bg-purple-100 transition">
+                <input type="checkbox" id="use-stamp-checkbox" checked class="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 mr-1.5">
+                <span>Use Stamp in Report</span>
+            </label>
+            <button type="button" id="remove-stamp-btn" class="text-xs text-red-600 hover:text-red-800 hover:underline px-1">Remove</button>
+        </div>
+    </div>
+    <p class="text-xs text-gray-500 mb-2">Upload a transparent PNG of your stamp. You can choose which pages it will appear on.</p>
     
     <input type="file" id="company-stamp" accept="image/*" 
-           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 mb-4">
+           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 mb-3">
     
-    <div id="stamp-controls" class="hidden mb-4 p-3 bg-gray-50 rounded-lg border">
-        <label for="stamp-slider" class="block text-sm font-medium text-gray-700 flex justify-between">
-            <span>Adjust Stamp Size</span>
-            <span id="stamp-slider-value" class="text-purple-600 font-bold">30mm</span>
-        </label>
-        <input type="range" id="stamp-slider" min="10" max="60" value="30" step="1"
-               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+    <div id="stamp-controls" class="hidden mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+        <div>
+            <label for="stamp-slider" class="block text-sm font-medium text-gray-700 flex justify-between">
+                <span>Adjust Stamp Size</span>
+                <span id="stamp-slider-value" class="text-purple-600 font-bold">30mm</span>
+            </label>
+            <input type="range" id="stamp-slider" min="10" max="60" value="30" step="1"
+                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+        </div>
+
+        <!-- Page Placement Selection -->
+        <div class="pt-2 border-t border-gray-200">
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Apply Stamp to Pages:</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <select id="stamp-page-option" class="block w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-purple-500 focus:ring-purple-500 py-1.5 px-2 bg-white">
+                    <option value="all">All Pages</option>
+                    <option value="first">First Page Only (Page 1)</option>
+                    <option value="last">Last Page Only</option>
+                    <option value="custom">Specific Pages (e.g. 1, 3)</option>
+                </select>
+                <div id="stamp-custom-pages-container" class="hidden">
+                    <input type="text" id="stamp-custom-pages" placeholder="e.g. 1, 3 or 1-3" 
+                           class="block w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-purple-500 focus:ring-purple-500 py-1.5 px-2">
+                </div>
+            </div>
+            <p id="stamp-custom-pages-hint" class="hidden text-xs text-gray-500 mt-1">Enter comma-separated page numbers or ranges (e.g., <code>1, 3</code> or <code>1-3</code>).</p>
+        </div>
     </div>
 
     <div class="bg-white border border-gray-300 h-24 flex items-center justify-center overflow-hidden rounded-lg relative" style="background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 10px 10px;">
-        <img id="stamp-preview" src="" alt="Stamp Preview" class="hidden shadow-sm" style="width: 30mm; max-height: 80px; object-fit: contain;">
+        <img id="stamp-preview" src="" alt="Stamp Preview" onerror="this.classList.add('hidden')" class="hidden shadow-sm transition" style="width: 30mm; max-height: 80px; object-fit: contain;">
         <span id="no-stamp-text" class="text-gray-400 text-sm">No stamp uploaded</span>
+        <div id="stamp-disabled-badge" class="hidden absolute top-2 right-2 bg-gray-600 text-white text-xs px-2 py-0.5 rounded shadow">Disabled</div>
     </div>
 </div>
 
@@ -1342,6 +1494,34 @@
                             <input type="text" id="company-form-address" placeholder="e.g., P.O. Box 12345, Business Bay">
                         </div>
                     </div>
+
+                    <!-- Company Letterhead Upload & Preview (Watchable in Manage Companies) -->
+                    <div class="form-row !grid-cols-1 !mb-0">
+                        <label class="form-label !text-left flex justify-between items-center">
+                            <span class="font-semibold text-gray-700">Company Letterhead (Image)</span>
+                            <button type="button" id="company-form-lh-remove" class="hidden text-xs text-red-600 hover:text-red-800 hover:underline">Remove</button>
+                        </label>
+                        <div class="form-input !col-span-1">
+                            <input type="file" id="company-form-lh-input" accept="image/*" class="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                            <div id="company-form-lh-preview-box" class="hidden mt-2 p-2 bg-white rounded-lg border border-gray-200 flex items-center justify-center min-h-[50px]">
+                                <img id="company-form-lh-preview" src="" alt="Letterhead Preview" onerror="this.classList.add('hidden')" class="max-h-14 max-w-full object-contain">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Company Stamp Upload & Preview (Watchable in Manage Companies) -->
+                    <div class="form-row !grid-cols-1 !mb-0">
+                        <label class="form-label !text-left flex justify-between items-center">
+                            <span class="font-semibold text-gray-700">Company Stamp (Image)</span>
+                            <button type="button" id="company-form-stamp-remove" class="hidden text-xs text-red-600 hover:text-red-800 hover:underline">Remove</button>
+                        </label>
+                        <div class="form-input !col-span-1">
+                            <input type="file" id="company-form-stamp-input" accept="image/*" class="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer">
+                            <div id="company-form-stamp-preview-box" class="hidden mt-2 p-2 bg-white rounded-lg border border-gray-200 flex items-center justify-center min-h-[50px]">
+                                <img id="company-form-stamp-preview" src="" alt="Stamp Preview" onerror="this.classList.add('hidden')" class="max-h-14 max-w-full object-contain">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="mt-6 flex justify-end space-x-2">
                     <button type="button" id="save-companies-details" class="btn-green">Add Company</button>
@@ -1358,6 +1538,195 @@
             </div>
         </div>
     </div>
+
+    <!-- Draft Management Modal (Two-Column Layout with Saved Files List on Right Side) -->
+    <div id="draft-management-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 1100px; width: 96vw;">
+            <div class="modal-header flex justify-between items-center pb-3 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shadow-xs">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="modal-title text-xl font-bold text-gray-900">Draft Management</h3>
+                        <p class="text-xs text-gray-500">Save progress, load saved reports & switch corporate profiles anytime</p>
+                    </div>
+                </div>
+                <span class="close-btn text-2xl font-bold cursor-pointer text-gray-400 hover:text-gray-700 leading-none" id="close-draft-management-modal">&times;</span>
+            </div>
+
+            <div class="modal-body mt-4">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Left Side: Start New Corp & Save Draft -->
+                    <div class="lg:col-span-5 space-y-5">
+                        <!-- Card 1: Start New Corporate Report -->
+                        <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 shadow-xs">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="text-sm font-bold text-gray-800 flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    Start New Corporate Report
+                                </h4>
+                                <span class="text-[10px] uppercase font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded">New Form</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-3">Choose a company to automatically load its profile, letterhead & stamp:</p>
+                            
+                            <label for="company-selector" class="block text-xs font-semibold text-gray-700 mb-1">Select Company</label>
+                            <select id="company-selector" class="block w-full text-xs rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white py-2 px-3">
+                                <option value="">-- No companies found --</option>
+                            </select>
+                            
+                            <button type="button" id="start-new-btn" class="mt-3 w-full btn-primary !py-2 text-xs font-semibold flex items-center justify-center">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Start New Report for Selected Company
+                            </button>
+                        </div>
+
+                        <!-- Card 2: Save Current Report as Draft -->
+                        <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 shadow-xs">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="text-sm font-bold text-gray-800 flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                                    Save Current Report as Draft
+                                </h4>
+                                <span class="text-[10px] uppercase font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded">Save</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-3">Save current numbers, schedules, notes, and uploaded logos:</p>
+                            
+                            <label for="draft-name-input" class="block text-xs font-semibold text-gray-700 mb-1">Draft File Name</label>
+                            <input type="text" id="draft-name-input" class="block w-full text-xs rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 bg-white py-2 px-3" placeholder="e.g. BRAND2025CORPR">
+                            
+                            <button type="button" id="save-draft-btn" class="mt-3 w-full btn-green !py-2 text-xs font-semibold flex items-center justify-center">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Save Draft Now
+                            </button>
+                            <div id="draft-message-box" class="mt-2.5 p-2 rounded-lg bg-green-100 text-green-800 text-xs hidden"></div>
+                        </div>
+
+                        <!-- Card 3: Account Session -->
+                        <div id="user-session" class="p-3 bg-white rounded-xl border border-gray-200 flex justify-between items-center text-xs text-gray-600 shadow-xs">
+                            <div class="truncate mr-2">
+                                <span class="text-gray-400 block text-[10px]">LOGGED IN AS</span>
+                                <span id="user-email" class="font-medium text-gray-800 truncate">Not signed in</span>
+                            </div>
+                            <button type="button" id="sign-out-btn" class="btn-secondary !py-1 !px-2.5 text-xs whitespace-nowrap">Sign Out</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Saved Draft Files List (User explicitly requested list on right side) -->
+                    <div class="lg:col-span-7 flex flex-col bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-xs">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-gray-200 mb-3">
+                            <div class="flex items-center space-x-2">
+                                <h4 class="text-sm font-bold text-gray-900">Saved Draft Files</h4>
+                                <span id="saved-drafts-count-badge" class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-100 text-blue-700">0 files</span>
+                            </div>
+                            <div class="w-full sm:w-52">
+                                <input type="text" id="draft-search-input" placeholder="Search saved files..." 
+                                       class="w-full text-xs rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1.5 px-2.5 bg-white">
+                            </div>
+                        </div>
+
+                        <!-- Scrollable list of cards -->
+                        <div id="saved-drafts-cards-container" class="space-y-2.5 overflow-y-auto max-h-[460px] pr-1 flex-1">
+                            <div id="no-drafts-placeholder" class="text-center py-12 text-gray-400 text-xs">
+                                <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+                                No saved drafts found yet.<br>Save your work anytime using the left panel.
+                            </div>
+                        </div>
+
+                        <!-- Hidden select for backward compatibility -->
+                        <select id="load-draft-select" class="hidden"></select>
+                        <button type="button" id="load-draft-btn" class="hidden"></button>
+                        <button type="button" id="delete-draft-btn" class="hidden"></button>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-200 flex justify-end">
+                    <button type="button" id="close-draft-modal-bottom-btn" class="btn-secondary !py-1.5 !px-4 text-xs">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Corporate History Modal -->
+    <div id="corporate-history-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 1100px; width: 96vw;">
+            <div class="modal-header flex justify-between items-center pb-3 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shadow-xs">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="modal-title text-xl font-bold text-gray-900">Corporate Audit & History</h3>
+                        <p class="text-xs text-gray-500">History of all added, edited, and removed corporate records</p>
+                    </div>
+                </div>
+                <span class="close-btn text-2xl font-bold cursor-pointer text-gray-400 hover:text-gray-700 leading-none" id="close-corporate-history-modal">×</span>
+            </div>
+
+            <div class="modal-body mt-4 space-y-4">
+                <!-- Filter & Search Bar -->
+                <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200">
+                    <div class="flex flex-1 items-center space-x-2">
+                        <div class="relative flex-1">
+                            <input type="text" id="history-search-input" placeholder="Search by name, signatory, city, details..." 
+                                   class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <select id="history-action-filter" class="py-2 px-3 text-sm rounded-lg border border-gray-300 bg-white focus:ring-blue-500 focus:border-blue-500">
+                            <option value="all">All Actions</option>
+                            <option value="Added">Added Only</option>
+                            <option value="Edited">Edited Only</option>
+                            <option value="Removed">Removed Only</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="export-history-csv-btn" class="btn-secondary !py-2 !px-3.5 text-xs font-semibold flex items-center shadow-xs">
+                            <svg class="w-3.5 h-3.5 mr-1.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Export CSV
+                        </button>
+                        <button type="button" id="clear-history-btn" class="text-xs text-red-600 hover:text-red-800 hover:underline px-2 py-1">
+                            Clear History
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Column-Wise Details Table -->
+                <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-xs max-h-[500px]">
+                    <table class="min-w-full divide-y divide-gray-200 text-left text-sm" id="corporate-history-table">
+                        <thead class="bg-gray-50 text-xs font-bold text-gray-600 uppercase tracking-wider sticky top-0 z-10 border-b border-gray-200 shadow-xs">
+                            <tr>
+                                <th class="px-4 py-3 whitespace-nowrap">Date & Time</th>
+                                <th class="px-3 py-3 whitespace-nowrap">Action</th>
+                                <th class="px-4 py-3 whitespace-nowrap">Corporate Name</th>
+                                <th class="px-4 py-3 whitespace-nowrap">Signatory</th>
+                                <th class="px-4 py-3 whitespace-nowrap">Location / Address</th>
+                                <th class="px-4 py-3 whitespace-nowrap">Email</th>
+                                <th class="px-4 py-3 whitespace-nowrap">Details / Changes</th>
+                                <th class="px-3 py-3 whitespace-nowrap">Modified By</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 bg-white" id="corporate-history-tbody">
+                            <!-- Populated dynamically by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex justify-between items-center pt-2">
+                    <span id="history-count-label" class="text-xs font-medium text-gray-500">Showing 0 entries</span>
+                    <button type="button" id="close-history-modal-btn" class="btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="calc-inv-adj-modal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
@@ -1493,8 +1862,11 @@
             { id: 10, item: 'Other expenses', amount: 14855 },
         ];
         
-        // --- ADD THIS ---
+        // --- Corporate Management & Audit History ---
         let companiesData = [];
+        let corporateHistoryData = [];
+        let editingCompanyId = null;
+        let corporateHistoryDocRef = null;
         // --- END ADD ---
         let shareholdingData = [
             { id: 1, name: 'Mr. NADEEM KHAN', nation: 'PAKISTAN', shares: 5, value: 1000 },
@@ -1513,9 +1885,18 @@
 let mainCommentsData = [];
             
             let letterheadBase64 = null;
-let selectedLetterheadWidth = 70; // Default width in mm
-let companyStampBase64 = null;
-let selectedStampWidth = 30; // Default width in mm        
+            let selectedLetterheadWidth = 70; // Default width in mm
+            let useLetterhead = true;
+            let letterheadPageOption = 'all'; // 'all' | 'first' | 'custom'
+            let letterheadCustomPages = '1';
+            
+            let companyStampBase64 = null;
+            let selectedStampWidth = 30; // Default width in mm
+            let useStamp = true;
+            let stampPageOption = 'all'; // 'all' | 'first' | 'last' | 'custom'
+            let stampCustomPages = '1';
+
+            let includeCompanyNameAr = false;
         // --- UI Element Globals ---
         const tabs = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -1651,17 +2032,68 @@ const mainCommentList = document.getElementById('main-comment-list');
         // Delete Confirmation
         const deleteConfirmModal = document.getElementById('delete-confirm-modal');
 
-        // --- ADD THESE NEW VARIABLES ---
+        // --- Navigation Drawer & History Modal Variables ---
+        const hamburgerMenuBtn = document.getElementById('hamburger-menu-btn');
+        const sideDrawer = document.getElementById('side-drawer');
+        const sideDrawerBackdrop = document.getElementById('side-drawer-backdrop');
+        const closeSideDrawerBtn = document.getElementById('close-side-drawer-btn');
+        const drawerHistoryBtn = document.getElementById('drawer-history-btn');
+        const drawerCompaniesBtn = document.getElementById('drawer-companies-btn');
+        const drawerStartNewBtn = document.getElementById('drawer-start-new-btn');
+        const drawerSignOutBtn = document.getElementById('drawer-sign-out-btn');
+        const drawerUserEmail = document.getElementById('drawer-user-email');
+        const openHistoryTopBtn = document.getElementById('open-history-top-btn');
+        const openHistoryMenuBtn = document.getElementById('open-history-menu-btn');
+
+        // Draft Management Elements
+        const drawerDraftsBtn = document.getElementById('drawer-drafts-btn');
+        const openDraftsTopBtn = document.getElementById('open-drafts-top-btn');
+        const openDraftModalTopBtn = document.getElementById('open-draft-modal-top-btn');
+        const quickSaveDraftBtn = document.getElementById('quick-save-draft-btn');
+        const openDraftsMenuBtn = document.getElementById('open-drafts-menu-btn');
+        const draftManagementModal = document.getElementById('draft-management-modal');
+        const closeDraftManagementModalBtn = document.getElementById('close-draft-management-modal');
+        const closeDraftModalBottomBtn = document.getElementById('close-draft-modal-bottom-btn');
+        const savedDraftsCardsContainer = document.getElementById('saved-drafts-cards-container');
+        const savedDraftsCountBadge = document.getElementById('saved-drafts-count-badge');
+        const draftSearchInput = document.getElementById('draft-search-input');
+        const currentActiveCompanyLabel = document.getElementById('current-active-company-label');
+        const activeDraftNameBadge = document.getElementById('active-draft-name-badge');
+        const activeDraftNameText = document.getElementById('active-draft-name-text');
+        let allSavedDraftsList = [];
+
+        // Corporate History Modal
+        const corporateHistoryModal = document.getElementById('corporate-history-modal');
+        const closeCorporateHistoryModal = document.getElementById('close-corporate-history-modal');
+        const closeHistoryModalBtn = document.getElementById('close-history-modal-btn');
+        const corporateHistoryTbody = document.getElementById('corporate-history-tbody');
+        const historySearchInput = document.getElementById('history-search-input');
+        const historyActionFilter = document.getElementById('history-action-filter');
+        const exportHistoryCsvBtn = document.getElementById('export-history-csv-btn');
+        const clearHistoryBtn = document.getElementById('clear-history-btn');
+        const historyCountLabel = document.getElementById('history-count-label');
+
         // Settings Dropdown
         const settingsBtn = document.getElementById('settings-btn');
         const settingsDropdown = document.getElementById('settings-dropdown');
         
-        // Manage Companies Modal
+        // Manage Companies Modal & Asset Upload Elements
         const companiesModal = document.getElementById('companies-modal');
         const openCompaniesModalBtn = document.getElementById('open-companies-modal-btn');
         const closeCompaniesModalBtn = document.getElementById('close-companies-modal');
         const cancelCompaniesModalBtn = document.getElementById('cancel-companies-modal');
         const saveCompaniesDetailsBtn = document.getElementById('save-companies-details');
+        const companyFormLhInput = document.getElementById('company-form-lh-input');
+        const companyFormLhPreviewBox = document.getElementById('company-form-lh-preview-box');
+        const companyFormLhPreview = document.getElementById('company-form-lh-preview');
+        const companyFormLhRemove = document.getElementById('company-form-lh-remove');
+        const companyFormStampInput = document.getElementById('company-form-stamp-input');
+        const companyFormStampPreviewBox = document.getElementById('company-form-stamp-preview-box');
+        const companyFormStampPreview = document.getElementById('company-form-stamp-preview');
+        const companyFormStampRemove = document.getElementById('company-form-stamp-remove');
+        let companyFormLetterheadBase64 = null;
+        let companyFormStampBase64 = null;
+        let activeCompanyId = null;
         // --- END OF NEW VARIABLES ---
 
         // Modal Open Buttons
@@ -1735,129 +2167,387 @@ const mainCommentList = document.getElementById('main-comment-list');
         document.getElementById('close-delete-modal').onclick = () => deleteConfirmModal.style.display = 'none';
         document.getElementById('cancel-delete-btn').onclick = () => deleteConfirmModal.style.display = 'none';
         
-    // --- NEW: Optimized Letterhead Upload & Preview ---
+    // --- Helper: Check if a given page is selected for letterhead or stamp ---
+    function isPageIncluded(pageNum, mode, customPagesStr, totalPages = 15) {
+        if (mode === 'all') return true;
+        if (mode === 'first') return pageNum === 1;
+        if (mode === 'last') return pageNum === totalPages;
+        if (mode === 'custom') {
+            if (!customPagesStr || !customPagesStr.trim()) return false;
+            const parts = customPagesStr.split(',').map(s => s.trim()).filter(Boolean);
+            for (const part of parts) {
+                if (part.includes('-')) {
+                    const rangeParts = part.split('-').map(s => s.trim());
+                    const start = parseInt(rangeParts[0], 10);
+                    const end = parseInt(rangeParts[1], 10);
+                    if (!isNaN(start) && !isNaN(end) && pageNum >= start && pageNum <= end) {
+                        return true;
+                    }
+                } else {
+                    const p = parseInt(part, 10);
+                    if (!isNaN(p) && pageNum === p) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        return false;
+    }
+
+    // --- Helper: Render Crisp Arabic Text via Offscreen Canvas (No Mojibake) ---
+    function renderArabicToPdf(doc, text, xCenter, yCenter, fontSizePt = 12, color = '#333333') {
+        if (!text || !text.trim()) return;
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const dpr = 4; // High DPI for crisp printing
+            const fontSizePx = fontSizePt * 1.333 * dpr;
+            ctx.font = `bold ${fontSizePx}px "Segoe UI", Arial, "Traditional Arabic", sans-serif`;
+            const metrics = ctx.measureText(text);
+            const textWidthPx = metrics.width;
+            const canvasWidth = Math.ceil(textWidthPx + 40 * dpr);
+            const canvasHeight = Math.ceil(fontSizePx * 1.8);
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            ctx.font = `bold ${fontSizePx}px "Segoe UI", Arial, "Traditional Arabic", sans-serif`;
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.direction = 'rtl';
+            ctx.fillText(text, canvasWidth / 2, canvasHeight / 2);
+
+            const imgData = canvas.toDataURL('image/png');
+            const widthMm = (canvasWidth / dpr) * 0.264583;
+            const heightMm = (canvasHeight / dpr) * 0.264583;
+            const x = xCenter - (widthMm / 2);
+            const y = yCenter - (heightMm / 2);
+            doc.addImage(imgData, 'PNG', x, y, widthMm, heightMm);
+        } catch (e) {
+            console.warn('Canvas Arabic render error:', e);
+        }
+    }
+
+    // --- Letterhead Elements & Logic ---
     const lhInput = document.getElementById('company-letterhead');
     const lhPreview = document.getElementById('letterhead-preview');
     const lhControls = document.getElementById('letterhead-controls');
     const lhSlider = document.getElementById('letterhead-slider');
     const lhSliderVal = document.getElementById('slider-value');
     const noPreviewText = document.getElementById('no-preview-text');
+    const lhToggleContainer = document.getElementById('letterhead-toggle-container');
+    const useLhCheckbox = document.getElementById('use-letterhead-checkbox');
+    const removeLhBtn = document.getElementById('remove-letterhead-btn');
+    const lhPageOptionSelect = document.getElementById('letterhead-page-option');
+    const lhCustomPagesInput = document.getElementById('letterhead-custom-pages');
+    const lhCustomPagesContainer = document.getElementById('letterhead-custom-pages-container');
+    const lhCustomPagesHint = document.getElementById('letterhead-custom-pages-hint');
+    const lhDisabledBadge = document.getElementById('letterhead-disabled-badge');
 
-    lhInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                // --- OPTIMIZATION STEP (Fixes Slowness) ---
-                // Create an off-screen canvas to resize the image
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-
-                // Max width of 1000px is plenty for a PDF header and much faster
-                const maxWidth = 1000; 
-                let width = img.width;
-                let height = img.height;
-
-                if (width > maxWidth) {
-                    height *= maxWidth / width;
-                    width = maxWidth;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                // Draw resized image onto canvas
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // Get optimized Base64 string (PNG for crisp text/logos)
-                letterheadBase64 = canvas.toDataURL('image/png');
-                
-                // --- Update UI ---
+    function updateLetterheadPreview() {
+        const hasValidLh = letterheadBase64 && typeof letterheadBase64 === 'string' && letterheadBase64.startsWith('data:image');
+        if (hasValidLh) {
+            if (lhPreview) {
                 lhPreview.src = letterheadBase64;
                 lhPreview.classList.remove('hidden');
-                lhControls.classList.remove('hidden');
-                noPreviewText.classList.add('hidden');
-                // Reset slider to default on new upload
-                lhSlider.value = 70;
-                lhSliderVal.innerText = "70mm";
-                selectedLetterheadWidth = 70;
-                lhPreview.style.width = '70mm';
+                lhPreview.style.width = selectedLetterheadWidth + 'mm';
+                lhPreview.style.opacity = useLetterhead ? '1' : '0.35';
+            }
+            if (lhControls) lhControls.classList.remove('hidden');
+            if (lhToggleContainer) {
+                lhToggleContainer.classList.remove('hidden');
+                lhToggleContainer.classList.add('flex');
+            }
+            if (noPreviewText) noPreviewText.classList.add('hidden');
+            if (lhSlider) lhSlider.value = selectedLetterheadWidth;
+            if (lhSliderVal) lhSliderVal.innerText = selectedLetterheadWidth + "mm";
+            if (useLhCheckbox) useLhCheckbox.checked = useLetterhead;
+            if (lhDisabledBadge) {
+                if (useLetterhead) lhDisabledBadge.classList.add('hidden');
+                else lhDisabledBadge.classList.remove('hidden');
+            }
+            if (lhPageOptionSelect) lhPageOptionSelect.value = letterheadPageOption;
+            if (lhCustomPagesInput) lhCustomPagesInput.value = letterheadCustomPages;
+            if (lhCustomPagesContainer && lhCustomPagesHint) {
+                if (letterheadPageOption === 'custom') {
+                    lhCustomPagesContainer.classList.remove('hidden');
+                    lhCustomPagesHint.classList.remove('hidden');
+                } else {
+                    lhCustomPagesContainer.classList.add('hidden');
+                    lhCustomPagesHint.classList.add('hidden');
+                }
+            }
+        } else {
+            if (lhPreview) {
+                lhPreview.removeAttribute('src');
+                lhPreview.classList.add('hidden');
+            }
+            if (lhControls) lhControls.classList.add('hidden');
+            if (lhToggleContainer) {
+                lhToggleContainer.classList.add('hidden');
+                lhToggleContainer.classList.remove('flex');
+            }
+            if (noPreviewText) noPreviewText.classList.remove('hidden');
+            if (lhDisabledBadge) lhDisabledBadge.classList.add('hidden');
+        }
+    }
+
+    if (lhInput) {
+        lhInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const maxWidth = 1000; 
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    letterheadBase64 = canvas.toDataURL('image/png');
+                    useLetterhead = true;
+                    selectedLetterheadWidth = 70;
+                    letterheadPageOption = 'all';
+                    letterheadCustomPages = '1';
+                    
+                    updateLetterheadPreview();
+
+                    // Automatically save with active company if loaded
+                    if (activeCompanyId && typeof companiesData !== 'undefined') {
+                        const comp = companiesData.find(c => c.id.toString() === activeCompanyId.toString());
+                        if (comp) {
+                            comp.letterheadBase64 = letterheadBase64;
+                            saveCompanies();
+                            renderCompanyList();
+                        }
+                    }
+                };
+                img.src = event.target.result;
             };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
+            reader.readAsDataURL(file);
+        });
+    }
 
-    // Slider Change Listener (Real-time preview resizing)
-    lhSlider.addEventListener('input', function(e) {
-        selectedLetterheadWidth = parseInt(e.target.value);
-        lhSliderVal.innerText = selectedLetterheadWidth + "mm";
-        // Update the preview image width visually
-        lhPreview.style.width = selectedLetterheadWidth + 'mm';
-    });
+    if (lhSlider) {
+        lhSlider.addEventListener('input', function(e) {
+            selectedLetterheadWidth = parseInt(e.target.value);
+            if (lhSliderVal) lhSliderVal.innerText = selectedLetterheadWidth + "mm";
+            if (lhPreview) lhPreview.style.width = selectedLetterheadWidth + 'mm';
+        });
+    }
 
-    // --- NEW: Optimized Stamp Upload & Preview ---
+    if (useLhCheckbox) {
+        useLhCheckbox.addEventListener('change', function(e) {
+            useLetterhead = e.target.checked;
+            updateLetterheadPreview();
+        });
+    }
+
+    if (removeLhBtn) {
+        removeLhBtn.addEventListener('click', function() {
+            letterheadBase64 = null;
+            if (lhInput) lhInput.value = '';
+            updateLetterheadPreview();
+            if (activeCompanyId && typeof companiesData !== 'undefined') {
+                const comp = companiesData.find(c => c.id.toString() === activeCompanyId.toString());
+                if (comp) {
+                    comp.letterheadBase64 = null;
+                    saveCompanies();
+                    renderCompanyList();
+                }
+            }
+        });
+    }
+
+    if (lhPageOptionSelect) {
+        lhPageOptionSelect.addEventListener('change', function(e) {
+            letterheadPageOption = e.target.value;
+            updateLetterheadPreview();
+        });
+    }
+
+    if (lhCustomPagesInput) {
+        lhCustomPagesInput.addEventListener('input', function(e) {
+            letterheadCustomPages = e.target.value;
+        });
+    }
+
+    // --- Stamp Elements & Logic ---
     const stampInput = document.getElementById('company-stamp');
     const stampPreview = document.getElementById('stamp-preview');
     const stampControls = document.getElementById('stamp-controls');
     const stampSlider = document.getElementById('stamp-slider');
     const stampSliderVal = document.getElementById('stamp-slider-value');
     const noStampText = document.getElementById('no-stamp-text');
+    const stampToggleContainer = document.getElementById('stamp-toggle-container');
+    const useStampCheckbox = document.getElementById('use-stamp-checkbox');
+    const removeStampBtn = document.getElementById('remove-stamp-btn');
+    const stampPageOptionSelect = document.getElementById('stamp-page-option');
+    const stampCustomPagesInput = document.getElementById('stamp-custom-pages');
+    const stampCustomPagesContainer = document.getElementById('stamp-custom-pages-container');
+    const stampCustomPagesHint = document.getElementById('stamp-custom-pages-hint');
+    const stampDisabledBadge = document.getElementById('stamp-disabled-badge');
 
-    stampInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                // Optimization Canvas
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-
-                // Resize to max 500px (stamps are small)
-                const maxWidth = 500; 
-                let width = img.width;
-                let height = img.height;
-
-                if (width > maxWidth) {
-                    height *= maxWidth / width;
-                    width = maxWidth;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // Get optimized Base64
-                companyStampBase64 = canvas.toDataURL('image/png');
-                
-                // Update UI
+    function updateStampPreview() {
+        const hasValidStamp = companyStampBase64 && typeof companyStampBase64 === 'string' && companyStampBase64.startsWith('data:image');
+        if (hasValidStamp) {
+            if (stampPreview) {
                 stampPreview.src = companyStampBase64;
                 stampPreview.classList.remove('hidden');
-                stampControls.classList.remove('hidden');
-                noStampText.classList.add('hidden');
-                
-                // Reset defaults
-                stampSlider.value = 30;
-                stampSliderVal.innerText = "30mm";
-                selectedStampWidth = 30;
-                stampPreview.style.width = '30mm';
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
+                stampPreview.style.width = selectedStampWidth + 'mm';
+                stampPreview.style.opacity = useStamp ? '1' : '0.35';
+            }
+            if (stampControls) stampControls.classList.remove('hidden');
+            if (stampToggleContainer) {
+                stampToggleContainer.classList.remove('hidden');
+                stampToggleContainer.classList.add('flex');
+            }
+            if (noStampText) noStampText.classList.add('hidden');
+            if (stampSlider) stampSlider.value = selectedStampWidth;
+            if (stampSliderVal) stampSliderVal.innerText = selectedStampWidth + "mm";
+            if (useStampCheckbox) useStampCheckbox.checked = useStamp;
+            if (stampDisabledBadge) {
+                if (useStamp) stampDisabledBadge.classList.add('hidden');
+                else stampDisabledBadge.classList.remove('hidden');
+            }
+            if (stampPageOptionSelect) stampPageOptionSelect.value = stampPageOption;
+            if (stampCustomPagesInput) stampCustomPagesInput.value = stampCustomPages;
+            if (stampCustomPagesContainer && stampCustomPagesHint) {
+                if (stampPageOption === 'custom') {
+                    stampCustomPagesContainer.classList.remove('hidden');
+                    stampCustomPagesHint.classList.remove('hidden');
+                } else {
+                    stampCustomPagesContainer.classList.add('hidden');
+                    stampCustomPagesHint.classList.add('hidden');
+                }
+            }
+        } else {
+            if (stampPreview) {
+                stampPreview.removeAttribute('src');
+                stampPreview.classList.add('hidden');
+            }
+            if (stampControls) stampControls.classList.add('hidden');
+            if (stampToggleContainer) {
+                stampToggleContainer.classList.add('hidden');
+                stampToggleContainer.classList.remove('flex');
+            }
+            if (noStampText) noStampText.classList.remove('hidden');
+            if (stampDisabledBadge) stampDisabledBadge.classList.add('hidden');
+        }
+    }
 
-    // Stamp Slider Listener
-    stampSlider.addEventListener('input', function(e) {
-        selectedStampWidth = parseInt(e.target.value);
-        stampSliderVal.innerText = selectedStampWidth + "mm";
-        stampPreview.style.width = selectedStampWidth + 'mm';
-    });
+    if (stampInput) {
+        stampInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const maxWidth = 500; 
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    companyStampBase64 = canvas.toDataURL('image/png');
+                    useStamp = true;
+                    selectedStampWidth = 30;
+                    stampPageOption = 'all';
+                    stampCustomPages = '1';
+                    
+                    updateStampPreview();
+
+                    // Automatically save with active company if loaded
+                    if (activeCompanyId && typeof companiesData !== 'undefined') {
+                        const comp = companiesData.find(c => c.id.toString() === activeCompanyId.toString());
+                        if (comp) {
+                            comp.stampBase64 = companyStampBase64;
+                            saveCompanies();
+                            renderCompanyList();
+                        }
+                    }
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (stampSlider) {
+        stampSlider.addEventListener('input', function(e) {
+            selectedStampWidth = parseInt(e.target.value);
+            if (stampSliderVal) stampSliderVal.innerText = selectedStampWidth + "mm";
+            if (stampPreview) stampPreview.style.width = selectedStampWidth + 'mm';
+        });
+    }
+
+    if (useStampCheckbox) {
+        useStampCheckbox.addEventListener('change', function(e) {
+            useStamp = e.target.checked;
+            updateStampPreview();
+        });
+    }
+
+    if (removeStampBtn) {
+        removeStampBtn.addEventListener('click', function() {
+            companyStampBase64 = null;
+            if (stampInput) stampInput.value = '';
+            updateStampPreview();
+            if (activeCompanyId && typeof companiesData !== 'undefined') {
+                const comp = companiesData.find(c => c.id.toString() === activeCompanyId.toString());
+                if (comp) {
+                    comp.stampBase64 = null;
+                    saveCompanies();
+                    renderCompanyList();
+                }
+            }
+        });
+    }
+
+    if (stampPageOptionSelect) {
+        stampPageOptionSelect.addEventListener('change', function(e) {
+            stampPageOption = e.target.value;
+            updateStampPreview();
+        });
+    }
+
+    if (stampCustomPagesInput) {
+        stampCustomPagesInput.addEventListener('input', function(e) {
+            stampCustomPages = e.target.value;
+        });
+    }
+
+    // --- Arabic Header Checkbox Listener ---
+    const includeArCheckbox = document.getElementById('include-company-name-ar');
+    if (includeArCheckbox) {
+        includeArCheckbox.addEventListener('change', function(e) {
+            includeCompanyNameAr = e.target.checked;
+        });
+    }
         function getVal(id) {
             const el = document.getElementById(id);
             if (!el) return 0;
@@ -1920,67 +2610,237 @@ const mainCommentList = document.getElementById('main-comment-list');
         
         // --- START: Paste Missing Company Management Functions HERE ---
 
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         async function loadCompanies() {
-            if (!userId) return;
-            try {
-                const docSnap = await getDoc(companiesDocRef);
-                if (docSnap.exists() && docSnap.data().list) {
-                    companiesData = docSnap.data().list;
-                } else {
-                    companiesData = []; // No companies saved yet
+            let loaded = false;
+            if (userId && companiesDocRef) {
+                try {
+                    const docSnap = await getDoc(companiesDocRef);
+                    if (docSnap.exists() && docSnap.data().list) {
+                        companiesData = docSnap.data().list;
+                        loaded = true;
+                    }
+                } catch (error) {
+                    console.error("Error loading companies from Firestore: ", error);
                 }
-            } catch (error) {
-                console.error("Error loading companies: ", error);
-                companiesData = [];
             }
+
+            if (!loaded) {
+                try {
+                    const localComp = localStorage.getItem(`corp_companies_${userId || 'default'}`);
+                    if (localComp) {
+                        companiesData = JSON.parse(localComp);
+                        loaded = true;
+                    }
+                } catch (e) {
+                    console.warn("Could not parse local companies:", e);
+                }
+            }
+
+            // If still no companies saved, seed default corporate entity
+            if (!companiesData || companiesData.length === 0) {
+                companiesData = [
+                    {
+                        id: 'comp-seed-1',
+                        name: 'BRANDSPOINT LLC',
+                        nameAr: 'براندز بوينت ذ م م',
+                        signatory: 'Mr. NADEEM KHAN',
+                        city: 'Sharjah',
+                        country: 'United Arab Emirates',
+                        address: 'Sharjah Media City',
+                        email: 'alwaseemsharjah001@gmail.com',
+                        letterheadBase64: null,
+                        stampBase64: null
+                    }
+                ];
+                saveCompanies();
+            }
+
+            if (!activeCompanyId && companiesData.length > 0) {
+                activeCompanyId = companiesData[0].id;
+                if (currentActiveCompanyLabel) {
+                    currentActiveCompanyLabel.textContent = companiesData[0].name;
+                }
+            }
+
             renderCompanyList();
             updateCompanySelector();
         }
 
         async function saveCompanies() {
-            if (!userId) return;
+            try {
+                localStorage.setItem(`corp_companies_${userId || 'default'}`, JSON.stringify(companiesData));
+            } catch (e) {
+                console.warn("localStorage company save error:", e);
+            }
+            if (!userId || !companiesDocRef) return;
             try {
                 await setDoc(companiesDocRef, { list: companiesData });
             } catch (error) {
-                console.error("Error saving companies: ", error);
-                // Show a message?
+                console.error("Error saving companies to Firestore: ", error);
             }
         }
 
         function renderCompanyList() {
+            if (!companyListContainer) return;
             companyListContainer.innerHTML = ''; // Clear the list
             if (companiesData.length === 0) {
-                companyListContainer.innerHTML = '<p class="text-gray-500">No companies saved yet.</p>';
+                companyListContainer.innerHTML = '<p class="text-gray-500 text-sm">No companies saved yet.</p>';
                 return;
             }
 
             companiesData.forEach(company => {
                 const companyEl = document.createElement('div');
-                companyEl.className = 'p-3 border rounded-lg bg-gray-50 flex justify-between items-center';
+                companyEl.className = 'p-3.5 border border-gray-200 rounded-xl bg-gray-50 flex flex-col sm:flex-row justify-between sm:items-center gap-3 transition hover:border-gray-300';
+                
+                const hasLh = company.letterheadBase64 && typeof company.letterheadBase64 === 'string' && company.letterheadBase64.startsWith('data:image');
+                const hasStamp = company.stampBase64 && typeof company.stampBase64 === 'string' && company.stampBase64.startsWith('data:image');
+
                 companyEl.innerHTML = `
-                    <div>
-                        <strong class="text-gray-900">${company.name}</strong>
-                        <p class="text-sm text-gray-600">${company.city}, ${company.country}</p>
+                    <div class="flex-1 min-w-0 mr-2">
+                        <div class="flex items-center space-x-2">
+                            <strong class="text-gray-900 text-sm truncate">${escapeHtml(company.name)}</strong>
+                            ${company.id === activeCompanyId ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-green-100 text-green-700">Active</span>` : ''}
+                        </div>
+                        ${company.nameAr ? `<span class="text-xs text-gray-500 block font-normal mt-0.5" dir="rtl">${escapeHtml(company.nameAr)}</span>` : ''}
+                        <p class="text-xs text-gray-600 mt-1 truncate">${escapeHtml(company.city || '')}${company.country ? ', ' + escapeHtml(company.country) : ''} | Signatory: <span class="font-medium text-gray-800">${escapeHtml(company.signatory || '—')}</span></p>
+                        
+                        <!-- Watchable Letterhead & Stamp Thumbnails in Manage Company Area -->
+                        <div class="mt-2.5 pt-2 border-t border-gray-200/80 flex flex-wrap items-center gap-3 text-xs">
+                            <div class="flex items-center space-x-1.5">
+                                <span class="text-gray-400 text-[11px] font-medium">Letterhead:</span>
+                                ${hasLh ? `
+                                    <div class="h-7 max-w-[90px] border border-blue-200 rounded-md bg-white p-0.5 flex items-center justify-center shadow-2xs">
+                                        <img src="${company.letterheadBase64}" alt="Letterhead" class="max-h-6 max-w-[80px] object-contain">
+                                    </div>
+                                ` : `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-gray-200/60 text-gray-500">None</span>`}
+                            </div>
+                            <div class="flex items-center space-x-1.5">
+                                <span class="text-gray-400 text-[11px] font-medium">Stamp:</span>
+                                ${hasStamp ? `
+                                    <div class="h-7 w-7 border border-purple-200 rounded-md bg-white p-0.5 flex items-center justify-center shadow-2xs">
+                                        <img src="${company.stampBase64}" alt="Stamp" class="max-h-6 max-w-6 object-contain">
+                                    </div>
+                                ` : `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-gray-200/60 text-gray-500">None</span>`}
+                            </div>
+                        </div>
                     </div>
-                    <button type="button" class="btn-red !py-1 !px-3 delete-company-btn" data-id="${company.id}">Delete</button>
+                    <div class="flex items-center space-x-2 shrink-0 self-end sm:self-center">
+                        <button type="button" class="btn-primary !py-1 !px-2.5 text-xs use-company-btn" data-id="${company.id}">Use in Report</button>
+                        <button type="button" class="btn-secondary !py-1 !px-2.5 text-xs edit-company-btn" data-id="${company.id}">Edit</button>
+                        <button type="button" class="btn-red !py-1 !px-2 text-xs delete-company-btn" data-id="${company.id}">Delete</button>
+                    </div>
                 `;
                 companyListContainer.appendChild(companyEl);
             });
 
-            // Add delete listener to all new buttons
+            // Add "Use in Report" listeners
+            companyListContainer.querySelectorAll('.use-company-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const companyId = btn.dataset.id;
+                    selectAndApplyCompany(companyId);
+                    if (companiesModal) companiesModal.style.display = 'none';
+                });
+            });
+
+            // Add edit listeners
+            companyListContainer.querySelectorAll('.edit-company-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const comp = companiesData.find(c => c.id.toString() === btn.dataset.id);
+                    if (!comp) return;
+                    editingCompanyId = comp.id;
+                    companyFormName.value = comp.name || '';
+                    companyFormNameAr.value = comp.nameAr || '';
+                    companyFormSignatory.value = comp.signatory || '';
+                    companyFormEmail.value = comp.email || '';
+                    companyFormCity.value = comp.city || '';
+                    companyFormCountry.value = comp.country || '';
+                    companyFormAddress.value = comp.address || '';
+
+                    // Load letterhead into edit form
+                    companyFormLetterheadBase64 = comp.letterheadBase64 || null;
+                    if (companyFormLetterheadBase64) {
+                        if (companyFormLhPreview) {
+                            companyFormLhPreview.src = companyFormLetterheadBase64;
+                            companyFormLhPreview.classList.remove('hidden');
+                        }
+                        if (companyFormLhPreviewBox) companyFormLhPreviewBox.classList.remove('hidden');
+                        if (companyFormLhRemove) companyFormLhRemove.classList.remove('hidden');
+                    } else {
+                        if (companyFormLhPreview) {
+                            companyFormLhPreview.removeAttribute('src');
+                            companyFormLhPreview.classList.add('hidden');
+                        }
+                        if (companyFormLhPreviewBox) companyFormLhPreviewBox.classList.add('hidden');
+                        if (companyFormLhRemove) companyFormLhRemove.classList.add('hidden');
+                    }
+
+                    // Load stamp into edit form
+                    companyFormStampBase64 = comp.stampBase64 || null;
+                    if (companyFormStampBase64) {
+                        if (companyFormStampPreview) {
+                            companyFormStampPreview.src = companyFormStampBase64;
+                            companyFormStampPreview.classList.remove('hidden');
+                        }
+                        if (companyFormStampPreviewBox) companyFormStampPreviewBox.classList.remove('hidden');
+                        if (companyFormStampRemove) companyFormStampRemove.classList.remove('hidden');
+                    } else {
+                        if (companyFormStampPreview) {
+                            companyFormStampPreview.removeAttribute('src');
+                            companyFormStampPreview.classList.add('hidden');
+                        }
+                        if (companyFormStampPreviewBox) companyFormStampPreviewBox.classList.add('hidden');
+                        if (companyFormStampRemove) companyFormStampRemove.classList.add('hidden');
+                    }
+
+                    saveCompaniesDetailsBtn.textContent = 'Update Company';
+                    companyFormName.focus();
+                });
+            });
+
+            // Add delete listener to buttons
             companyListContainer.querySelectorAll('.delete-company-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const companyId = btn.dataset.id;
+                    const deletedComp = companiesData.find(c => c.id.toString() === companyId);
+                    if (!confirm(`Are you sure you want to delete "${deletedComp ? deletedComp.name : 'this company'}"?`)) return;
+
                     companiesData = companiesData.filter(c => c.id.toString() !== companyId);
+                    if (activeCompanyId && activeCompanyId.toString() === companyId) {
+                        activeCompanyId = companiesData.length > 0 ? companiesData[0].id : null;
+                    }
                     saveCompanies();
-                    renderCompanyList(); // Re-render this modal list
-                    updateCompanySelector(); // Re-render the top dropdown
+                    renderCompanyList();
+                    updateCompanySelector();
+                    if (deletedComp) {
+                        addCorporateHistoryEntry({
+                            action: 'Removed',
+                            name: deletedComp.name,
+                            nameAr: deletedComp.nameAr,
+                            signatory: deletedComp.signatory,
+                            city: deletedComp.city,
+                            country: deletedComp.country,
+                            address: deletedComp.address,
+                            email: deletedComp.email,
+                            details: `Removed corporate profile: ${deletedComp.name}`
+                        });
+                    }
                 });
             });
         }
 
         function updateCompanySelector() {
-            companySelector.innerHTML = ''; // Clear dropdown
+            if (!companySelector) return;
+            companySelector.innerHTML = '';
             if (companiesData.length === 0) {
                 companySelector.innerHTML = '<option value="">-- No companies found --</option>';
                 return;
@@ -1988,8 +2848,352 @@ const mainCommentList = document.getElementById('main-comment-list');
 
             companySelector.innerHTML = '<option value="">-- Select a Company to start new report --</option>';
             companiesData.forEach(company => {
-                companySelector.innerHTML += `<option value="${company.id}">${company.name}</option>`;
+                const isSelected = activeCompanyId && company.id.toString() === activeCompanyId.toString();
+                companySelector.innerHTML += `<option value="${company.id}" ${isSelected ? 'selected' : ''}>${escapeHtml(company.name)}</option>`;
             });
+        }
+
+        function resetCompanyForm() {
+            editingCompanyId = null;
+            companyFormLetterheadBase64 = null;
+            companyFormStampBase64 = null;
+            if (saveCompaniesDetailsBtn) saveCompaniesDetailsBtn.textContent = 'Add Company';
+            if (companyFormName) companyFormName.value = '';
+            if (companyFormNameAr) companyFormNameAr.value = '';
+            if (companyFormSignatory) companyFormSignatory.value = '';
+            if (companyFormEmail) companyFormEmail.value = '';
+            if (companyFormCity) companyFormCity.value = '';
+            if (companyFormCountry) companyFormCountry.value = '';
+            if (companyFormAddress) companyFormAddress.value = '';
+            if (companyFormLhInput) companyFormLhInput.value = '';
+            if (companyFormStampInput) companyFormStampInput.value = '';
+            if (companyFormLhPreview) {
+                companyFormLhPreview.removeAttribute('src');
+                companyFormLhPreview.classList.add('hidden');
+            }
+            if (companyFormStampPreview) {
+                companyFormStampPreview.removeAttribute('src');
+                companyFormStampPreview.classList.add('hidden');
+            }
+            if (companyFormLhPreviewBox) companyFormLhPreviewBox.classList.add('hidden');
+            if (companyFormStampPreviewBox) companyFormStampPreviewBox.classList.add('hidden');
+            if (companyFormLhRemove) companyFormLhRemove.classList.add('hidden');
+            if (companyFormStampRemove) companyFormStampRemove.classList.add('hidden');
+        }
+
+        // --- Auto-Load Company Profile, Letterhead & Stamp ---
+        function selectAndApplyCompany(companyId) {
+            if (!companyId) return;
+            const company = companiesData.find(c => c.id.toString() === companyId.toString());
+            if (!company) return;
+
+            activeCompanyId = company.id;
+
+            // 1. Reset form fields to fresh template
+            if (startNewBtn) {
+                document.getElementById('financial-form').reset();
+            }
+            document.getElementById('report-start-date').valueAsDate = new Date(new Date().getFullYear(), 0, 1);
+            document.getElementById('report-end-date').valueAsDate = new Date();
+
+            // 2. Populate company General Information
+            setVal('company-name', company.name || '');
+            setVal('company-name-ar', company.nameAr || '');
+            setVal('signatory', company.signatory || '');
+            setVal('email', company.email || '');
+
+            const fullAddress = [company.address, company.city, company.country]
+                                .filter(Boolean)
+                                .join(', ');
+            setVal('address', fullAddress);
+
+            // 3. AUTO-LOAD LETTERHEAD IMAGE
+            if (company.letterheadBase64 && typeof company.letterheadBase64 === 'string' && company.letterheadBase64.startsWith('data:image')) {
+                letterheadBase64 = company.letterheadBase64;
+                useLetterhead = true;
+                selectedLetterheadWidth = 70;
+            } else {
+                letterheadBase64 = null;
+            }
+
+            // 4. AUTO-LOAD STAMP IMAGE
+            if (company.stampBase64 && typeof company.stampBase64 === 'string' && company.stampBase64.startsWith('data:image')) {
+                companyStampBase64 = company.stampBase64;
+                useStamp = true;
+                selectedStampWidth = 30;
+            } else {
+                companyStampBase64 = null;
+            }
+
+            updateLetterheadPreview();
+            updateStampPreview();
+
+            // Update top bar corporate label
+            if (currentActiveCompanyLabel) {
+                currentActiveCompanyLabel.textContent = company.name;
+            }
+
+            // Set suggested draft name
+            if (draftNameInput) {
+                const cleanName = (company.name || 'CORP').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                draftNameInput.value = `${cleanName}${new Date().getFullYear()}CORPR`;
+            }
+
+            // Re-render company list so active badge moves
+            renderCompanyList();
+
+            // Close Draft Management Modal if open
+            if (draftManagementModal) {
+                draftManagementModal.style.display = 'none';
+            }
+
+            // Switch to General Information Tab
+            const genTab = document.querySelector('.tab-btn[data-tab="general"]');
+            if (genTab) genTab.click();
+        }
+
+        // --- Corporate Audit History Management ---
+        async function loadCorporateHistory() {
+            let loaded = false;
+            if (userId && corporateHistoryDocRef) {
+                try {
+                    const docSnap = await getDoc(corporateHistoryDocRef);
+                    if (docSnap.exists() && docSnap.data().history) {
+                        corporateHistoryData = docSnap.data().history;
+                        loaded = true;
+                    }
+                } catch (err) {
+                    console.warn("Could not load corporate history from Firestore:", err);
+                }
+            }
+            if (!loaded) {
+                try {
+                    const localHist = localStorage.getItem(`corp_history_${userId || 'default'}`);
+                    if (localHist) {
+                        corporateHistoryData = JSON.parse(localHist);
+                        loaded = true;
+                    }
+                } catch (e) {
+                    console.warn("Local history parse error:", e);
+                }
+            }
+            // If history is still empty, seed with initial corporate entry so the user immediately sees column-wise details!
+            if (!corporateHistoryData || corporateHistoryData.length === 0) {
+                corporateHistoryData = [
+                    {
+                        id: 'seed-1',
+                        timestamp: new Date().toISOString(),
+                        formattedDate: new Date().toLocaleString(),
+                        action: 'Added',
+                        name: 'BRANDSPOINT LLC',
+                        nameAr: 'براندز بوينت ذ م م',
+                        signatory: 'Mr. NADEEM KHAN',
+                        location: 'Dubai, United Arab Emirates',
+                        address: 'P.O. Box 12345, Business Bay, Dubai',
+                        email: 'info@brandspoint.ae',
+                        details: 'Initial corporate record configured',
+                        modifiedBy: (auth && auth.currentUser && auth.currentUser.email) ? auth.currentUser.email : 'Admin'
+                    }
+                ];
+                saveCorporateHistory();
+            }
+            renderCorporateHistoryTable();
+        }
+
+        async function saveCorporateHistory() {
+            try {
+                localStorage.setItem(`corp_history_${userId || 'default'}`, JSON.stringify(corporateHistoryData));
+            } catch (e) {
+                console.warn("Could not write to localStorage:", e);
+            }
+            if (userId && corporateHistoryDocRef) {
+                try {
+                    await setDoc(corporateHistoryDocRef, { history: corporateHistoryData });
+                } catch (err) {
+                    console.warn("Could not save corporate history to Firestore:", err);
+                }
+            }
+        }
+
+        function addCorporateHistoryEntry(entry) {
+            const now = new Date();
+            const currentUserName = (auth && auth.currentUser && auth.currentUser.email) ? auth.currentUser.email : 
+                                    (userEmail && userEmail.textContent ? userEmail.textContent.replace('Signed in as: ', '').trim() : 'Admin');
+            
+            const record = {
+                id: 'hist-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                timestamp: now.toISOString(),
+                formattedDate: now.toLocaleString(),
+                action: entry.action || 'Added',
+                name: entry.name || '',
+                nameAr: entry.nameAr || '',
+                signatory: entry.signatory || '—',
+                location: entry.location || (entry.city ? `${entry.city}${entry.country ? ', ' + entry.country : ''}` : '—'),
+                address: entry.address || '—',
+                email: entry.email || '—',
+                details: entry.details || '—',
+                modifiedBy: currentUserName || 'Admin'
+            };
+
+            corporateHistoryData.unshift(record);
+            saveCorporateHistory();
+            renderCorporateHistoryTable();
+        }
+
+        function renderCorporateHistoryTable() {
+            if (!corporateHistoryTbody) return;
+            
+            const searchTerm = (historySearchInput ? historySearchInput.value : '').toLowerCase().trim();
+            const actionFilter = historyActionFilter ? historyActionFilter.value : 'all';
+            
+            const filtered = (corporateHistoryData || []).filter(item => {
+                if (actionFilter !== 'all' && item.action !== actionFilter) return false;
+                if (!searchTerm) return true;
+                const haystack = [
+                    item.name,
+                    item.nameAr,
+                    item.signatory,
+                    item.location,
+                    item.address,
+                    item.email,
+                    item.details,
+                    item.modifiedBy,
+                    item.action,
+                    item.formattedDate
+                ].join(' ').toLowerCase();
+                return haystack.includes(searchTerm);
+            });
+
+            if (historyCountLabel) {
+                historyCountLabel.textContent = `Showing ${filtered.length} of ${corporateHistoryData.length} records`;
+            }
+
+            if (filtered.length === 0) {
+                corporateHistoryTbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-gray-500">
+                            <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            No corporate history records found.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            corporateHistoryTbody.innerHTML = filtered.map(item => {
+                let badgeClass = 'bg-gray-100 text-gray-800 border-gray-200';
+                if (item.action === 'Added') {
+                    badgeClass = 'bg-green-100 text-green-800 border-green-200';
+                } else if (item.action === 'Edited') {
+                    badgeClass = 'bg-blue-100 text-blue-800 border-blue-200';
+                } else if (item.action === 'Removed') {
+                    badgeClass = 'bg-red-100 text-red-800 border-red-200';
+                }
+
+                const arSnippet = item.nameAr ? `<span class="block text-xs text-gray-500 font-normal" dir="rtl">${escapeHtml(item.nameAr)}</span>` : '';
+                const addrSnippet = item.address && item.address !== '—' && item.address !== item.location ? `<span class="block text-xs text-gray-400 truncate max-w-xs" title="${escapeHtml(item.address)}">${escapeHtml(item.address)}</span>` : '';
+
+                return `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500 font-mono">
+                            ${escapeHtml(item.formattedDate || '')}
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badgeClass}">
+                                ${escapeHtml(item.action || 'Log')}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                            ${escapeHtml(item.name || '—')}
+                            ${arSnippet}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                            ${escapeHtml(item.signatory || '—')}
+                        </td>
+                        <td class="px-4 py-3 text-xs text-gray-600">
+                            <div class="font-medium text-gray-800">${escapeHtml(item.location || '—')}</div>
+                            ${addrSnippet}
+                        </td>
+                        <td class="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
+                            ${escapeHtml(item.email || '—')}
+                        </td>
+                        <td class="px-4 py-3 text-xs text-gray-600 max-w-xs break-words">
+                            ${escapeHtml(item.details || '—')}
+                        </td>
+                        <td class="px-3 py-3 text-xs text-gray-500 whitespace-nowrap">
+                            <span class="inline-block px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-mono text-[11px]">
+                                ${escapeHtml(item.modifiedBy || 'System')}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function exportCorporateHistoryCsv() {
+            if (!corporateHistoryData || corporateHistoryData.length === 0) {
+                alert('No history records to export.');
+                return;
+            }
+            const headers = ['Date & Time', 'Action', 'Corporate Name', 'Corporate Name (Arabic)', 'Signatory', 'Location', 'Address', 'Email', 'Details', 'Modified By'];
+            const rows = corporateHistoryData.map(item => [
+                `"${(item.formattedDate || '').replace(/"/g, '""')}"`,
+                `"${(item.action || '').replace(/"/g, '""')}"`,
+                `"${(item.name || '').replace(/"/g, '""')}"`,
+                `"${(item.nameAr || '').replace(/"/g, '""')}"`,
+                `"${(item.signatory || '').replace(/"/g, '""')}"`,
+                `"${(item.location || '').replace(/"/g, '""')}"`,
+                `"${(item.address || '').replace(/"/g, '""')}"`,
+                `"${(item.email || '').replace(/"/g, '""')}"`,
+                `"${(item.details || '').replace(/"/g, '""')}"`,
+                `"${(item.modifiedBy || '').replace(/"/g, '""')}"`
+            ]);
+            const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `corporate_history_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function clearCorporateHistory() {
+            if (confirm('Are you sure you want to clear all corporate history records? This cannot be undone.')) {
+                corporateHistoryData = [];
+                saveCorporateHistory();
+                renderCorporateHistoryTable();
+            }
+        }
+
+        function openSideDrawer() {
+            if (sideDrawer && sideDrawerBackdrop) {
+                sideDrawerBackdrop.classList.remove('hidden');
+                sideDrawer.classList.remove('-translate-x-full');
+            }
+        }
+
+        function closeSideDrawer() {
+            if (sideDrawer && sideDrawerBackdrop) {
+                sideDrawer.classList.add('-translate-x-full');
+                sideDrawerBackdrop.classList.add('hidden');
+            }
+        }
+
+        function openCorporateHistoryModal() {
+            closeSideDrawer();
+            if (corporateHistoryModal) {
+                corporateHistoryModal.style.display = 'block';
+                renderCorporateHistoryTable();
+            }
+        }
+
+        function closeCorporateHistoryModalFunc() {
+            if (corporateHistoryModal) {
+                corporateHistoryModal.style.display = 'none';
+            }
         }
 
         // --- END: Missing Company Management Functions ---
@@ -2013,9 +3217,11 @@ const mainCommentList = document.getElementById('main-comment-list');
                         
                         // --- ADD THIS LINE ---
                         companiesDocRef = doc(db, `users/${userId}/app_data`, 'companies');
+                        corporateHistoryDocRef = doc(db, `users/${userId}/app_data`, 'corporate_history');
 
                         // Update UI
                         userEmail.textContent = `Signed in as: ${user.email || 'User'}`;
+                        if (drawerUserEmail) drawerUserEmail.textContent = `Signed in as: ${user.email || 'User'}`;
                         userSession.style.display = 'flex';
                         authContainer.style.display = 'none';
                         mainAppContainer.style.display = 'block';
@@ -2025,6 +3231,7 @@ const mainCommentList = document.getElementById('main-comment-list');
                         
                         // --- ADD THIS LINE ---
                         loadCompanies();
+                        loadCorporateHistory();
                         
                         // --- AND ADD THIS LINE ---
                         initializeMainAppListeners();
@@ -2153,9 +3360,18 @@ const mainCommentList = document.getElementById('main-comment-list');
                 mainCommentsData: mainCommentsData,
     
                 letterheadBase64: letterheadBase64,
-letterheadWidth: selectedLetterheadWidth, // Don't forget to save Letterhead width too!
-companyStampBase64: companyStampBase64,
-stampWidth: selectedStampWidth
+                letterheadWidth: selectedLetterheadWidth,
+                useLetterhead: useLetterhead,
+                letterheadPageOption: letterheadPageOption,
+                letterheadCustomPages: letterheadCustomPages,
+                
+                companyStampBase64: companyStampBase64,
+                stampWidth: selectedStampWidth,
+                useStamp: useStamp,
+                stampPageOption: stampPageOption,
+                stampCustomPages: stampCustomPages,
+
+                includeCompanyNameAr: document.getElementById('include-company-name-ar') ? document.getElementById('include-company-name-ar').checked : false
             };
         }
 
@@ -2186,147 +3402,361 @@ stampWidth: selectedStampWidth
     
             openingInventoryCalcHistory = data.openingInventoryCalcHistory || [];
 
-// --- ADD THIS ---
-mainCommentsData = data.mainCommentsData || [];
-renderMainCommentsList(); // Render comments when loading a draft
+            // Comments
+            mainCommentsData = data.mainCommentsData || [];
+            renderMainCommentsList();
     
             // Restore letterhead
             letterheadBase64 = data.letterheadBase64 || null;
-            selectedLetterheadWidth = data.letterheadWidth || 70; // Restore width
+            selectedLetterheadWidth = data.letterheadWidth || 70;
+            useLetterhead = data.useLetterhead !== undefined ? data.useLetterhead : true;
+            letterheadPageOption = data.letterheadPageOption || 'all';
+            letterheadCustomPages = data.letterheadCustomPages || '1';
 
+            // Restore stamp
             companyStampBase64 = data.companyStampBase64 || null;
             selectedStampWidth = data.stampWidth || 30;
+            useStamp = data.useStamp !== undefined ? data.useStamp : true;
+            stampPageOption = data.stampPageOption || 'all';
+            stampCustomPages = data.stampCustomPages || '1';
 
-            // Restore UI for Letterhead
-            // (Call the update logic or manually set src/hidden classes here like we did in listeners)
+            // Restore Arabic header checkbox
+            includeCompanyNameAr = !!data.includeCompanyNameAr;
+            const incArEl = document.getElementById('include-company-name-ar');
+            if (incArEl) incArEl.checked = includeCompanyNameAr;
 
-            // Restore UI for Stamp
-            if (companyStampBase64) {
-                stampPreview.src = companyStampBase64;
-                stampPreview.classList.remove('hidden');
-                stampControls.classList.remove('hidden');
-                noStampText.classList.add('hidden');
-                stampSlider.value = selectedStampWidth;
-                stampSliderVal.innerText = selectedStampWidth + "mm";
-                stampPreview.style.width = selectedStampWidth + 'mm';
-            }
+            // Restore UI for Letterhead & Stamp
+            updateLetterheadPreview();
+            updateStampPreview();
             
             // Re-run all calculations to ensure UI is consistent
             runAllCalculations();
             updateReviewTab();
         }
 
-        async function saveDraft() {
-            if (!userId) {
-                showDraftMessage("You must be signed in to save drafts.", true);
-                return;
-            }
-            const draftName = draftNameInput.value.trim();
+        async function saveDraft(nameOverride = null) {
+            let draftName = (nameOverride || (draftNameInput ? draftNameInput.value : '')).trim();
             if (!draftName) {
-                showDraftMessage("Please enter a draft name.", true);
+                const compName = document.getElementById('company-name') ? document.getElementById('company-name').value.trim() : '';
+                const clean = (compName || 'DRAFT').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                draftName = `${clean}${new Date().getFullYear()}CORPR`;
+                if (draftNameInput) draftNameInput.value = draftName;
+            }
+
+            const draftData = getFullDraftData();
+            draftData.draftName = draftName;
+            draftData.savedAt = new Date().toISOString();
+            draftData.savedAtFormatted = new Date().toLocaleString();
+            draftData.companyName = document.getElementById('company-name') ? document.getElementById('company-name').value : '';
+
+            // Also sync letterhead and stamp to active company record if applicable
+            if (activeCompanyId && typeof companiesData !== 'undefined') {
+                const comp = companiesData.find(c => c.id.toString() === activeCompanyId.toString());
+                if (comp) {
+                    if (letterheadBase64) comp.letterheadBase64 = letterheadBase64;
+                    if (companyStampBase64) comp.stampBase64 = companyStampBase64;
+                    saveCompanies();
+                    renderCompanyList();
+                }
+            }
+
+            // Save to localStorage for instant offline access
+            try {
+                const localDraftsKey = `corp_drafts_${userId || 'default'}`;
+                const localDrafts = JSON.parse(localStorage.getItem(localDraftsKey) || '{}');
+                localDrafts[draftName] = draftData;
+                localStorage.setItem(localDraftsKey, JSON.stringify(localDrafts));
+            } catch (e) {
+                console.warn("localStorage draft write error:", e);
+            }
+
+            // Update top bar status badge
+            if (activeDraftNameText) activeDraftNameText.textContent = draftName;
+            if (activeDraftNameBadge) activeDraftNameBadge.classList.remove('hidden');
+
+            if (!userId) {
+                showDraftMessage(`Draft "${draftName}" saved locally!`, false);
+                loadDraftsList();
                 return;
             }
-            
-            const draftData = getFullDraftData();
-            
+
             try {
-                // Updated doc path
                 const draftDoc = doc(db, `users/${userId}/financial_drafts`, draftName);
                 await setDoc(draftDoc, draftData);
                 showDraftMessage(`Draft "${draftName}" saved successfully!`, false);
-                loadDraftsList(); // Refresh list in case this is a new draft
+                loadDraftsList();
             } catch (error) {
-                console.error("Error saving draft:", error);
-                showDraftMessage(`Error saving draft: ${error.message}`, true);
+                console.error("Error saving draft to Firestore:", error);
+                showDraftMessage(`Saved locally. Cloud sync warning: ${error.message}`, false);
+                loadDraftsList();
             }
         }
         
         async function loadDraftsList() {
-            if (!userId) return;
+            // 1. Instantly populate from localStorage
+            try {
+                const localKey = `corp_drafts_${userId || 'default'}`;
+                const localDrafts = JSON.parse(localStorage.getItem(localKey) || '{}');
+                const localList = Object.keys(localDrafts).map(key => ({
+                    id: key,
+                    name: key,
+                    companyName: (localDrafts[key].formData && localDrafts[key].formData['company-name']) || localDrafts[key].companyName || '',
+                    savedAt: localDrafts[key].savedAt || null,
+                    savedAtFormatted: localDrafts[key].savedAtFormatted || (localDrafts[key].savedAt ? new Date(localDrafts[key].savedAt).toLocaleString() : ''),
+                    data: localDrafts[key]
+                }));
+                if (localList.length > 0) {
+                    allSavedDraftsList = localList;
+                    renderSavedDraftsCards();
+                }
+            } catch (e) {
+                console.warn("Error reading local drafts:", e);
+            }
+
+            // 2. Real-time sync with Firestore
+            if (!userId || !draftsCollection) {
+                renderSavedDraftsCards();
+                return;
+            }
             
             try {
                 onSnapshot(draftsCollection, (snapshot) => {
-                    if (snapshot.empty) {
-                        loadDraftSelect.innerHTML = '<option value="">-- No drafts found --</option>';
-                        return;
-                    }
-                    
-                    let html = '';
-                    snapshot.forEach(doc => {
-                        html += `<option value="${doc.id}">${doc.id}</option>`;
+                    const firestoreList = [];
+                    snapshot.forEach(docSnap => {
+                        const d = docSnap.data();
+                        firestoreList.push({
+                            id: docSnap.id,
+                            name: docSnap.id,
+                            companyName: (d.formData && d.formData['company-name']) || d.companyName || '',
+                            savedAt: d.savedAt || null,
+                            savedAtFormatted: d.savedAtFormatted || (d.savedAt ? new Date(d.savedAt).toLocaleString() : ''),
+                            data: d
+                        });
                     });
-                    loadDraftSelect.innerHTML = html;
+
+                    // Merge and sort
+                    const mergedMap = new Map();
+                    allSavedDraftsList.forEach(item => mergedMap.set(item.name, item));
+                    firestoreList.forEach(item => mergedMap.set(item.name, item));
+                    allSavedDraftsList = Array.from(mergedMap.values());
+
+                    allSavedDraftsList.sort((a, b) => {
+                        const dateA = a.savedAt ? new Date(a.savedAt).getTime() : 0;
+                        const dateB = b.savedAt ? new Date(b.savedAt).getTime() : 0;
+                        return dateB - dateA;
+                    });
+
+                    renderSavedDraftsCards();
                 });
             } catch (error) {
-                console.error("Error loading drafts list:", error);
-                showDraftMessage("Could not load draft list.", true);
+                console.error("Error loading drafts list from Firestore:", error);
             }
         }
 
-        async function loadSelectedDraft() {
-            if (!userId) {
-                showDraftMessage("You must be signed in to load drafts.", true);
+        // Render saved draft files on the right side of Draft Management modal
+        function renderSavedDraftsCards() {
+            if (!savedDraftsCardsContainer) return;
+
+            const searchQuery = (draftSearchInput ? draftSearchInput.value : '').toLowerCase().trim();
+            const filtered = allSavedDraftsList.filter(d => {
+                if (!searchQuery) return true;
+                const haystack = `${d.name} ${d.companyName || ''} ${d.savedAtFormatted || ''}`.toLowerCase();
+                return haystack.includes(searchQuery);
+            });
+
+            if (savedDraftsCountBadge) {
+                savedDraftsCountBadge.textContent = `${filtered.length} ${filtered.length === 1 ? 'file' : 'files'}`;
+            }
+
+            // Sync hidden loadDraftSelect for backwards compatibility
+            if (loadDraftSelect) {
+                if (allSavedDraftsList.length === 0) {
+                    loadDraftSelect.innerHTML = '<option value="">-- No drafts found --</option>';
+                } else {
+                    loadDraftSelect.innerHTML = allSavedDraftsList.map(d => `<option value="${escapeHtml(d.name)}">${escapeHtml(d.name)}</option>`).join('');
+                }
+            }
+
+            if (filtered.length === 0) {
+                savedDraftsCardsContainer.innerHTML = `
+                    <div class="text-center py-12 px-4 bg-white rounded-xl border border-dashed border-gray-200 text-gray-400 text-xs">
+                        <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+                        </svg>
+                        ${searchQuery ? `No drafts matching "${escapeHtml(searchQuery)}"` : 'No saved drafts found yet.<br>Save your work anytime using the left panel.'}
+                    </div>
+                `;
                 return;
             }
-            const draftName = loadDraftSelect.value;
+
+            savedDraftsCardsContainer.innerHTML = filtered.map(draft => `
+                <div class="p-3.5 bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-xs transition flex items-center justify-between gap-3 group">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+                                </svg>
+                            </div>
+                            <div class="truncate">
+                                <h5 class="font-bold text-gray-900 text-sm truncate group-hover:text-blue-600 transition" title="${escapeHtml(draft.name)}">
+                                    ${escapeHtml(draft.name)}
+                                </h5>
+                                ${draft.companyName ? `
+                                    <div class="text-xs text-gray-500 truncate flex items-center mt-0.5">
+                                        <svg class="w-3 h-3 mr-1 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                        <span class="truncate font-medium text-gray-700">${escapeHtml(draft.companyName)}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="mt-1 text-[11px] text-gray-400 font-mono ml-10">
+                            ${escapeHtml(draft.savedAtFormatted || 'Saved Draft')}
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1.5 shrink-0">
+                        <button type="button" class="btn-primary !py-1.5 !px-3 text-xs font-semibold flex items-center shadow-2xs load-draft-card-btn cursor-pointer" data-name="${escapeHtml(draft.name)}">
+                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            Load
+                        </button>
+                        <button type="button" class="btn-red !py-1.5 !px-2 text-xs delete-draft-card-btn cursor-pointer" title="Delete draft" data-name="${escapeHtml(draft.name)}">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Attach card listeners
+            savedDraftsCardsContainer.querySelectorAll('.load-draft-card-btn').forEach(btn => {
+                btn.onclick = () => loadDraftByName(btn.dataset.name);
+            });
+            savedDraftsCardsContainer.querySelectorAll('.delete-draft-card-btn').forEach(btn => {
+                btn.onclick = () => deleteDraftByName(btn.dataset.name);
+            });
+        }
+
+        async function loadDraftByName(draftName) {
+            if (!draftName) return;
+
+            let loadedData = null;
+
+            // 1. Check in memory list
+            const existing = allSavedDraftsList.find(d => d.name === draftName);
+            if (existing && existing.data) {
+                loadedData = existing.data;
+            }
+
+            // 2. Fetch from Firestore if needed
+            if (!loadedData && userId) {
+                try {
+                    const draftDoc = doc(db, `users/${userId}/financial_drafts`, draftName);
+                    const docSnap = await getDoc(draftDoc);
+                    if (docSnap.exists()) {
+                        loadedData = docSnap.data();
+                    }
+                } catch (err) {
+                    console.warn("Could not fetch draft from Firestore:", err);
+                }
+            }
+
+            // 3. Fallback to localStorage
+            if (!loadedData) {
+                try {
+                    const localDrafts = JSON.parse(localStorage.getItem(`corp_drafts_${userId || 'default'}`) || '{}');
+                    if (localDrafts[draftName]) {
+                        loadedData = localDrafts[draftName];
+                    }
+                } catch (e) {
+                    console.warn("localStorage draft read error:", e);
+                }
+            }
+
+            if (loadedData) {
+                setFullDraftData(loadedData);
+                if (draftNameInput) draftNameInput.value = draftName;
+                if (activeDraftNameText) activeDraftNameText.textContent = draftName;
+                if (activeDraftNameBadge) activeDraftNameBadge.classList.remove('hidden');
+
+                const compName = (loadedData.formData && loadedData.formData['company-name']) || loadedData.companyName;
+                if (compName && currentActiveCompanyLabel) {
+                    currentActiveCompanyLabel.textContent = compName;
+                }
+
+                showDraftMessage(`Draft "${draftName}" loaded successfully!`, false);
+
+                // Close Draft Management Modal
+                if (draftManagementModal) {
+                    draftManagementModal.style.display = 'none';
+                }
+
+                // Switch to General tab
+                const genTab = document.querySelector('.tab-btn[data-tab="general"]');
+                if (genTab) genTab.click();
+            } else {
+                showDraftMessage("Draft not found. It may have been deleted.", true);
+            }
+        }
+
+        async function deleteDraftByName(draftName) {
+            if (!draftName) return;
+            if (!confirm(`Are you sure you want to delete draft "${draftName}"? This action cannot be undone.`)) {
+                return;
+            }
+
+            // Delete from localStorage
+            try {
+                const localKey = `corp_drafts_${userId || 'default'}`;
+                const localDrafts = JSON.parse(localStorage.getItem(localKey) || '{}');
+                delete localDrafts[draftName];
+                localStorage.setItem(localKey, JSON.stringify(localDrafts));
+            } catch (e) {}
+
+            // Delete from Firestore
+            if (userId) {
+                try {
+                    const draftDoc = doc(db, `users/${userId}/financial_drafts`, draftName);
+                    await deleteDoc(draftDoc);
+                } catch (err) {
+                    console.error("Firestore delete error:", err);
+                }
+            }
+
+            allSavedDraftsList = allSavedDraftsList.filter(d => d.name !== draftName);
+            renderSavedDraftsCards();
+            showDraftMessage(`Draft "${draftName}" deleted.`, false);
+        }
+
+        async function loadSelectedDraft() {
+            const draftName = loadDraftSelect ? loadDraftSelect.value : '';
             if (!draftName) {
                 showDraftMessage("Please select a draft to load.", true);
                 return;
             }
-            
-            try {
-                // Updated doc path
-                const draftDoc = doc(db, `users/${userId}/financial_drafts`, draftName);
-                const docSnap = await getDoc(draftDoc);
-                
-                if (docSnap.exists()) {
-                    setFullDraftData(docSnap.data());
-                    draftNameInput.value = draftName; // Set the name input for re-saving
-                    showDraftMessage(`Draft "${draftName}" loaded successfully!`, false);
-                } else {
-                    showDraftMessage("Draft not found. It may have been deleted.", true);
-                }
-            } catch (error) {
-                console.error("Error loading draft:", error);
-                showDraftMessage(`Error loading draft: ${error.message}`, true);
-            }
+            loadDraftByName(draftName);
         }
         
         function confirmDelete() {
-            const draftName = loadDraftSelect.value;
+            const draftName = loadDraftSelect ? loadDraftSelect.value : '';
             if (!draftName) {
                 showDraftMessage("Please select a draft to delete.", true);
                 return;
             }
-            deleteDraftName.textContent = draftName;
-            deleteConfirmModal.style.display = 'block';
+            deleteDraftByName(draftName);
         }
 
         async function deleteSelectedDraft() {
-            if (!userId) return;
-            const draftName = loadDraftSelect.value;
+            const draftName = loadDraftSelect ? loadDraftSelect.value : '';
             if (!draftName) return;
-            
-            try {
-                // Updated doc path
-                const draftDoc = doc(db, `users/${userId}/financial_drafts`, draftName);
-                await deleteDoc(draftDoc);
-                
-                showDraftMessage(`Draft "${draftName}" deleted.`, false);
-                deleteConfirmModal.style.display = 'none';
-                // loadDraftsList() will update automatically via onSnapshot
-            } catch (error) {
-                console.error("Error deleting draft:", error);
-                showDraftMessage(`Error deleting draft: ${error.message}`, true);
-                deleteConfirmModal.style.display = 'none';
-            }
+            deleteDraftByName(draftName);
+            if (deleteConfirmModal) deleteConfirmModal.style.display = 'none';
         }
         
         // --- Event Listeners for Drafts ---
-        saveDraftBtn.addEventListener('click', saveDraft);
-        loadDraftBtn.addEventListener('click', loadSelectedDraft);
-        deleteDraftBtn.addEventListener('click', confirmDelete);
-        confirmDeleteBtn.onclick = deleteSelectedDraft;
+        if (saveDraftBtn) saveDraftBtn.addEventListener('click', () => saveDraft());
+        if (loadDraftBtn) loadDraftBtn.addEventListener('click', loadSelectedDraft);
+        if (deleteDraftBtn) deleteDraftBtn.addEventListener('click', confirmDelete);
+        if (confirmDeleteBtn) confirmDeleteBtn.onclick = deleteSelectedDraft;
+        if (quickSaveDraftBtn) quickSaveDraftBtn.addEventListener('click', () => saveDraft());
 
         // --- Helper Functions ---        // --- Tab Navigation ---
         tabs.forEach(tab => {
@@ -3215,13 +4645,28 @@ mainCommentsData = [];
 renderMainCommentsList(); // Clear comment list on new form
     
                 letterheadBase64 = null;
-                
+                selectedLetterheadWidth = 70;
+                useLetterhead = true;
+                letterheadPageOption = 'all';
+                letterheadCustomPages = '1';
+
+                companyStampBase64 = null;
+                selectedStampWidth = 30;
+                useStamp = true;
+                stampPageOption = 'all';
+                stampCustomPages = '1';
+
+                includeCompanyNameAr = false;
+                const incArEl = document.getElementById('include-company-name-ar');
+                if (incArEl) incArEl.checked = false;
+
                 // Re-render linked fields
                 document.getElementById('cos-closing-inv').textContent = inventoryData.age_1_150;
                 document.getElementById('pl-cost').value = -calculateCostOfSalesTotal();
                 
-                // Init Letterhead
+                // Init Letterhead & Stamp UI
                 updateLetterheadPreview();
+                updateStampPreview();
                 
                 // Run all cals and update UI
                 runAllCalculations();
@@ -3243,19 +4688,118 @@ renderMainCommentsList(); // Clear comment list on new form
 
             // Open Companies Modal
             openCompaniesModalBtn.addEventListener('click', () => {
+                resetCompanyForm();
                 companiesModal.style.display = 'block';
                 settingsDropdown.classList.add('hidden'); // Hide dropdown
             });
 
             // Close/Cancel Companies Modal
             closeCompaniesModalBtn.addEventListener('click', () => {
+                resetCompanyForm();
                 companiesModal.style.display = 'none';
             });
             cancelCompaniesModalBtn.addEventListener('click', () => {
+                resetCompanyForm();
                 companiesModal.style.display = 'none';
             });
+
+            // Manage Companies: Letterhead Image Upload Listener
+            if (companyFormLhInput) {
+                companyFormLhInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            const maxWidth = 800;
+                            let width = img.width;
+                            let height = img.height;
+                            if (width > maxWidth) {
+                                height *= maxWidth / width;
+                                width = maxWidth;
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            ctx.drawImage(img, 0, 0, width, height);
+                            companyFormLetterheadBase64 = canvas.toDataURL('image/png');
+                            if (companyFormLhPreview) {
+                                companyFormLhPreview.src = companyFormLetterheadBase64;
+                                companyFormLhPreview.classList.remove('hidden');
+                            }
+                            if (companyFormLhPreviewBox) companyFormLhPreviewBox.classList.remove('hidden');
+                            if (companyFormLhRemove) companyFormLhRemove.classList.remove('hidden');
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (companyFormLhRemove) {
+                companyFormLhRemove.addEventListener('click', () => {
+                    companyFormLetterheadBase64 = null;
+                    if (companyFormLhInput) companyFormLhInput.value = '';
+                    if (companyFormLhPreview) {
+                        companyFormLhPreview.removeAttribute('src');
+                        companyFormLhPreview.classList.add('hidden');
+                    }
+                    if (companyFormLhPreviewBox) companyFormLhPreviewBox.classList.add('hidden');
+                    companyFormLhRemove.classList.add('hidden');
+                });
+            }
+
+            // Manage Companies: Stamp Image Upload Listener
+            if (companyFormStampInput) {
+                companyFormStampInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            const maxWidth = 400;
+                            let width = img.width;
+                            let height = img.height;
+                            if (width > maxWidth) {
+                                height *= maxWidth / width;
+                                width = maxWidth;
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            ctx.drawImage(img, 0, 0, width, height);
+                            companyFormStampBase64 = canvas.toDataURL('image/png');
+                            if (companyFormStampPreview) {
+                                companyFormStampPreview.src = companyFormStampBase64;
+                                companyFormStampPreview.classList.remove('hidden');
+                            }
+                            if (companyFormStampPreviewBox) companyFormStampPreviewBox.classList.remove('hidden');
+                            if (companyFormStampRemove) companyFormStampRemove.classList.remove('hidden');
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (companyFormStampRemove) {
+                companyFormStampRemove.addEventListener('click', () => {
+                    companyFormStampBase64 = null;
+                    if (companyFormStampInput) companyFormStampInput.value = '';
+                    if (companyFormStampPreview) {
+                        companyFormStampPreview.removeAttribute('src');
+                        companyFormStampPreview.classList.add('hidden');
+                    }
+                    if (companyFormStampPreviewBox) companyFormStampPreviewBox.classList.add('hidden');
+                    companyFormStampRemove.classList.add('hidden');
+                });
+            }
             
-            // Save Company Details (Placeholder)
+            // Save or Update Company Details
             saveCompaniesDetailsBtn.addEventListener('click', () => {
                 const name = companyFormName.value.trim();
                 if (!name) {
@@ -3263,30 +4807,94 @@ renderMainCommentsList(); // Clear comment list on new form
                     return;
                 }
 
-                const newCompany = {
-                    id: Date.now(), // Simple unique ID
-                    name: name,
-                    nameAr: companyFormNameAr.value.trim(),
-                    signatory: companyFormSignatory.value.trim(),
-                    email: companyFormEmail.value.trim(),
-                    city: companyFormCity.value.trim(),
-                    country: companyFormCountry.value.trim(),
-                    address: companyFormAddress.value.trim()
-                };
+                if (editingCompanyId) {
+                    const index = companiesData.findIndex(c => c.id.toString() === editingCompanyId.toString());
+                    if (index !== -1) {
+                        const prevComp = { ...companiesData[index] };
+                        const updatedComp = {
+                            ...prevComp,
+                            name: name,
+                            nameAr: companyFormNameAr.value.trim(),
+                            signatory: companyFormSignatory.value.trim(),
+                            email: companyFormEmail.value.trim(),
+                            city: companyFormCity.value.trim(),
+                            country: companyFormCountry.value.trim(),
+                            address: companyFormAddress.value.trim(),
+                            letterheadBase64: companyFormLetterheadBase64 || null,
+                            stampBase64: companyFormStampBase64 || null
+                        };
+                        companiesData[index] = updatedComp;
+                        saveCompanies();
+                        renderCompanyList();
+                        updateCompanySelector();
 
-                companiesData.push(newCompany);
-                saveCompanies(); // Save to Firebase
-                renderCompanyList(); // Update the list in the modal
-                updateCompanySelector(); // Update the main dropdown
+                        // If the edited company is currently active in the report, auto-update active report assets!
+                        if (activeCompanyId && activeCompanyId.toString() === editingCompanyId.toString()) {
+                            letterheadBase64 = updatedComp.letterheadBase64;
+                            companyStampBase64 = updatedComp.stampBase64;
+                            updateLetterheadPreview();
+                            updateStampPreview();
+                            if (currentActiveCompanyLabel) currentActiveCompanyLabel.textContent = updatedComp.name;
+                        }
+
+                        // Detect changes summary
+                        const changes = [];
+                        if (prevComp.name !== updatedComp.name) changes.push(`Name: ${prevComp.name} -> ${updatedComp.name}`);
+                        if (prevComp.signatory !== updatedComp.signatory) changes.push(`Signatory: ${updatedComp.signatory}`);
+                        if (prevComp.city !== updatedComp.city || prevComp.country !== updatedComp.country) changes.push(`Location updated`);
+                        if (prevComp.email !== updatedComp.email) changes.push(`Email: ${updatedComp.email}`);
+                        if (prevComp.letterheadBase64 !== updatedComp.letterheadBase64) changes.push(`Letterhead updated`);
+                        if (prevComp.stampBase64 !== updatedComp.stampBase64) changes.push(`Stamp updated`);
+                        const detailsStr = changes.length > 0 ? changes.join(', ') : 'Updated corporate details';
+
+                        addCorporateHistoryEntry({
+                            action: 'Edited',
+                            name: updatedComp.name,
+                            nameAr: updatedComp.nameAr,
+                            signatory: updatedComp.signatory,
+                            city: updatedComp.city,
+                            country: updatedComp.country,
+                            address: updatedComp.address,
+                            email: updatedComp.email,
+                            details: detailsStr
+                        });
+                    }
+                    editingCompanyId = null;
+                    saveCompaniesDetailsBtn.textContent = 'Add Company';
+                } else {
+                    const newCompany = {
+                        id: Date.now().toString(),
+                        name: name,
+                        nameAr: companyFormNameAr.value.trim(),
+                        signatory: companyFormSignatory.value.trim(),
+                        email: companyFormEmail.value.trim(),
+                        city: companyFormCity.value.trim(),
+                        country: companyFormCountry.value.trim(),
+                        address: companyFormAddress.value.trim(),
+                        letterheadBase64: companyFormLetterheadBase64 || null,
+                        stampBase64: companyFormStampBase64 || null
+                    };
+
+                    companiesData.push(newCompany);
+                    saveCompanies(); // Save to Firebase & localStorage
+                    renderCompanyList(); // Update the list in the modal
+                    updateCompanySelector(); // Update the main dropdown
+
+                    addCorporateHistoryEntry({
+                        action: 'Added',
+                        name: newCompany.name,
+                        nameAr: newCompany.nameAr,
+                        signatory: newCompany.signatory,
+                        city: newCompany.city,
+                        country: newCompany.country,
+                        address: newCompany.address,
+                        email: newCompany.email,
+                        details: `Added new corporate profile: ${newCompany.name}`
+                    });
+                }
 
                 // Clear form for next entry
-                companyFormName.value = '';
-                companyFormNameAr.value = '';
-                companyFormSignatory.value = '';
-                companyFormEmail.value = '';
-                companyFormCity.value = '';
-                companyFormCountry.value = '';
-                companyFormAddress.value = '';
+                resetCompanyForm();
             });
             // --- END OF NEW BLOCK ---
             
@@ -3349,32 +4957,14 @@ renderMainCommentsList(); // Clear comment list on new form
                 }
             });
 
-            // --- ADD THIS NEW LISTENER ---
-            companySelector.addEventListener('change', (e) => {
-                const companyId = e.target.value;
-                if (!companyId) return;
-
-                const company = companiesData.find(c => c.id.toString() === companyId);
-                if (company) {
-                    // 1. Reset the entire form to a clean slate
-                    startNewBtn.click();
-
-                    // 2. Populate General Info from the selected company
-                    setVal('company-name', company.name);
-                    setVal('company-name-ar', company.nameAr);
-                    setVal('signatory', company.signatory);
-                    setVal('email', company.email);
-
-                    // Combine address fields
-                    const fullAddress = [company.address, company.city, company.country]
-                                        .filter(Boolean) // Remove empty parts
-                                        .join(', ');
-                    setVal('address', fullAddress);
-
-                    // Switch to the General tab
-                    document.querySelector('.tab-btn[data-tab="general"]').click();
-                }
-            });
+            // --- Company Selector Change Listener ---
+            if (companySelector) {
+                companySelector.addEventListener('change', (e) => {
+                    const companyId = e.target.value;
+                    if (!companyId) return;
+                    selectAndApplyCompany(companyId);
+                });
+            }
 
 	        // --- START: Add New OI Calculator Listeners ---
 	        openOiCalcModalLink.addEventListener('click', (e) => {
@@ -3495,13 +5085,151 @@ renderMainCommentsList(); // Clear comment list on new form
             document.getElementById('cos-closing-inv').textContent = inventoryData.age_1_150;
             document.getElementById('pl-cost').value = -calculateCostOfSalesTotal();
             
-            // Init Letterhead
+            // Init Letterhead & Stamp UI
             updateLetterheadPreview();
+            updateStampPreview();
             
+            // Init Navigation Drawer & History
+            initializeDrawerAndHistoryListeners();
+
             runAllCalculations();
             updateReviewTab();
         }
         // --- END: New function ---
+
+        function initializeDrawerAndHistoryListeners() {
+            // Hamburger menu button opens drawer
+            if (hamburgerMenuBtn) {
+                hamburgerMenuBtn.onclick = openSideDrawer;
+            }
+            // Close drawer button
+            if (closeSideDrawerBtn) {
+                closeSideDrawerBtn.onclick = closeSideDrawer;
+            }
+            // Backdrop click closes drawer
+            if (sideDrawerBackdrop) {
+                sideDrawerBackdrop.onclick = closeSideDrawer;
+            }
+            // History button in drawer
+            if (drawerHistoryBtn) {
+                drawerHistoryBtn.onclick = openCorporateHistoryModal;
+            }
+            // History button in top header
+            if (openHistoryTopBtn) {
+                openHistoryTopBtn.onclick = openCorporateHistoryModal;
+            }
+            // History item in settings dropdown
+            if (openHistoryMenuBtn) {
+                openHistoryMenuBtn.onclick = () => {
+                    if (settingsDropdown) settingsDropdown.classList.add('hidden');
+                    openCorporateHistoryModal();
+                };
+            }
+            // Close history modal buttons
+            if (closeCorporateHistoryModal) {
+                closeCorporateHistoryModal.onclick = closeCorporateHistoryModalFunc;
+            }
+            if (closeHistoryModalBtn) {
+                closeHistoryModalBtn.onclick = closeCorporateHistoryModalFunc;
+            }
+            // Drawer Manage Companies button
+            if (drawerCompaniesBtn) {
+                drawerCompaniesBtn.onclick = () => {
+                    closeSideDrawer();
+                    if (companiesModal) {
+                        resetCompanyForm();
+                        companiesModal.style.display = 'block';
+                    }
+                };
+            }
+            // Drawer Start New Report button
+            if (drawerStartNewBtn) {
+                drawerStartNewBtn.onclick = () => {
+                    closeSideDrawer();
+                    if (startNewBtn) startNewBtn.click();
+                };
+            }
+            // Drawer Sign Out button
+            if (drawerSignOutBtn) {
+                drawerSignOutBtn.onclick = () => {
+                    closeSideDrawer();
+                    handleSignOut();
+                };
+            }
+            // History search & filter
+            if (historySearchInput) {
+                historySearchInput.oninput = renderCorporateHistoryTable;
+            }
+            if (historyActionFilter) {
+                historyActionFilter.onchange = renderCorporateHistoryTable;
+            }
+            if (exportHistoryCsvBtn) {
+                exportHistoryCsvBtn.onclick = exportCorporateHistoryCsv;
+            }
+            if (clearHistoryBtn) {
+                clearHistoryBtn.onclick = clearCorporateHistory;
+            }
+            // Draft Management Modal Openers
+            function openDraftManagementModal() {
+                closeSideDrawer();
+                if (settingsDropdown) settingsDropdown.classList.add('hidden');
+                if (draftManagementModal) {
+                    draftManagementModal.style.display = 'block';
+                    loadDraftsList();
+                    updateCompanySelector();
+                }
+            }
+
+            function closeDraftManagementModal() {
+                if (draftManagementModal) {
+                    draftManagementModal.style.display = 'none';
+                }
+            }
+
+            // Drafts button in drawer
+            if (drawerDraftsBtn) {
+                drawerDraftsBtn.onclick = openDraftManagementModal;
+            }
+            // Drafts button in top header
+            if (openDraftsTopBtn) {
+                openDraftsTopBtn.onclick = openDraftManagementModal;
+            }
+            // Drafts button in top status bar
+            if (openDraftModalTopBtn) {
+                openDraftModalTopBtn.onclick = openDraftManagementModal;
+            }
+            // Drafts item in settings dropdown
+            if (openDraftsMenuBtn) {
+                openDraftsMenuBtn.onclick = () => {
+                    if (settingsDropdown) settingsDropdown.classList.add('hidden');
+                    openDraftManagementModal();
+                };
+            }
+            // Close Draft Management Modal buttons
+            if (closeDraftManagementModalBtn) {
+                closeDraftManagementModalBtn.onclick = closeDraftManagementModal;
+            }
+            if (closeDraftModalBottomBtn) {
+                closeDraftModalBottomBtn.onclick = closeDraftManagementModal;
+            }
+            // Drafts real-time search
+            if (draftSearchInput) {
+                draftSearchInput.oninput = renderSavedDraftsCards;
+            }
+
+            // Keyboard Escape closes drawer, modals
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeSideDrawer();
+                    closeCorporateHistoryModalFunc();
+                    closeDraftManagementModal();
+                    if (companiesModal) {
+                        resetCompanyForm();
+                        companiesModal.style.display = 'none';
+                    }
+                }
+            });
+        }
 
 
         // --- Initial Load ---
@@ -3512,6 +5240,9 @@ renderMainCommentsList(); // Clear comment list on new form
             // --- Auth Event Listeners (for login screen) ---
             signInBtn.addEventListener('click', handleSignIn);
             registerBtn.addEventListener('click', handleRegister);
+
+            // Wire drawer and history listeners on initial load
+            initializeDrawerAndHistoryListeners();
         };
         
         // --- PDF Generation (THE BIG ONE) ---
@@ -3554,28 +5285,38 @@ renderMainCommentsList(); // Clear comment list on new form
                 doc.setTextColor(100);
                 
                 // 1. Draw Letterhead or Company Name
-                if (letterheadBase64) {
-    const imgProps = doc.getImageProperties(letterheadBase64);
-    
-    // USE THE SLIDER VALUE HERE
-    const imgWidth = selectedLetterheadWidth; 
-    
-    // Calculate height based on the new width to keep aspect ratio
-    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-    
-    // Re-center based on new width
-    const xPos = (pageWidth - imgWidth) / 2; 
-    
-    doc.addImage(letterheadBase64, 'PNG', xPos, 10, imgWidth, imgHeight);
+                const isLhActive = useLetterhead && letterheadBase64 && 
+                    isPageIncluded(currentPage, letterheadPageOption, letterheadCustomPages, 15);
+                
+                let titleY = 38;
+                let subtitleY = 44;
+
+                if (isLhActive) {
+                    const imgProps = doc.getImageProperties(letterheadBase64);
+                    const imgWidth = selectedLetterheadWidth; 
+                    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+                    const xPos = (pageWidth - imgWidth) / 2; 
+                    doc.addImage(letterheadBase64, 'PNG', xPos, 10, imgWidth, imgHeight);
+                    titleY = Math.max(38, 10 + imgHeight + 6);
+                    subtitleY = titleY + 6;
                 } else {
                     doc.setFontSize(14);
                     doc.setFont('helvetica', 'bold');
-                    doc.text(companyName, pageWidth / 2, 20, { align: 'center' });
-                    doc.setFontSize(12);
-                    doc.text(companyNameAr, pageWidth / 2, 28, { align: 'center' });
+                    
+                    const isArActive = includeCompanyNameAr && companyNameAr && companyNameAr.trim();
+                    if (isArActive) {
+                        doc.text(companyName, pageWidth / 2, 18, { align: 'center' });
+                        renderArabicToPdf(doc, companyNameAr, pageWidth / 2, 26, 12, '#1f2937');
+                        titleY = 36;
+                        subtitleY = 42;
+                    } else {
+                        doc.text(companyName, pageWidth / 2, 22, { align: 'center' });
+                        titleY = 32;
+                        subtitleY = 38;
+                    }
                 }
 
-                // 2. Define the Date Subtitle (THIS WAS MISSING)
+                // 2. Define the Date Subtitle
                 let dateSubtitle = "";
                 if (title.includes("Financial Position")) {
                     dateSubtitle = `As at ${formattedEndDate}`;
@@ -3583,14 +5324,14 @@ renderMainCommentsList(); // Clear comment list on new form
                     dateSubtitle = `For the year ended ${formattedEndDate}`; 
                 }
 
-                // 3. Print Title & Date (MOVED UP to avoid merging)
+                // 3. Print Title & Date
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
-                doc.text(title, pageWidth / 2, 38, { align: 'center' }); // Y=38 (Was 45)
+                doc.text(title, pageWidth / 2, titleY, { align: 'center' });
                 
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
-                doc.text(dateSubtitle, pageWidth / 2, 44, { align: 'center' }); // Y=44 (Was 51)
+                doc.text(dateSubtitle, pageWidth / 2, subtitleY, { align: 'center' });
 
                 // 4. Footer
                 doc.setLineWidth(0.5);
@@ -3605,7 +5346,6 @@ renderMainCommentsList(); // Clear comment list on new form
                 doc.setTextColor(0);
             };
             
-            // --- Helper: Add Signature ---
             // --- Helper: Add Signature & Stamp ---
             const addSignature = (yPos) => {
                 doc.setFontSize(10);
@@ -3613,25 +5353,15 @@ renderMainCommentsList(); // Clear comment list on new form
                 doc.text(companyName, pageMargin, yPos);
                 doc.text("Authorized Signatory", pageMargin, yPos + 10);
                 
-                // --- NEW: Draw Stamp if Available ---
-                if (companyStampBase64) {
+                // Draw Stamp if enabled and page selected
+                const isStampActive = useStamp && companyStampBase64 && 
+                    isPageIncluded(currentPage, stampPageOption, stampCustomPages, 15);
+                if (isStampActive) {
                     const imgProps = doc.getImageProperties(companyStampBase64);
-                    // Use Slider Value
                     const imgWidth = selectedStampWidth; 
                     const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-                    
-                    // Position: Right side, aligned with signature area
-                    // (pageWidth - pageMargin - imgWidth - 10) gives a nice right alignment
                     const xPos = pageWidth - pageMargin - imgWidth - 10; 
-                    
-                    // Draw Image
                     doc.addImage(companyStampBase64, 'PNG', xPos, yPos - 15, imgWidth, imgHeight);
-                } else {
-                    // Fallback: Draw the old ellipse circle if no image uploaded
-                    doc.setDrawColor(100);
-                    doc.setLineWidth(0.5);
-                    doc.ellipse(pageWidth - pageMargin - 20, yPos - 10, 20, 20);
-                    doc.text("Stamp Here", pageWidth - pageMargin - 20, yPos - 10, { align: 'center' });
                 }
 
                 doc.text(signatory, pageMargin, yPos + 25);

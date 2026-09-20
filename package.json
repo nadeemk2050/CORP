@@ -4,6 +4,7 @@
   "private": true,
   "description": "Financial Statement Generator",
   "scripts": {
+    "build": "echo \"Build complete. Static assets are ready in public/\"",
     "dev": "serve public -l 3000",
     "start": "serve public -l 3000"
   },
