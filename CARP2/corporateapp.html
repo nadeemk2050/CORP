@@ -1,0 +1,3633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Statement Generator</title>
+    <!-- 1. Load Tailwind CSS (with Typography plugin for the preview) -->
+    <script src="https://cdn.tailwindcss.com/3.4.1?plugins=typography"></script>
+    <!-- 2. Load jsPDF and the autoTable plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- 3. Load Firebase libraries -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, query, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+
+        // Make Firebase functions globally available
+        window.firebase = {
+            initializeApp,
+            getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged,
+            getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, query, setLogLevel,
+            getAnalytics,
+            // Add new auth functions
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signOut
+        };
+    </script>
+    
+    <style>
+        /* Simple style for active and inactive tabs */
+        .tab-btn.active {
+            @apply border-blue-500 text-blue-600;
+        }
+        .tab-btn {
+            @apply border-transparent;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* Style for number inputs */
+        input[type="number"] {
+            @apply text-right;
+        }
+        /* Style for the preview area tables */
+        #review-preview-area table {
+            @apply w-full my-4;
+        }
+        #review-preview-area th {
+            @apply text-left bg-gray-50 p-2;
+        }
+        #review-preview-area td {
+            @apply p-2 border-b border-gray-100;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; /* 5% from the top and centered */
+            padding: 24px;
+            border: 1px solid #888;
+            width: 90%; /* Could be more or less, depending on screen size */
+            max-width: 960px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        /* REMOVING .modal-content-sm as it was causing transparency issues.
+        We will now use .modal-content with an inline max-width style for smaller modals.
+        
+        .modal-content-sm {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 24px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 640px; 
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        */
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 16px;
+        }
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .close-btn:hover,
+        .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        /* Modal Table Styles */
+        .modal-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        .modal-table th, .modal-table td {
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .modal-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+        .modal-table input {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+        }
+        .modal-table input[type="number"] {
+            text-align: right;
+        }
+        .modal-table .calc-field {
+            text-align: right;
+            font-weight: 500;
+            padding-right: 0.75rem;
+            min-width: 80px;
+        }
+        .modal-table .action-cell {
+            text-align: center;
+        }
+        .remove-row-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+        
+        /* Modal Form (Non-Table) */
+        .modal-form .form-row {
+            @apply grid grid-cols-1 md:grid-cols-3 gap-4 items-center mb-4;
+        }
+        .modal-form .form-label {
+            @apply block text-sm font-medium text-gray-700 md:text-right;
+        }
+        .modal-form .form-input {
+            @apply md:col-span-2;
+        }
+         .modal-form .form-input input, .modal-form .form-input span {
+            @apply mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500;
+        }
+        .modal-form .form-input span {
+             @apply px-3 py-2 bg-gray-100 text-gray-600;
+        }
+        .modal-form .form-total-row {
+            @apply border-t pt-4 mt-4;
+        }
+        .modal-form .form-total-row .form-label {
+            @apply font-bold text-lg;
+        }
+        .modal-form .form-total-row .form-input span {
+            @apply font-bold text-lg text-black;
+        }
+        
+        .btn {
+            @apply inline-flex justify-center py-2 px-4 border rounded-lg shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2;
+        }
+        .btn-primary {
+            @apply btn border-transparent text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500;
+        }
+        .btn-secondary {
+             @apply btn border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-indigo-500;
+        }
+        .btn-green {
+            @apply btn border-transparent text-white bg-green-600 hover:bg-green-700 focus:ring-green-500;
+        }
+        .btn-red {
+            @apply btn border-transparent text-white bg-red-600 hover:bg-red-700 focus:ring-red-500;
+        }
+        .btn-indigo {
+             @apply w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
+        }
+        .form-field-readonly {
+            @apply bg-gray-100;
+        }
+        .form-field-note {
+            @apply text-xs text-gray-500 mt-1;
+        }
+        .background-detail-card {
+            @apply rounded-lg border border-gray-200 p-4;
+        }
+        
+        /* New Letterhead Styles */
+        #letterhead-preview-container {
+            display: none; /* Hidden by default */
+            margin-top: 1rem;
+            padding: 1rem;
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+        }
+        #letterhead-preview {
+            max-width: 100%;
+            max-height: 150px;
+            margin: 0 auto;
+            display: block;
+            border: 1px solid #e5e7eb;
+        }
+        .btn-bar {
+            @apply flex items-center space-x-2 mt-4;
+        }
+        
+        /* --- ADD THIS NEW CODE --- */
+        .review-link {
+            cursor: pointer;
+            color: #2563eb; /* This is tailwind's blue-600 */
+            font-weight: 500;
+        }
+        .review-link:hover {
+            color: #1d4ed8; /* This is tailwind's blue-700 */
+            text-decoration: underline;
+        }
+        /* --- END OF NEW CODE --- */
+
+    </style>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+
+    <!-- New Authentication Container -->
+    <div id="auth-container" class="container mx-auto max-w-md p-8 bg-white shadow-xl rounded-2xl mt-12" style="display: block;">
+        <h2 class="text-3xl font-bold text-gray-800 text-center mb-6">Sign In or Register</h2>
+        <div class="space-y-4">
+            <div>
+                <label for="auth-email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="auth-email" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="you@example.com">
+            </div>
+            <div>
+                <label for="auth-password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="auth-password" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="••••••••">
+            </div>
+            <div id="auth-message-box" class="mt-4 p-4 rounded-lg bg-red-100 text-red-700" style="display: none;"></div>
+            <div class="flex space-x-4 pt-4">
+                <button type="button" id="sign-in-btn" class="btn-primary w-1/2">Sign In</button>
+                <button type="button" id="register-btn" class="btn-secondary w-1/2">Register</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container (now hidden by default) -->
+    <div id="main-app-container" class="container mx-auto max-w-4xl p-4 sm:p-8" style="display: none;">
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">Financial Statement Generator</h1>
+            <p class="text-lg text-gray-600">Based on BRANDSPOINT LLC Report</p>
+        </header>
+
+        <!-- New Draft Management Card -->
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-8">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 class="text-2xl font-semibold text-gray-800">Draft Management</h2>
+                
+                <div class="relative">
+                    <button type="button" id="settings-btn" class="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </button>
+                    
+                    <div id="settings-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-20 py-1 border border-gray-200">
+                        <button type="button" id="open-companies-modal-btn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Manage Companies
+                        </button>
+                        </div>
+                </div>
+                </div>
+            
+            <!-- New User Session Info -->
+            <div id="user-session" class="hidden mb-4 p-4 bg-gray-50 rounded-lg shadow-inner flex justify-between items-center">
+                <span id="user-email" class="text-sm font-medium text-gray-700"></span>
+                <button type="button" id="sign-out-btn" class="btn-secondary btn-sm !py-1 !px-3">Sign Out</button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="draft-name-input" class="block text-sm font-medium text-gray-700">Draft Name</label>
+                        <input type="text" id="draft-name-input" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="e.g., Q4 Report - In Progress">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">&nbsp;</label>
+                        <button type="button" id="save-draft-btn" class="btn-green w-full">Save as Draft</button>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="load-draft-select" class="block text-sm font-medium text-gray-700">Load Existing Draft</label>
+                        <select id="load-draft-select" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">-- No drafts found --</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end space-x-2">
+                        <button type="button" id="load-draft-btn" class="btn-primary w-1/2">Load</button>
+                        <button type="button" id="delete-draft-btn" class="btn-red w-1/2">Delete</button>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+
+                <div>
+                    <label for="company-selector" class="block text-sm font-medium text-gray-700">Select Company to Start New Report</label>
+                    <select id="company-selector" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">-- No companies found --</option>
+                    </select>
+                </div>
+                <hr class="my-4">
+                
+                <button type="button" id="start-new-btn" class="btn-secondary w-full">Start New Form</button>
+                <div id="draft-message-box" class="mt-4 p-4 rounded-lg bg-green-100 text-green-700" style="display: none;"></div>
+            </div>
+        </div>
+
+
+        <!-- Form Container -->
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl min-h-[500px]">
+            <!-- Tab Buttons -->
+            <div class="mb-6 border-b border-gray-200">
+                <nav class="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
+                    <button class="tab-btn active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="general">General</button>
+                    <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="position">Financial Position</button>
+                    <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="profitloss">Profit & Loss</button>
+                    <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="cashflow">Cash Flow</button>
+                    <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="background">Background Details</button>
+                    <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="review">Total Review Form</button>
+                    <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="comments">Comments</button>
+                </nav>
+            </div>
+
+            <!-- Form -->
+            <form id="financial-form" onsubmit="return false;">
+                <!-- Tab 1: General Info -->
+                <div id="tab-general" class="tab-content active space-y-6">
+                    <h3 class="text-xl font-semibold text-gray-700 border-b pb-2">General Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="company-name" class="block text-sm font-medium text-gray-700">Company Name</label>
+                            <input type="text" id="company-name" value="BRANDSPOINT LLC" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="company-name-ar" class="block text-sm font-medium text-gray-700">Company Name (Arabic)</label>
+                            <input type="text" id="company-name-ar" value="براندز بوينت ذ م م" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-right" dir="rtl">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="report-date" class="block text-sm font-medium text-gray-700">Report Date (e.g., 31st December, 2024)</label>
+                            <input type="text" id="report-date" value="31st December, 2024" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="signatory" class="block text-sm font-medium text-gray-700">Authorized Signatory</label>
+                            <input type="text" id="signatory" value="Leen" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+                            <input type="text" id="address" value="Sharjah Media City, Sharjah, United Arab Emirates" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                            <input type="email" id="email" value="alwaseemsharjah001@gmail.com" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <!-- New Letterhead Section -->
+                    <div class="background-detail-card pt-4">
+                         <h3 class="text-lg font-semibold text-gray-700">Letterhead Management</h3>
+                         <p class="form-field-note mt-1">Upload a letterhead image (e.g., your company logo) to appear at the top of each PDF page. This will replace the plain text company name.</p>
+                         
+                         <div id="letterhead-preview-container">
+                             <p class="text-sm font-medium text-gray-700 mb-2">Current Letterhead:</p>
+                             <img id="letterhead-preview" src="" alt="Letterhead Preview">
+                         </div>
+                         
+                         <div class="btn-bar">
+                             <input type="file" id="letterhead-upload" class="hidden" accept="image/png, image/jpeg">
+                             <label for="letterhead-upload" class="btn-primary cursor-pointer">Upload Image</label>
+                             <button type="button" id="remove-letterhead-btn" class="btn-red">Remove Image</button>
+                         </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <button type="button" class="save-btn btn-indigo" data-next-tab="position">
+                            Save & Continue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Statement of Financial Position -->
+                <div id="tab-position" class="tab-content space-y-6">
+                    <h3 class="text-xl font-semibold text-gray-700 border-b pb-2">Statement of Financial Position (AED)</h3>
+                    <!-- Assets -->
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-medium text-gray-600">Assets</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="pos-ppe" class="block text-sm font-medium text-gray-700">Property, plant and equipment</label>
+                                <input type="number" id="pos-ppe" value="8454" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                                <p class="form-field-note">Calculated from Background Details (Note 6).</p>
+                            </div>
+                            <div>
+                                <label for="pos-inventory" class="block text-sm font-medium text-gray-700">Inventory</label>
+                                <input type="number" id="pos-inventory" value="67148" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                                <p class="form-field-note">Calculated from Background Details (Note 7).</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="pos-receivables" class="block text-sm font-medium text-gray-700">Trade receivables</label>
+                                <input type="number" id="pos-receivables" value="627000" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                                <p class="form-field-note">Calculated from Background Details (Note 8).</p>
+                            </div>
+                            <div>
+                                <label for="pos-cash" class="block text-sm font-medium text-gray-700">Cash and balance with bank</label>
+                                <input type="number" id="pos-cash" value="238679" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <p class="form-field-note">Note 9: Enter total cash and bank balances here.</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="pos-deposits" class="block text-sm font-medium text-gray-700">Deposits and prepaid expenses</label>
+                            <input type="number" id="pos-deposits" value="14492" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                            <p class="form-field-note">Calculated from Background Details (Note 10).</p>
+                        </div>
+                    </div>
+                    <!-- Equity & Liabilities -->
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-medium text-gray-600">Equity & Liabilities</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="pos-capital" class="block text-sm font-medium text-gray-700">Share capital</label>
+                                <input type="number" id="pos-capital" value="100000" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                                <p class="form-field-note">Calculated from Background Details (Note 2).</p>
+                            </div>
+                            <div>
+                                <label for="pos-retained" class="block text-sm font-medium text-gray-700">Retained earnings</label>
+                                <input type="number" id="pos-retained" value="399815" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                                <p class="form-field-note">Calculated from Background Details (Note 11).</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="pos-shareholder" class="block text-sm font-medium text-gray-700">Shareholder's current account</label>
+                                <input type="number" id="pos-shareholder" value="-132042" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                                <p class="form-field-note">Calculated from Background Details (Note 12).</p>
+                            </div>
+                            <div>
+                                <label for="pos-payables" class="block text-sm font-medium text-gray-700">Trade payables</label>
+                                <input type="number" id="pos-payables" value="588000" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                                <p class="form-field-note">Calculated from Background Details (Note 13).</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="pos-accruals" class="block text-sm font-medium text-gray-700">Accruals and other payables</label>
+                            <input type="number" id="pos-accruals" value="0" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="0">
+                            <p class="form-field-note">Note 14: Enter total accruals here.</p>
+                        </div>
+                    </div>
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <button type="button" class="save-btn btn-indigo" data-next-tab="profitloss">
+                            Save & Continue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Statement of Profit or Loss -->
+                <div id="tab-profitloss" class="tab-content space-y-6">
+                    <h3 class="text-xl font-semibold text-gray-700 border-b pb-2">Statement of Profit or Loss (AED)</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="pl-sales" class="block text-sm font-medium text-gray-700">Sales</label>
+                            <input type="number" id="pl-sales" value="2528668" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <p class="form-field-note">Note 15: Enter total sales here.</p>
+                        </div>
+                        <div>
+                            <label for="pl-cost" class="block text-sm font-medium text-gray-700">Cost of sales (Enter as negative)</label>
+                            <input type="number" id="pl-cost" value="-1366842" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                            <p class="form-field-note">Calculated from Background Details (Note 16).</p>
+                        </div>
+                        <div>
+                            <label for="pl-admin" class="block text-sm font-medium text-gray-700">Administration and selling expenses (Enter as negative)</label>
+                            <input type="number" id="pl-admin" value="-820808" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                            <p class="form-field-note">Calculated from Background Details (Note 17).</p>
+                        </div>
+                        <div>
+                            <label for="pl-remuneration" class="block text-sm font-medium text-gray-700">Managerial remuneration (Enter as negative)</label>
+                            <input type="number" id="pl-remuneration" value="0" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="0">
+                            <p class="form-field-note">Note 18: Enter total remuneration here.</p>
+                        </div>
+                        <div>
+                            <label for="pl-depreciation" class="block text-sm font-medium text-gray-700">Depreciation for the Year (Enter as negative)</label>
+                            <input type="number" id="pl-depreciation" value="-3059" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                            <p class="form-field-note">Calculated from Background Details (Note 6).</p>
+                        </div>
+                    </div>
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <button type="button" class="save-btn btn-indigo" data-next-tab="cashflow">
+                            Save & Continue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Statement of Cash Flows -->
+                <div id="tab-cashflow" class="tab-content space-y-6">
+                    <h3 class="text-xl font-semibold text-gray-700 border-b pb-2">Statement of Cash Flows (AED)</h3>
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-medium text-gray-600">Operating Activities</h4>
+                        <div>
+                            <label for="cf-profit" class="block text-sm font-medium text-gray-700">Net profit for the year (Calculated from P/L)</label>
+                            <input type="number" id="cf-profit" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                        </div>
+                        <div>
+                            <label for="cf-inventory" class="block text-sm font-medium text-gray-700">(Increase) / Decrease in Inventory</label>
+                            <input type="number" id="cf-inventory" value="-67148" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="cf-receivables" class="block text-sm font-medium text-gray-700">(Increase) / Decrease in Trade receivables</label>
+                            <input type="number" id="cf-receivables" value="-627000" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="cf-deposits" class="block text-sm font-medium text-gray-700">(Increase) / Decrease in Deposits</label>
+                            <input type="number" id="cf-deposits" value="1418" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="cf-payables" class="block text-sm font-medium text-gray-700">Increase / (Decrease) in Trade payables</label>
+                            <input type="number" id="cf-payables" value="588000" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="cf-accruals" class="block text-sm font-medium text-gray-700">Increase / (Decrease) in Accruals</label>
+                            <input type="number" id="cf-accruals" value="-2625" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                    </div>
+                     <div class="space-y-4">
+                        <h4 class="text-lg font-medium text-gray-600">Financing Activities</h4>
+                        <div>
+                            <label for="cf-dividend" class="block text-sm font-medium text-gray-700">Dividend paid</label>
+                            <input type="number" id="cf-dividend" value="0" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="0">
+                            <p class="form-field-note">Linked to Background Details (Note 11).</p>
+                        </div>
+                        <div>
+                            <label for="cf-shareholder" class="block text-sm font-medium text-gray-700">Net movement in shareholder's current account</label>
+                            <input type="number" id="cf-shareholder" value="98500" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                            <p class="form-field-note">Calculated from Background Details (Note 12).</p>
+                        </div>
+                    </div>
+                     <div class="space-y-4">
+                        <h4 class="text-lg font-medium text-gray-600">Cash Position</h4>
+                        <div>
+                            <label for="cf-cash-begin" class="block text-sm font-medium text-gray-700">Cash at beginning of the year</label>
+                            <input type="number" id="cf-cash-begin" value="-90425" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <button type="button" class="save-btn btn-indigo" data-next-tab="background">
+                            Save & Continue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 5: Background Details -->
+                <div id="tab-background" class="tab-content space-y-6">
+                    <h3 class="text-xl font-semibold text-gray-700 border-b pb-2">Background Details (Notes)</h3>
+                    <p class="text-sm text-gray-600">Use this section to enter detailed breakdowns for specific line items. The totals will automatically update the main financial statements.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="background-detail-card">
+                            <h4 class="text-lg font-medium text-gray-900">Note 2: Shareholding</h4>
+                            <p class="form-field-note mt-1">Edit shareholder details. The total Share Capital will update the Financial Position.</p>
+                            <div class="mt-4">
+                                <button type="button" id="open-shareholding-modal" class="btn-primary">
+                                    Edit Shareholding
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="background-detail-card">
+                            <h4 class="text-lg font-medium text-gray-900">Note 6: Property, Plant & Equipment</h4>
+                            <p class="form-field-note mt-1">Edit the fixed asset schedule. Totals will populate the P&L and Financial Position.</p>
+                            <div class="mt-4">
+                                <button type="button" id="open-ppe-modal" class="btn-primary">
+                                    Edit PPE
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="background-detail-card">
+                            <h4 class="text-lg font-medium text-gray-900">Note 7: Inventory</h4>
+                            <p class="form-field-note mt-1">Edit inventory details. The total will update the Financial Position.</p>
+                            <div class="mt-4">
+                                <button type="button" id="open-inventory-modal" class="btn-primary">
+                                    Edit Inventory
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="background-detail-card">
+                            <h4 class="text-lg font-medium text-gray-900">Note 8: Trade Receivables</h4>
+                            <p class="form-field-note mt-1">Edit receivables details. The total will update the Financial Position.</p>
+                            <div class="mt-4">
+                                <button type="button" id="open-receivables-modal" class="btn-primary">
+                                    Edit Trade Receivables
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="background-detail-card">
+                            <h4 class="text-lg font-medium text-gray-900">Note 10: Deposits & Prepaid Exp.</h4>
+                            <p class="form-field-note mt-1">Edit deposits and prepayments. The total will update the Financial Position.</p>
+                            <div class="mt-4">
+                                <button type="button" id="open-deposits-modal" class="btn-primary">
+                                    Edit Deposits
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="background-detail-card">
+                            <h4 class="text-lg font-medium text-gray-900">Note 11: Retained Earnings</h4>
+                            <p class="form-field-note mt-1">Edit the retained earnings calculation. The total will update the Financial Position.</p>
+                            <div class="mt-4">
+                                <button type="button" id="open-re-modal" class="btn-primary">
+                                    Edit Retained Earnings
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="background-detail-card">
+                            <h4 class="text-lg font-medium text-gray-900">Note 12: Shareholder's Account</h4>
+                            <p class="form-field-note mt-1">Edit shareholder account movements. The total will update the Financial Position.</p>
+                            <div class="mt-4">
+                                <button type="button" id="open-shareholder-acc-modal" class="btn-primary">
+                                    Edit Shareholder's Account
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="background-detail-card">
+                            <h4 class="text-lg font-medium text-gray-900">Note 13: Trade Payables</h4>
+                            <p class="form-field-note mt-1">Edit payables details. The total will update the Financial Position.</p>
+                            <div class="mt-4">
+                                <button type="button" id="open-payables-modal" class="btn-primary">
+                                    Edit Trade Payables
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="background-detail-card">
+                            <h4 class="text-lg font-medium text-gray-900">Note 16: Cost of Sales</h4>
+                            <p class="form-field-note mt-1">Edit the cost of sales calculation. The total will update the P&L statement.</p>
+                            <div class="mt-4">
+                                <button type="button" id="open-cost-of-sales-modal" class="btn-primary">
+                                    Edit Cost of Sales
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="background-detail-card">
+                            <h4 class="text-lg font-medium text-gray-900">Note 17: Admin & Selling Expenses</h4>
+                            <p class="form-field-note mt-1">Edit the detailed expense list. The total will update the P&L statement.</p>
+                            <div class="mt-4">
+                                <button type="button" id="open-admin-exp-modal" class="btn-primary">
+                                    Edit Admin & Selling Expenses
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <button type="button" class="save-btn btn-indigo" data-next-tab="review">
+                            Save & Review
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Tab 6: Total Review Form -->
+                <div id="tab-review" class="tab-content space-y-6">
+                    <h3 class="text-xl font-semibold text-gray-700 border-b pb-2">Total Review Form</h3>
+                    <p class="text-sm text-gray-600">This is a live preview of your financial statement. All changes from other tabs are reflected here instantly. Please review for accuracy before generating the PDF.</p>
+                    
+                    <!-- Preview Area -->
+                    <div id="review-preview-area" class="prose prose-sm max-w-none rounded-lg border border-gray-200 p-4 bg-gray-50/50">
+                        <!-- Content will be injected by JavaScript -->
+                        <p>Loading preview...</p>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <button type="button" id="generate-pdf-btn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150">
+                            Generate 15-Page PDF Report
+                        </button>
+                    </div>
+                    
+                    <!-- Message Box -->
+                    <div id="message-box" class="mt-4 p-4 rounded-lg bg-red-100 text-red-700" style="display: none;"></div>
+                </div>
+
+                <div id="tab-comments" class="tab-content space-y-6">
+                    <h3 class="text-xl font-semibold text-gray-700 border-b pb-2">Main Comments</h3>
+                    <p class="text-sm text-gray-600">Leave comments for other users. Your name (email) will be attached automatically.</p>
+
+                    <div class="space-y-3">
+                        <label for="main-comment-input" class="block text-sm font-medium text-gray-700">New Comment</label>
+                        <textarea id="main-comment-input" rows="4" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Type your comment here..."></textarea>
+                        <div class="flex justify-end">
+                            <button type="button" id="add-main-comment-btn" class="btn-green">Add Comment</button>
+                        </div>
+                    </div>
+
+                    <hr class="my-6">
+                    <h4 class="text-lg font-semibold text-gray-800">Comment History</h4>
+                    <div id="main-comment-list" class="space-y-4">
+                        <p class="text-gray-500">No comments added to this draft yet.</p>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modals Container -->
+
+    <!-- PPE Modal Structure (Note 6) -->
+    <div id="ppe-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Note 6: Property, Plant and Equipment</h3>
+                <span class="close-btn" id="close-ppe-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <div class="overflow-x-auto">
+                    <table class="modal-table">
+                        <thead>
+                            <tr>
+                                <th>Particulars</th>
+                                <th>Addition</th>
+                                <th>Rate (%)</th>
+                                <th class="text-right">Depreciation</th>
+                                <th class="text-right">Closing Balance</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ppe-rows-container"></tbody>
+                        <tfoot>
+                            <tr class="bg-gray-50">
+                                <th colspan="3" class="text-right font-bold pr-4">Total</th>
+                                <td id="ppe-total-depreciation" class="calc-field font-bold">0</td>
+                                <td id="ppe-total-closing" class="calc-field font-bold">0</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="mt-4 flex justify-between">
+                    <button type="button" id="add-ppe-row" class="btn-secondary">Add Asset</button>
+                    <div class="space-x-2">
+                        <button type="button" id="save-ppe-details" class="btn-green">Save Details</button>
+                        <button type="button" id="cancel-ppe-modal" class="btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Expense Modal Structure (Note 17) -->
+    <div id="admin-exp-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Note 17: Administration and Selling Expenses</h3>
+                <span class="close-btn" id="close-admin-exp-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <div class="overflow-x-auto">
+                    <table class="modal-table">
+                        <thead>
+                            <tr>
+                                <th>Expense Item</th>
+                                <th>Amount (AED)</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-exp-rows-container"></tbody>
+                        <tfoot>
+                            <tr class="bg-gray-50">
+                                <th class="text-right font-bold pr-4">Total</th>
+                                <td id="admin-exp-total" class="calc-field font-bold">0</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="mt-4 flex justify-between">
+                    <button type="button" id="add-admin-exp-row" class="btn-secondary">Add Expense</button>
+                    <div class="space-x-2">
+                        <button type="button" id="save-admin-exp-details" class="btn-green">Save Details</button>
+                        <button type="button" id="cancel-admin-exp-modal" class="btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Retained Earnings Modal Structure (Note 11) -->
+    <div id="re-modal" class="modal">
+        <div class="modal-content modal-form" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Note 11: Retained Earnings</h3>
+                <span class="close-btn" id="close-re-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <div class="form-row">
+                    <label for="re-opening-balance" class="form-label">Opening balance</label>
+                    <div class="form-input">
+                        <input type="number" id="re-opening-balance" value="61856">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Total comprehensive income</label>
+                    <div class="form-input">
+                        <span id="re-net-income" class="text-right block">0</span>
+                        <p class="form-field-note">Automatically calculated from Profit & Loss statement.</p>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="re-dividend-paid" class="form-label">Dividend paid</label>
+                    <div class="form-input">
+                        <input type="number" id="re-dividend-paid" value="0">
+                         <p class="form-field-note">Linked to "Dividend paid" in the Cash Flow tab.</p>
+                    </div>
+                </div>
+                <div class="form-row form-total-row">
+                    <label class="form-label">Closing Balance</label>
+                    <div class="form-input">
+                         <span id="re-closing-balance" class="text-right block">0</span>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button type="button" id="save-re-details" class="btn-green">Save Details</button>
+                    <button type="button" id="cancel-re-modal" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shareholding Modal Structure (Note 2) -->
+    <div id="shareholding-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Note 2: Shareholding</h3>
+                <span class="close-btn" id="close-shareholding-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <div class="overflow-x-auto">
+                    <table class="modal-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Nationality</th>
+                                <th>No. of Shares</th>
+                                <th>Value per Share</th>
+                                <th class="text-right">Total Value</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shareholding-rows-container"></tbody>
+                        <tfoot>
+                            <tr class="bg-gray-50">
+                                <th colspan="2" class="text-right font-bold pr-4">Total</th>
+                                <td id="shareholding-total-shares" class="calc-field font-bold">0</td>
+                                <td></td>
+                                <td id="shareholding-total-value" class="calc-field font-bold">0</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="mt-4 flex justify-between">
+                    <button type="button" id="add-shareholder-row" class="btn-secondary">Add Shareholder</button>
+                    <div class="space-x-2">
+                        <button type="button" id="save-shareholding-details" class="btn-green">Save Details</button>
+                        <button type="button" id="cancel-shareholding-modal" class="btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Modal Structure (Note 7) -->
+    <div id="inventory-modal" class="modal">
+        <div class="modal-content modal-form" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Note 7: Inventory</h3>
+                <span class="close-btn" id="close-inventory-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <div class="form-row">
+                    <label class="form-label">
+                        <a href="#" id="open-inv-age-calc-link" class="review-link">Age analysis (1 to 150 days)</a>
+                    </label>
+                    <div class="form-input">
+                        <input type="number" id="inv-age-1-150" value="67148">
+                        <p class="form-field-note">Click the link above to calculate this value.</p>
+                    </div>
+                </div>
+                <!-- Add more age brackets if needed -->
+                <div class="form-row form-total-row">
+                    <label class="form-label">Total Inventory</label>
+                    <div class="form-input">
+                         <span id="inv-total" class="text-right block">0</span>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button type="button" id="save-inventory-details" class="btn-green">Save Details</button>
+                    <button type="button" id="cancel-inventory-modal" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trade Receivables Modal Structure (Note 8) -->
+    <div id="receivables-modal" class="modal">
+        <div class="modal-content modal-form" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Note 8: Trade Receivables</h3>
+                <span class="close-btn" id="close-receivables-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <div class="form-row">
+                    <label for="rec-age-1-60" class="form-label">Age analysis (1 to 60 days)</label>
+                    <div class="form-input">
+                        <input type="number" id="rec-age-1-60" value="627000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="rec-geo-uae" class="form-label">Geographical (Within U.A.E.)</label>
+                    <div class="form-input">
+                        <input type="number" id="rec-geo-uae" value="627000">
+                    </div>
+                </div>
+                <div class="form-row form-total-row">
+                    <label class="form-label">Total Receivables</label>
+                    <div class="form-input">
+                         <span id="rec-total" class="text-right block">0</span>
+                         <p class="form-field-note">Total is based on Age Analysis. Geographical is for info.</p>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button type="button" id="save-receivables-details" class="btn-green">Save Details</button>
+                    <button type="button" id="cancel-receivables-modal" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="inv-age-calc-modal" class="modal">
+        <div class="modal-content modal-form" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Inventory Age Analysis Calculator</h3>
+                <span class="close-btn" id="close-inv-age-calc-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <p class="text-sm text-gray-600 mb-4">This calculator uses data from Note 16 (Cost of Sales) and the Profit & Loss tab.</p>
+                
+                <div class="form-row">
+                    <label class="form-label">Opening Inventory</label>
+                    <div class="form-input">
+                        <span id="inv-calc-opening" class="text-right block">0</span>
+                        <p class="form-field-note">From Note 16</p>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Purchases</label>
+                    <div class="form-input">
+                        <span id="inv-calc-purchase" class="text-right block">0</span>
+                        <p class="form-field-note">From Note 16</p>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Sales</label>
+                    <div class="form-input">
+                        <span id="inv-calc-sales" class="text-right block">0</span>
+                        <p class="form-field-note">From Profit & Loss (Note 15)</p>
+                    </div>
+                </div>
+                
+                <div class="form-row form-total-row">
+                    <label class="form-label">Calculated Closing Inventory</label>
+                    <div class="form-input">
+                         <span id="inv-calc-total" class="text-right block">0</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button type="button" id="inv-calc-apply-btn" class="btn-green">Apply Calculation</button>
+                    <button type="button" id="inv-calc-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deposits Modal Structure (Note 10) -->
+    <div id="deposits-modal" class="modal">
+        <div class="modal-content modal-form" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Note 10: Deposits and Prepaid Expenses</h3>
+                <span class="close-btn" id="close-deposits-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <div class="form-row">
+                    <label for="dep-deposits" class="form-label">Deposits</label>
+                    <div class="form-input">
+                        <input type="number" id="dep-deposits" value="5541">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="dep-prepaid" class="form-label">Prepaid expenses</label>
+                    <div class="form-input">
+                        <input type="number" id="dep-prepaid" value="8951">
+                    </div>
+                </div>
+                <div class="form-row form-total-row">
+                    <label class="form-label">Total Deposits & Prepaids</label>
+                    <div class="form-input">
+                         <span id="dep-total" class="text-right block">0</span>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button type="button" id="save-deposits-details" class="btn-green">Save Details</button>
+                    <button type="button" id="cancel-deposits-modal" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shareholder Account Modal Structure (Note 12) -->
+    <div id="shareholder-acc-modal" class="modal">
+        <div class="modal-content modal-form" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Note 12: Shareholder's Current Account</h3>
+                <span class="close-btn" id="close-shareholder-acc-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <div class="form-row">
+                    <label for="sha-opening" class="form-label">Opening balance</label>
+                    <div class="form-input">
+                        <input type="number" id="sha-opening" value="33542">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="sha-funds" class="form-label">Funds contributed (Net)</label>
+                    <div class="form-input">
+                        <input type="number" id="sha-funds" value="98500">
+                        <p class="form-field-note">This value is also used in the Cash Flow statement.</p>
+                    </div>
+                </div>
+                <div class="form-row form-total-row">
+                    <label class="form-label">Total Shareholder's Account</label>
+                    <div class="form-input">
+                         <span id="sha-total" class="text-right block">0</span>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button type="button" id="save-shareholder-acc-details" class="btn-green">Save Details</button>
+                    <button type="button" id="cancel-shareholder-acc-modal" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trade Payables Modal Structure (Note 13) -->
+    <div id="payables-modal" class="modal">
+        <div class="modal-content modal-form" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Note 13: Trade Payables</h3>
+                <span class="close-btn" id="close-payables-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <div class="form-row">
+                    <label for="pay-age-1-30" class="form-label">Age analysis (1 to 30 days)</label>
+                    <div class="form-input">
+                        <input type="number" id="pay-age-1-30" value="588000">
+                    </div>
+                </div>
+                <div class="form-row form-total-row">
+                    <label class="form-label">Total Trade Payables</label>
+                    <div class="form-input">
+                         <span id="pay-total" class="text-right block">0</span>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button type="button" id="save-payables-details" class="btn-green">Save Details</button>
+                    <button type="button" id="cancel-payables-modal" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cost of Sales Modal Structure (Note 16) -->
+    <div id="cost-of-sales-modal" class="modal">
+        <div class="modal-content modal-form" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Note 16: Cost of Sales</h3>
+                <span class="close-btn" id="close-cost-of-sales-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <div class="form-row">
+                    <label class="form-label">
+                        <a href="#" id="open-oi-calc-link" class="review-link">Opening inventory (Calculate)</a>
+                    </label>
+                    <div class="form-input">
+                        <input type="number" id="cos-opening-inv" value="0">
+                        <p class="form-field-note">Click the link above to calculate this value.</p>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="cos-purchases" class="form-label">Purchase and direct expenses</label>
+                    <div class="form-input">
+                        <input type="number" id="cos-purchases" value="1366842">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Closing inventory</label>
+                    <div class="form-input">
+                         <span id="cos-closing-inv" class="text-right block">0</span>
+                         <p class="form-field-note">Automatically linked from Note 7 (Inventory).</p>
+                    </div>
+                </div>
+                <div class="form-row form-total-row">
+                    <label class="form-label">Total Cost of Sales</label>
+                    <div class="form-input">
+                         <span id="cos-total" class="text-right block">0</span>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button type="button" id="save-cost-of-sales-details" class="btn-green">Save Details</button>
+                    <button type="button" id="cancel-cost-of-sales-modal" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+<div id="oi-calc-modal" class="modal">
+        <div class="modal-content modal-form" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Opening Inventory Calculator</h3>
+                <span class="close-btn" id="close-oi-calc-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <p class="text-sm text-gray-600 mb-4">This calculator is for your convenience only. The calculation will not be shown in the PDF.</p>
+                <div class="form-row">
+                    <label for="oi-calc-purchase" class="form-label">Closing Purchase (Previous)</label>
+                    <div class="form-input">
+                        <input type="number" id="oi-calc-purchase" value="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="oi-calc-sales" class="form-label">Closing Sales (Previous)</label>
+                    <div class="form-input">
+                        <input type="number" id="oi-calc-sales" value="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="oi-calc-extra" class="form-label">Extra Price Add</label>
+                    <div class="form-input">
+                        <input type="number" id="oi-calc-extra" value="0">
+                    </div>
+                </div>
+                
+                <div class="form-row form-total-row">
+                    <label class="form-label">Calculated Opening Inventory</label>
+                    <div class="form-input">
+                         <span id="oi-calc-total" class="text-right block">0</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end mt-4">
+                    <input type-="checkbox" id="oi-calc-save-history" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <label for="oi-calc-save-history" class="ml-2 block text-sm text-gray-900">
+                        Save this calculation to history
+                    </label>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button type="button" id="oi-calc-apply-btn" class="btn-green">Apply Calculation</button>
+                    <button type="button" id="oi-calc-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+
+                <hr class="my-6">
+                <h4 class="text-lg font-semibold text-gray-800 mb-3">Calculation History</h4>
+                <div id="oi-calc-history-container" class="space-y-2 max-h-40 overflow-y-auto">
+                    <p class="text-gray-500">No history saved for this draft.</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-confirm-modal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Deletion</h3>
+                <span class="close-btn" id="close-delete-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                <p>Are you sure you want to delete the draft "<strong id="delete-draft-name"></strong>"? This action cannot be undone.</p>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancel-delete-btn" class="btn-secondary">Cancel</button>
+                    <button type="button" id="confirm-delete-btn" class="btn-red">Confirm Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="companies-modal" class="modal">
+        <div class="modal-content modal-form" style="max-width: 768px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Manage Companies</h3>
+                <span class="close-btn" id="close-companies-modal">&times;</span>
+            </div>
+            <div class="modal-body mt-4">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div class="form-row !grid-cols-1 !mb-0">
+                        <label for="company-form-name" class="form-label !text-left">Company Name</label>
+                        <div class="form-input !col-span-1">
+                            <input type="text" id="company-form-name" placeholder="e.g., My New Company LLC">
+                        </div>
+                    </div>
+                    <div class="form-row !grid-cols-1 !mb-0">
+                        <label for="company-form-name-ar" class="form-label !text-left">Company Name (Arabic)</label>
+                        <div class="form-input !col-span-1">
+                            <input type="text" id="company-form-name-ar" placeholder="الاسم باللغة العربية" class="text-right" dir="rtl">
+                        </div>
+                    </div>
+                     <div class="form-row !grid-cols-1 !mb-0">
+                        <label for="company-form-signatory" class="form-label !text-left">Authorized Signatory</label>
+                        <div class="form-input !col-span-1">
+                            <input type="text" id="company-form-signatory" placeholder="e.g., John Doe">
+                        </div>
+                    </div>
+                     <div class="form-row !grid-cols-1 !mb-0">
+                        <label for="company-form-email" class="form-label !text-left">Email</label>
+                        <div class="form-input !col-span-1">
+                            <input type="email" id="company-form-email" placeholder="e.g., info@company.com">
+                        </div>
+                    </div>
+                    <div class="form-row !grid-cols-1 !mb-0">
+                        <label for="company-form-city" class="form-label !text-left">City</label>
+                        <div class="form-input !col-span-1">
+                            <input type="text" id="company-form-city" placeholder="e.g., Dubai">
+                        </div>
+                    </div>
+                    <div class="form-row !grid-cols-1 !mb-0">
+                        <label for="company-form-country" class="form-label !text-left">Country</label>
+                        <div class="form-input !col-span-1">
+                            <input type="text" id="company-form-country" placeholder="e.g., United Arab Emirates">
+                        </div>
+                    </div>
+                    <div class="form-row !grid-cols-1 !mb-0 md:col-span-2">
+                        <label for="company-form-address" class="form-label !text-left">Address</label>
+                        <div class="form-input !col-span-1">
+                            <input type="text" id="company-form-address" placeholder="e.g., P.O. Box 12345, Business Bay">
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button type="button" id="save-companies-details" class="btn-green">Add Company</button>
+                    <button type="button" id="cancel-companies-modal" class="btn-secondary">Close</button>
+                </div>
+                
+                <hr class="my-6">
+                
+                <h4 class="text-lg font-semibold text-gray-800 mb-3">Existing Companies</h4>
+                <div id="company-list-container" class="space-y-3">
+                    <p class="text-gray-500">No companies saved yet.</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- Firebase Globals ---
+        let db, auth, userId, draftsCollection;
+        
+        // --- ADD THIS ---
+        let companiesDocRef;
+        // --- END ADD ---
+        
+        // --- Firebase Config ---
+        // User-provided Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSPXIidrhF3-Ea8i2vEcfU5NuaWV2vh3M",
+            authDomain: "corporateapp-25ca4.firebaseapp.com",
+            projectId: "corporateapp-25ca4",
+            storageBucket: "corporateapp-25ca4.firebasestorage.app",
+            messagingSenderId: "1082853414036",
+            appId: "1:1082853414036:web:ee8bc99036bdbfe8035081",
+            measurementId: "G-PPKRVNEDHW"
+        };
+        // const initialAuthToken = null; // Not needed when using user's own project
+        
+        // --- Firebase Imports ---
+        const {
+            initializeApp,
+            getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged,
+            getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, query, setLogLevel,
+            getAnalytics, // Added this line
+            // Add new auth functions
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signOut
+        } = window.firebase;
+
+        // --- All Form Input IDs ---
+        const allInputIds = [
+            'company-name', 'company-name-ar', 'report-date', 'signatory', 'address', 'email',
+            'pos-ppe', 'pos-inventory', 'pos-receivables', 'pos-cash', 'pos-deposits',
+            'pos-capital', 'pos-retained', 'pos-shareholder', 'pos-payables', 'pos-accruals',
+            'pl-sales', 'pl-cost', 'pl-admin', 'pl-remuneration', 'pl-depreciation',
+            'cf-profit', 'cf-inventory', 'cf-receivables', 'cf-deposits', 'cf-payables', 'cf-accruals',
+            'cf-dividend', 'cf-shareholder', 'cf-cash-begin'
+        ];
+        
+        // --- State ---
+        // Store data for row-based modals
+        let ppeData = [
+            { id: 1, particulars: 'Office Furniture', addition: 4418, rate: 5 },
+            { id: 2, particulars: 'Computers', addition: 3895, rate: 40 },
+            { id: 3, particulars: 'Printers', addition: 3200, rate: 40 },
+            { id: 4, particulars: 'CCTV', addition: 0, rate: 40 },
+            { id: 5, particulars: 'Vehicles', addition: 0, rate: 20 },
+        ];
+        let adminExpData = [
+            { id: 1, item: 'Salaries and benefits', amount: 8415 },
+            { id: 2, item: 'Legal, professional and visa charges', amount: 36859 },
+            { id: 3, item: 'Commission paid', amount: 24400 },
+            { id: 4, item: 'Rent', amount: 105000 },
+            { id: 5, item: 'Communication and utilities', amount: 4154 },
+            { id: 6, item: 'Packing and Bailing & Packing Expenses', amount: 145500 },
+            { id: 7, item: 'Travelling and conveyance', amount: 6625 },
+            { id: 8, item: 'Insurance and BL Charges', amount: 132000 },
+            { id: 9, item: 'Plastic regrinding expenses', amount: 343000 },
+            { id: 10, item: 'Other expenses', amount: 14855 },
+        ];
+        
+        // --- ADD THIS ---
+        let companiesData = [];
+        // --- END ADD ---
+        let shareholdingData = [
+            { id: 1, name: 'Mr. NADEEM KHAN', nation: 'PAKISTAN', shares: 5, value: 1000 },
+            { id: 2, name: 'Mr. MUHAMMAD USAMA SAQIB', nation: 'PAKISTAN', shares: 95, value: 1000 },
+        ];
+        // Store data for simple modals
+        let retainedEarningsData = { opening: 61856, dividend: 0 }; // net income is calculated
+        let inventoryData = { age_1_150: 67148 };
+        let receivablesData = { age_1_60: 627000, geo_uae: 627000 };
+        let depositsData = { deposits: 5541, prepaid: 8951 };
+        let shareholderAccData = { opening: 33542, funds: 98500 };
+        let payablesData = { age_1_30: 588000 };
+        let costOfSalesData = { opening: 0, purchases: 1366842 }; // closing inv is linked
+            
+            let openingInventoryCalcHistory = [];
+let mainCommentsData = [];
+            
+            let letterheadBase64 = null;        
+        // --- UI Element Globals ---
+        const tabs = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const saveAndContinueBtns = document.querySelectorAll('.save-btn');
+        const reviewPreviewArea = document.getElementById('review-preview-area');
+        const generatePdfBtn = document.getElementById('generate-pdf-btn');
+        const messageBox = document.getElementById('message-box');
+        
+        // --- Modals ---
+        // PPE (Note 6)
+        const ppeModal = document.getElementById('ppe-modal');
+        const ppeRowsContainer = document.getElementById('ppe-rows-container');
+        const ppeTotalDepreciation = document.getElementById('ppe-total-depreciation');
+        const ppeTotalClosing = document.getElementById('ppe-total-closing');
+        const openPpeModalBtn = document.getElementById('open-ppe-modal');
+        const savePpeDetailsBtn = document.getElementById('save-ppe-details');
+        
+        // Admin Expenses (Note 17)
+        const adminExpModal = document.getElementById('admin-exp-modal');
+        const adminExpRowsContainer = document.getElementById('admin-exp-rows-container');
+        const adminExpTotal = document.getElementById('admin-exp-total');
+        const openAdminExpModalBtn = document.getElementById('open-admin-exp-modal');
+        const saveAdminExpDetailsBtn = document.getElementById('save-admin-exp-details');
+        
+        // Retained Earnings (Note 11)
+        const reModal = document.getElementById('re-modal');
+        const openReModalBtn = document.getElementById('open-re-modal');
+        const saveReDetailsBtn = document.getElementById('save-re-details');
+        
+        // Shareholding (Note 2)
+        const shareholdingModal = document.getElementById('shareholding-modal');
+        const shareholdingRowsContainer = document.getElementById('shareholding-rows-container');
+        const shareholdingTotalShares = document.getElementById('shareholding-total-shares');
+        const shareholdingTotalValue = document.getElementById('shareholding-total-value');
+        const openShareholdingModalBtn = document.getElementById('open-shareholding-modal');
+        const saveShareholdingDetailsBtn = document.getElementById('save-shareholding-details');
+        
+        // Inventory (Note 7)
+        const inventoryModal = document.getElementById('inventory-modal');
+        const openInventoryModalBtn = document.getElementById('open-inventory-modal');
+                const saveInventoryDetailsBtn = document.getElementById('save-inventory-details');
+        
+                // --- START: Add New Inventory Calc Variables ---
+                const invAgeCalcModal = document.getElementById('inv-age-calc-modal');
+                const openInvAgeCalcLink = document.getElementById('open-inv-age-calc-link');
+                const closeInvAgeCalcModalBtn = document.getElementById('close-inv-age-calc-modal');
+                const invCalcApplyBtn = document.getElementById('inv-calc-apply-btn');
+                const invCalcCancelBtn = document.getElementById('inv-calc-cancel-btn');
+                const invCalcOpening = document.getElementById('inv-calc-opening');
+                const invCalcPurchase = document.getElementById('inv-calc-purchase');
+                const invCalcSales = document.getElementById('inv-calc-sales');
+                const invCalcTotal = document.getElementById('inv-calc-total');
+                // --- END: Add New Inventory Calc Variables ---
+                
+                // Receivables (Note 8)
+        const receivablesModal = document.getElementById('receivables-modal');
+        const openReceivablesModalBtn = document.getElementById('open-receivables-modal');
+        const saveReceivablesDetailsBtn = document.getElementById('save-receivables-details');
+        
+        // Deposits (Note 10)
+        const depositsModal = document.getElementById('deposits-modal');
+        const openDepositsModalBtn = document.getElementById('open-deposits-modal');
+        const saveDepositsDetailsBtn = document.getElementById('save-deposits-details');
+        
+        // Shareholder Account (Note 12)
+        const shareholderAccModal = document.getElementById('shareholder-acc-modal');
+        const openShareholderAccModalBtn = document.getElementById('open-shareholder-acc-modal');
+        const saveShareholderAccDetailsBtn = document.getElementById('save-shareholder-acc-details');
+
+        // --- ADD THIS BLOCK ---
+        // Company Management
+        const companySelector = document.getElementById('company-selector');
+        const companyListContainer = document.getElementById('company-list-container');
+        const companyFormName = document.getElementById('company-form-name');
+        const companyFormNameAr = document.getElementById('company-form-name-ar');
+        const companyFormSignatory = document.getElementById('company-form-signatory');
+        const companyFormEmail = document.getElementById('company-form-email');
+        const companyFormCity = document.getElementById('company-form-city');
+        const companyFormCountry = document.getElementById('company-form-country');
+        const companyFormAddress = document.getElementById('company-form-address');
+        // --- END ADD ---
+
+        // Payables (Note 13)
+        const payablesModal = document.getElementById('payables-modal');
+        const openPayablesModalBtn = document.getElementById('open-payables-modal');
+        const savePayablesDetailsBtn = document.getElementById('save-payables-details');
+
+        // Cost of Sales (Note 16)
+        const costOfSalesModal = document.getElementById('cost-of-sales-modal');
+        const openCostOfSalesModalBtn = document.getElementById('open-cost-of-sales-modal');
+        const saveCostOfSalesDetailsBtn = document.getElementById('save-cost-of-sales-details');
+
+        // --- START: Add New OI Calculator Variables ---
+        const oiCalcModal = document.getElementById('oi-calc-modal');
+        const openOiCalcModalLink = document.getElementById('open-oi-calc-link');
+        const closeOiCalcModalBtn = document.getElementById('close-oi-calc-modal');
+        const oiCalcApplyBtn = document.getElementById('oi-calc-apply-btn');
+        const oiCalcCancelBtn = document.getElementById('oi-calc-cancel-btn');
+        const oiCalcPurchase = document.getElementById('oi-calc-purchase');
+        const oiCalcSales = document.getElementById('oi-calc-sales');
+            const oiCalcExtra = document.getElementById('oi-calc-extra');
+            const oiCalcTotal = document.getElementById('oi-calc-total');
+            
+            // --- ADD THESE ---
+            const oiCalcSaveHistory = document.getElementById('oi-calc-save-history');
+            const oiCalcHistoryContainer = document.getElementById('oi-calc-history-container');
+
+// --- START: Add Main Comments Variables ---
+const mainCommentInput = document.getElementById('main-comment-input');
+const addMainCommentBtn = document.getElementById('add-main-comment-btn');
+const mainCommentList = document.getElementById('main-comment-list');
+// --- END: Add Main Comments Variables ---
+            
+            // Delete Confirmation
+        // Delete Confirmation
+        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+
+        // --- ADD THESE NEW VARIABLES ---
+        // Settings Dropdown
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsDropdown = document.getElementById('settings-dropdown');
+        
+        // Manage Companies Modal
+        const companiesModal = document.getElementById('companies-modal');
+        const openCompaniesModalBtn = document.getElementById('open-companies-modal-btn');
+        const closeCompaniesModalBtn = document.getElementById('close-companies-modal');
+        const cancelCompaniesModalBtn = document.getElementById('cancel-companies-modal');
+        const saveCompaniesDetailsBtn = document.getElementById('save-companies-details');
+        // --- END OF NEW VARIABLES ---
+
+        // Modal Open Buttons
+        openPpeModalBtn.onclick = () => { renderPpeModal(); ppeModal.style.display = 'block'; };
+        openAdminExpModalBtn.onclick = () => { renderAdminExpModal(); adminExpModal.style.display = 'block'; };
+        openReModalBtn.onclick = () => { renderRetainedEarningsModal(); reModal.style.display = 'block'; };
+        openShareholdingModalBtn.onclick = () => { renderShareholdingModal(); shareholdingModal.style.display = 'block'; };
+        openInventoryModalBtn.onclick = () => { renderInventoryModal(); inventoryModal.style.display = 'block'; };
+        openReceivablesModalBtn.onclick = () => { renderReceivablesModal(); receivablesModal.style.display = 'block'; };
+        openDepositsModalBtn.onclick = () => { renderDepositsModal(); depositsModal.style.display = 'block'; };
+        openShareholderAccModalBtn.onclick = () => { renderShareholderAccModal(); shareholderAccModal.style.display = 'block'; };
+        openPayablesModalBtn.onclick = () => { renderPayablesModal(); payablesModal.style.display = 'block'; };
+        openCostOfSalesModalBtn.onclick = () => { renderCostOfSalesModal(); costOfSalesModal.style.display = 'block'; };
+
+        // Modal Close/Cancel Buttons
+        document.getElementById('close-ppe-modal').onclick = () => ppeModal.style.display = 'none';
+        document.getElementById('cancel-ppe-modal').onclick = () => ppeModal.style.display = 'none';
+        document.getElementById('close-admin-exp-modal').onclick = () => adminExpModal.style.display = 'none';
+        document.getElementById('cancel-admin-exp-modal').onclick = () => adminExpModal.style.display = 'none';
+        document.getElementById('close-re-modal').onclick = () => reModal.style.display = 'none';
+        document.getElementById('cancel-re-modal').onclick = () => reModal.style.display = 'none';
+        document.getElementById('close-shareholding-modal').onclick = () => shareholdingModal.style.display = 'none';
+        document.getElementById('cancel-shareholding-modal').onclick = () => shareholdingModal.style.display = 'none';
+        document.getElementById('close-inventory-modal').onclick = () => inventoryModal.style.display = 'none';
+        document.getElementById('cancel-inventory-modal').onclick = () => inventoryModal.style.display = 'none';
+        document.getElementById('close-receivables-modal').onclick = () => receivablesModal.style.display = 'none';
+        document.getElementById('cancel-receivables-modal').onclick = () => receivablesModal.style.display = 'none';
+        document.getElementById('close-deposits-modal').onclick = () => depositsModal.style.display = 'none';
+        document.getElementById('cancel-deposits-modal').onclick = () => depositsModal.style.display = 'none';
+        document.getElementById('close-shareholder-acc-modal').onclick = () => shareholderAccModal.style.display = 'none';
+        document.getElementById('cancel-shareholder-acc-modal').onclick = () => shareholderAccModal.style.display = 'none';
+        document.getElementById('close-payables-modal').onclick = () => payablesModal.style.display = 'none';
+        document.getElementById('cancel-payables-modal').onclick = () => payablesModal.style.display = 'none';
+        document.getElementById('close-cost-of-sales-modal').onclick = () => costOfSalesModal.style.display = 'none';
+        document.getElementById('cancel-cost-of-sales-modal').onclick = () => costOfSalesModal.style.display = 'none';
+        
+        // Modal Save Buttons
+        savePpeDetailsBtn.onclick = () => { savePpeData(); ppeModal.style.display = 'none'; };
+        saveAdminExpDetailsBtn.onclick = () => { saveAdminExpData(); adminExpModal.style.display = 'none'; };
+        saveReDetailsBtn.onclick = () => { saveRetainedEarningsData(); reModal.style.display = 'none'; };
+        saveShareholdingDetailsBtn.onclick = () => { saveShareholdingData(); shareholdingModal.style.display = 'none'; };
+        saveInventoryDetailsBtn.onclick = () => { saveInventoryData(); inventoryModal.style.display = 'none'; };
+        saveReceivablesDetailsBtn.onclick = () => { saveReceivablesData(); receivablesModal.style.display = 'none'; };
+        saveDepositsDetailsBtn.onclick = () => { saveDepositsData(); depositsModal.style.display = 'none'; };
+        saveShareholderAccDetailsBtn.onclick = () => { saveShareholderAccData(); shareholderAccModal.style.display = 'none'; };
+        savePayablesDetailsBtn.onclick = () => { savePayablesData(); payablesModal.style.display = 'none'; };
+        saveCostOfSalesDetailsBtn.onclick = () => { saveCostOfSalesData(); costOfSalesModal.style.display = 'none'; };
+
+        // Auth UI
+        const authContainer = document.getElementById('auth-container');
+        const mainAppContainer = document.getElementById('main-app-container');
+        const userSession = document.getElementById('user-session');
+        const userEmail = document.getElementById('user-email');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const signInBtn = document.getElementById('sign-in-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const signOutBtn = document.getElementById('sign-out-btn');
+        const authMessageBox = document.getElementById('auth-message-box');
+
+        // Draft Management UI
+        const draftNameInput = document.getElementById('draft-name-input');
+        const saveDraftBtn = document.getElementById('save-draft-btn');
+        const loadDraftSelect = document.getElementById('load-draft-select');
+        const loadDraftBtn = document.getElementById('load-draft-btn');
+        const deleteDraftBtn = document.getElementById('delete-draft-btn');
+        const startNewBtn = document.getElementById('start-new-btn');
+        const draftMessageBox = document.getElementById('draft-message-box');
+        const deleteDraftName = document.getElementById('delete-draft-name');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        document.getElementById('close-delete-modal').onclick = () => deleteConfirmModal.style.display = 'none';
+        document.getElementById('cancel-delete-btn').onclick = () => deleteConfirmModal.style.display = 'none';
+        
+        // Letterhead UI
+        const letterheadUpload = document.getElementById('letterhead-upload');
+        const letterheadPreview = document.getElementById('letterhead-preview');
+        const letterheadPreviewContainer = document.getElementById('letterhead-preview-container');
+        const removeLetterheadBtn = document.getElementById('remove-letterhead-btn');
+        
+        
+        // --- Helper Functions ---
+        function getVal(id) {
+            const el = document.getElementById(id);
+            if (!el) return 0;
+            const val = parseFloat(el.value);
+            return isNaN(val) ? 0 : val;
+        }
+        function setVal(id, value) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.value = value;
+            }
+        }
+        
+        
+        // --- START: Paste Missing Company Management Functions HERE ---
+
+        async function loadCompanies() {
+            if (!userId) return;
+            try {
+                const docSnap = await getDoc(companiesDocRef);
+                if (docSnap.exists() && docSnap.data().list) {
+                    companiesData = docSnap.data().list;
+                } else {
+                    companiesData = []; // No companies saved yet
+                }
+            } catch (error) {
+                console.error("Error loading companies: ", error);
+                companiesData = [];
+            }
+            renderCompanyList();
+            updateCompanySelector();
+        }
+
+        async function saveCompanies() {
+            if (!userId) return;
+            try {
+                await setDoc(companiesDocRef, { list: companiesData });
+            } catch (error) {
+                console.error("Error saving companies: ", error);
+                // Show a message?
+            }
+        }
+
+        function renderCompanyList() {
+            companyListContainer.innerHTML = ''; // Clear the list
+            if (companiesData.length === 0) {
+                companyListContainer.innerHTML = '<p class="text-gray-500">No companies saved yet.</p>';
+                return;
+            }
+
+            companiesData.forEach(company => {
+                const companyEl = document.createElement('div');
+                companyEl.className = 'p-3 border rounded-lg bg-gray-50 flex justify-between items-center';
+                companyEl.innerHTML = `
+                    <div>
+                        <strong class="text-gray-900">${company.name}</strong>
+                        <p class="text-sm text-gray-600">${company.city}, ${company.country}</p>
+                    </div>
+                    <button type="button" class="btn-red !py-1 !px-3 delete-company-btn" data-id="${company.id}">Delete</button>
+                `;
+                companyListContainer.appendChild(companyEl);
+            });
+
+            // Add delete listener to all new buttons
+            companyListContainer.querySelectorAll('.delete-company-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const companyId = btn.dataset.id;
+                    companiesData = companiesData.filter(c => c.id.toString() !== companyId);
+                    saveCompanies();
+                    renderCompanyList(); // Re-render this modal list
+                    updateCompanySelector(); // Re-render the top dropdown
+                });
+            });
+        }
+
+        function updateCompanySelector() {
+            companySelector.innerHTML = ''; // Clear dropdown
+            if (companiesData.length === 0) {
+                companySelector.innerHTML = '<option value="">-- No companies found --</option>';
+                return;
+            }
+
+            companySelector.innerHTML = '<option value="">-- Select a Company to start new report --</option>';
+            companiesData.forEach(company => {
+                companySelector.innerHTML += `<option value="${company.id}">${company.name}</option>`;
+            });
+        }
+
+        // --- END: Missing Company Management Functions ---
+        
+        // --- Firebase Initialization ---
+        async function initFirebase() {
+            try {
+                setLogLevel('Debug');
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                const analytics = getAnalytics(app); // Added this line
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // User is signed in
+                        userId = user.uid;
+                        // Updated collection path for a standard user project
+                        const collectionPath = `users/${userId}/financial_drafts`;
+                        draftsCollection = collection(db, collectionPath);
+                        
+                        // --- ADD THIS LINE ---
+                        companiesDocRef = doc(db, `users/${userId}/app_data`, 'companies');
+
+                        // Update UI
+                        userEmail.textContent = `Signed in as: ${user.email || 'User'}`;
+                        userSession.style.display = 'flex';
+                        authContainer.style.display = 'none';
+                        mainAppContainer.style.display = 'block';
+                        
+                        // Load user's data
+                        loadDraftsList();
+                        
+                        // --- ADD THIS LINE ---
+                        loadCompanies();
+                        
+                        // --- AND ADD THIS LINE ---
+                        initializeMainAppListeners();
+                    } else {
+                        // User is signed out
+                        userId = null;
+                        draftsCollection = null;
+                        
+                        // Update UI
+                        userSession.style.display = 'none';
+                        authContainer.style.display = 'block';
+                        mainAppContainer.style.display = 'none';
+                        
+                        // Clear any old data
+                        loadDraftSelect.innerHTML = '<option value="">-- Sign in to see drafts --</option>';
+                        // Reset the form by simulating a "Start New" click
+                        startNewBtn.click();
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase init error:", error);
+                authContainer.style.display = 'block';
+                mainAppContainer.style.display = 'none';
+                showAuthMessage("Error connecting to Firebase. Please refresh.");
+                showDraftMessage("Error connecting to database. Drafts cannot be saved or loaded.", true);
+            }
+        }
+
+        // --- Auth Functions ---
+        function showAuthMessage(message, isError = true) {
+            authMessageBox.textContent = message;
+            authMessageBox.style.display = 'block';
+        }
+
+        async function handleSignIn() {
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            if (!email || !password) {
+                showAuthMessage("Please enter both email and password.");
+                return;
+            }
+            authMessageBox.style.display = 'none';
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                // onAuthStateChanged will handle the UI switch
+            } catch (error) {
+                console.error("Sign in error:", error);
+                if (error.code === 'auth/operation-not-allowed') {
+                    showAuthMessage("Sign-in failed: Email/Password sign-in is not enabled for this project. Please contact the administrator.");
+                } else {
+                    showAuthMessage(error.message);
+                }
+            }
+        }
+
+        async function handleRegister() {
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            if (!email || !password) {
+                showAuthMessage("Please enter both email and password.");
+                return;
+            }
+            if (password.length < 6) {
+                showAuthMessage("Password must be at least 6 characters long.");
+                return;
+            }
+            authMessageBox.style.display = 'none';
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                // onAuthStateChanged will handle the UI switch
+            } catch (error) {
+                console.error("Register error:", error);
+                if (error.code === 'auth/operation-not-allowed') {
+                    showAuthMessage("Registration failed: Email/Password sign-in is not enabled for this project. Please enable it in your Firebase Console (Authentication > Sign-in method).");
+                } else {
+                    showAuthMessage(error.message);
+                }
+            }
+        }
+        
+        async function handleSignOut() {
+            try {
+                await signOut(auth);
+                // onAuthStateChanged will automatically handle the UI switch,
+                // hide the main app, show the login screen, and clear data.
+            } catch (error) {
+                console.error("Sign out error:", error);
+                // Show message in draft box as auth box might be hidden
+                showDraftMessage(`Error signing out: ${error.message}`, true);
+            }
+        }
+        
+        // --- Draft Management Functions ---
+        
+        function showDraftMessage(message, isError = false) {
+            draftMessageBox.textContent = message;
+            draftMessageBox.className = `mt-4 p-4 rounded-lg ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+            draftMessageBox.style.display = 'block';
+            setTimeout(() => { draftMessageBox.style.display = 'none'; }, 3000);
+        }
+
+        // Collects all data from the form and state
+        function getFullDraftData() {
+            const formData = {};
+            allInputIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    formData[id] = el.type === 'number' ? getVal(id) : el.value;
+                }
+            });
+            
+            return {
+                formData,
+                ppeData: ppeData,
+                adminExpData: adminExpData,
+                shareholdingData: shareholdingData,
+                retainedEarningsData: retainedEarningsData,
+                inventoryData: inventoryData,
+                receivablesData: receivablesData,
+                depositsData: depositsData,
+                shareholderAccData: shareholderAccData,
+                payablesData: payablesData,
+                costOfSalesData: costOfSalesData,
+    
+                openingInventoryCalcHistory: openingInventoryCalcHistory,
+                mainCommentsData: mainCommentsData,
+    
+                letterheadBase64: letterheadBase64
+            };
+        }
+
+        // Populates all form fields and state
+        function setFullDraftData(data) {
+            if (!data) return;
+            
+            // Restore form fields
+            if (data.formData) {
+                allInputIds.forEach(id => {
+                    if (data.formData[id] !== undefined) {
+                        setVal(id, data.formData[id]);
+                    }
+                });
+            }
+            
+            // Restore modal data states
+            ppeData = data.ppeData || ppeData;
+            adminExpData = data.adminExpData || adminExpData;
+            shareholdingData = data.shareholdingData || shareholdingData;
+            retainedEarningsData = data.retainedEarningsData || retainedEarningsData;
+            inventoryData = data.inventoryData || inventoryData;
+            receivablesData = data.receivablesData || receivablesData;
+            depositsData = data.depositsData || depositsData;
+            shareholderAccData = data.shareholderAccData || shareholderAccData;
+            payablesData = data.payablesData || payablesData;
+            costOfSalesData = data.costOfSalesData || costOfSalesData;
+    
+            openingInventoryCalcHistory = data.openingInventoryCalcHistory || [];
+
+// --- ADD THIS ---
+mainCommentsData = data.mainCommentsData || [];
+renderMainCommentsList(); // Render comments when loading a draft
+    
+            // Restore letterhead
+            letterheadBase64 = data.letterheadBase64 || null;
+            updateLetterheadPreview();
+            
+            // Re-run all calculations to ensure UI is consistent
+            runAllCalculations();
+            updateReviewTab();
+        }
+
+        async function saveDraft() {
+            if (!userId) {
+                showDraftMessage("You must be signed in to save drafts.", true);
+                return;
+            }
+            const draftName = draftNameInput.value.trim();
+            if (!draftName) {
+                showDraftMessage("Please enter a draft name.", true);
+                return;
+            }
+            
+            const draftData = getFullDraftData();
+            
+            try {
+                // Updated doc path
+                const draftDoc = doc(db, `users/${userId}/financial_drafts`, draftName);
+                await setDoc(draftDoc, draftData);
+                showDraftMessage(`Draft "${draftName}" saved successfully!`, false);
+                loadDraftsList(); // Refresh list in case this is a new draft
+            } catch (error) {
+                console.error("Error saving draft:", error);
+                showDraftMessage(`Error saving draft: ${error.message}`, true);
+            }
+        }
+        
+        async function loadDraftsList() {
+            if (!userId) return;
+            
+            try {
+                onSnapshot(draftsCollection, (snapshot) => {
+                    if (snapshot.empty) {
+                        loadDraftSelect.innerHTML = '<option value="">-- No drafts found --</option>';
+                        return;
+                    }
+                    
+                    let html = '';
+                    snapshot.forEach(doc => {
+                        html += `<option value="${doc.id}">${doc.id}</option>`;
+                    });
+                    loadDraftSelect.innerHTML = html;
+                });
+            } catch (error) {
+                console.error("Error loading drafts list:", error);
+                showDraftMessage("Could not load draft list.", true);
+            }
+        }
+
+        async function loadSelectedDraft() {
+            if (!userId) {
+                showDraftMessage("You must be signed in to load drafts.", true);
+                return;
+            }
+            const draftName = loadDraftSelect.value;
+            if (!draftName) {
+                showDraftMessage("Please select a draft to load.", true);
+                return;
+            }
+            
+            try {
+                // Updated doc path
+                const draftDoc = doc(db, `users/${userId}/financial_drafts`, draftName);
+                const docSnap = await getDoc(draftDoc);
+                
+                if (docSnap.exists()) {
+                    setFullDraftData(docSnap.data());
+                    draftNameInput.value = draftName; // Set the name input for re-saving
+                    showDraftMessage(`Draft "${draftName}" loaded successfully!`, false);
+                } else {
+                    showDraftMessage("Draft not found. It may have been deleted.", true);
+                }
+            } catch (error) {
+                console.error("Error loading draft:", error);
+                showDraftMessage(`Error loading draft: ${error.message}`, true);
+            }
+        }
+        
+        function confirmDelete() {
+            const draftName = loadDraftSelect.value;
+            if (!draftName) {
+                showDraftMessage("Please select a draft to delete.", true);
+                return;
+            }
+            deleteDraftName.textContent = draftName;
+            deleteConfirmModal.style.display = 'block';
+        }
+
+        async function deleteSelectedDraft() {
+            if (!userId) return;
+            const draftName = loadDraftSelect.value;
+            if (!draftName) return;
+            
+            try {
+                // Updated doc path
+                const draftDoc = doc(db, `users/${userId}/financial_drafts`, draftName);
+                await deleteDoc(draftDoc);
+                
+                showDraftMessage(`Draft "${draftName}" deleted.`, false);
+                deleteConfirmModal.style.display = 'none';
+                // loadDraftsList() will update automatically via onSnapshot
+            } catch (error) {
+                console.error("Error deleting draft:", error);
+                showDraftMessage(`Error deleting draft: ${error.message}`, true);
+                deleteConfirmModal.style.display = 'none';
+            }
+        }
+        
+        // --- Event Listeners for Drafts ---
+        saveDraftBtn.addEventListener('click', saveDraft);
+        loadDraftBtn.addEventListener('click', loadSelectedDraft);
+        deleteDraftBtn.addEventListener('click', confirmDelete);
+        confirmDeleteBtn.onclick = deleteSelectedDraft;
+
+        // --- Letterhead Logic ---
+        letterheadUpload.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                alert("File is too large. Please use an image under 2MB.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                letterheadBase64 = event.target.result;
+                updateLetterheadPreview();
+            };
+            reader.readAsDataURL(file);
+        };
+        
+        function updateLetterheadPreview() {
+            if (letterheadBase64) {
+                letterheadPreview.src = letterheadBase64;
+                letterheadPreviewContainer.style.display = 'block';
+            } else {
+                letterheadPreview.src = '';
+                letterheadPreviewContainer.style.display = 'none';
+            }
+        }
+        
+        removeLetterheadBtn.onclick = () => {
+            letterheadBase64 = null;
+            letterheadUpload.value = null; // Reset file input
+            updateLetterheadPreview();
+        };
+
+        // --- Tab Navigation ---
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Deactivate all
+                tabs.forEach(t => t.classList.remove('active', 'text-blue-600', 'border-blue-500'));
+                tabs.forEach(t => t.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300'));
+                tabContents.forEach(c => c.classList.remove('active'));
+
+                // Activate clicked
+                tab.classList.add('active', 'text-blue-600', 'border-blue-500');
+                tab.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+                
+                // Special actions on tab switch
+                if (tab.dataset.tab === 'review') {
+                    updateReviewTab();
+                }
+                if (tab.dataset.tab === 'cashflow') {
+                    // Auto-fill net profit
+                    document.getElementById('cf-profit').value = calculateProfitLossTotal();
+                }
+            });
+        });
+
+        saveAndContinueBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const nextTab = btn.dataset.nextTab;
+                document.querySelector(`.tab-btn[data-tab="${nextTab}"]`).click();
+            });
+        });
+
+        // --- Modal: PPE (Note 6) ---
+        function renderPpeModal() {
+            ppeRowsContainer.innerHTML = '';
+            ppeData.forEach(asset => {
+                const depreciation = (asset.addition * asset.rate / 100).toFixed(0);
+                const closing = (asset.addition - depreciation).toFixed(0);
+                ppeRowsContainer.innerHTML += `
+                    <tr data-id="${asset.id}">
+                        <td><input type="text" class="ppe-particulars" value="${asset.particulars}"></td>
+                        <td><input type="number" class="ppe-addition" value="${asset.addition}"></td>
+                        <td><input type="number" class="ppe-rate" value="${asset.rate}"></td>
+                        <td class="calc-field ppe-depreciation">${depreciation}</td>
+                        <td class="calc-field ppe-closing">${closing}</td>
+                        <td class="action-cell"><button class="remove-row-btn" data-id="${asset.id}">&times;</button></td>
+                    </tr>
+                `;
+            });
+            updatePpeTotals();
+        }
+        
+        function updatePpeTotals() {
+            let totalDepreciation = 0;
+            let totalClosing = 0;
+            ppeRowsContainer.querySelectorAll('tr').forEach(row => {
+                const addition = parseFloat(row.querySelector('.ppe-addition').value) || 0;
+                const rate = parseFloat(row.querySelector('.ppe-rate').value) || 0;
+                const depreciation = Math.round(addition * rate / 100);
+                const closing = addition - depreciation;
+                
+                row.querySelector('.ppe-depreciation').textContent = depreciation;
+                row.querySelector('.ppe-closing').textContent = closing;
+                
+                totalDepreciation += depreciation;
+                totalClosing += closing;
+            });
+            ppeTotalDepreciation.textContent = totalDepreciation;
+            ppeTotalClosing.textContent = totalClosing;
+        }
+
+        ppeRowsContainer.addEventListener('input', updatePpeTotals);
+        
+        ppeRowsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-row-btn')) {
+                const id = parseInt(e.target.dataset.id);
+                ppeData = ppeData.filter(a => a.id !== id);
+                renderPpeModal();
+            }
+        });
+
+        document.getElementById('add-ppe-row').addEventListener('click', () => {
+            const newId = ppeData.length ? Math.max(...ppeData.map(a => a.id)) + 1 : 1;
+            ppeData.push({ id: newId, particulars: 'New Asset', addition: 0, rate: 0 });
+            renderPpeModal();
+        });
+
+        function savePpeData() {
+            const newData = [];
+            ppeRowsContainer.querySelectorAll('tr').forEach(row => {
+                newData.push({
+                    id: parseInt(row.dataset.id),
+                    particulars: row.querySelector('.ppe-particulars').value,
+                    addition: parseFloat(row.querySelector('.ppe-addition').value) || 0,
+                    rate: parseFloat(row.querySelector('.ppe-rate').value) || 0,
+                });
+            });
+            ppeData = newData;
+            
+            // Update the main form
+            const totalClosing = ppeData.reduce((acc, asset) => {
+                const depreciation = Math.round(asset.addition * asset.rate / 100);
+                return acc + (asset.addition - depreciation);
+            }, 0);
+            const totalDepreciation = ppeData.reduce((acc, asset) => {
+                return acc + Math.round(asset.addition * asset.rate / 100);
+            }, 0);
+            
+            document.getElementById('pos-ppe').value = totalClosing;
+            document.getElementById('pl-depreciation').value = -totalDepreciation;
+            
+            runAllCalculations();
+        }
+
+        // --- Modal: Admin Expenses (Note 17) ---
+        function renderAdminExpModal() {
+            adminExpRowsContainer.innerHTML = '';
+            adminExpData.forEach(exp => {
+                adminExpRowsContainer.innerHTML += `
+                    <tr data-id="${exp.id}">
+                        <td><input type="text" class="admin-exp-item" value="${exp.item}"></td>
+                        <td><input type="number" class="admin-exp-amount" value="${exp.amount}"></td>
+                        <td class="action-cell"><button class="remove-row-btn" data-id="${exp.id}">&times;</button></td>
+                    </tr>
+                `;
+            });
+            updateAdminExpTotals();
+        }
+
+        function updateAdminExpTotals() {
+            let total = 0;
+            adminExpRowsContainer.querySelectorAll('tr').forEach(row => {
+                total += parseFloat(row.querySelector('.admin-exp-amount').value) || 0;
+            });
+            adminExpTotal.textContent = total;
+        }
+
+        adminExpRowsContainer.addEventListener('input', updateAdminExpTotals);
+        
+        adminExpRowsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-row-btn')) {
+                const id = parseInt(e.target.dataset.id);
+                adminExpData = adminExpData.filter(a => a.id !== id);
+                renderAdminExpModal();
+            }
+        });
+
+        document.getElementById('add-admin-exp-row').addEventListener('click', () => {
+            const newId = adminExpData.length ? Math.max(...adminExpData.map(a => a.id)) + 1 : 1;
+            adminExpData.push({ id: newId, item: 'New Expense', amount: 0 });
+            renderAdminExpModal();
+        });
+
+        function saveAdminExpData() {
+            const newData = [];
+            adminExpRowsContainer.querySelectorAll('tr').forEach(row => {
+                newData.push({
+                    id: parseInt(row.dataset.id),
+                    item: row.querySelector('.admin-exp-item').value,
+                    amount: parseFloat(row.querySelector('.admin-exp-amount').value) || 0,
+                });
+            });
+            adminExpData = newData;
+            
+            const total = adminExpData.reduce((acc, exp) => acc + exp.amount, 0);
+            document.getElementById('pl-admin').value = -total;
+            runAllCalculations();
+        }
+
+        // --- Modal: Retained Earnings (Note 11) ---
+        function renderRetainedEarningsModal() {
+            document.getElementById('re-opening-balance').value = retainedEarningsData.opening;
+            document.getElementById('re-dividend-paid').value = retainedEarningsData.dividend;
+            document.getElementById('re-net-income').textContent = calculateProfitLossTotal();
+            updateRetainedEarningsTotal();
+        }
+        
+        function updateRetainedEarningsTotal() {
+            const opening = parseFloat(document.getElementById('re-opening-balance').value) || 0;
+            const netIncome = calculateProfitLossTotal();
+            const dividend = parseFloat(document.getElementById('re-dividend-paid').value) || 0;
+            const closing = opening + netIncome - dividend;
+            document.getElementById('re-closing-balance').textContent = closing;
+        }
+        
+        reModal.addEventListener('input', updateRetainedEarningsTotal);
+        
+        function saveRetainedEarningsData() {
+            retainedEarningsData.opening = parseFloat(document.getElementById('re-opening-balance').value) || 0;
+            retainedEarningsData.dividend = parseFloat(document.getElementById('re-dividend-paid').value) || 0;
+            
+            // Link to CF
+            document.getElementById('cf-dividend').value = -retainedEarningsData.dividend;
+            
+            // Update main form
+            const closing = retainedEarningsData.opening + calculateProfitLossTotal() - retainedEarningsData.dividend;
+            document.getElementById('pos-retained').value = closing;
+            runAllCalculations();
+        }
+
+        // --- Modal: Shareholding (Note 2) ---
+        function renderShareholdingModal() {
+            shareholdingRowsContainer.innerHTML = '';
+            shareholdingData.forEach(sh => {
+                shareholdingRowsContainer.innerHTML += `
+                    <tr data-id="${sh.id}">
+                        <td><input type="text" class="sh-name" value="${sh.name}"></td>
+                        <td><input type="text" class="sh-nation" value="${sh.nation}"></td>
+                        <td><input type="number" class="sh-shares" value="${sh.shares}"></td>
+                        <td><input type="number" class="sh-value" value="${sh.value}"></td>
+                        <td class="calc-field sh-total">${sh.shares * sh.value}</td>
+                        <td class="action-cell"><button class="remove-row-btn" data-id="${sh.id}">&times;</button></td>
+                    </tr>
+                `;
+            });
+            updateShareholdingTotals();
+        }
+        
+        function updateShareholdingTotals() {
+            let totalShares = 0;
+            let totalValue = 0;
+            shareholdingRowsContainer.querySelectorAll('tr').forEach(row => {
+                const shares = parseFloat(row.querySelector('.sh-shares').value) || 0;
+                const value = parseFloat(row.querySelector('.sh-value').value) || 0;
+                const total = shares * value;
+                
+                row.querySelector('.sh-total').textContent = total;
+                totalShares += shares;
+                totalValue += total;
+            });
+            shareholdingTotalShares.textContent = totalShares;
+            shareholdingTotalValue.textContent = totalValue;
+        }
+        
+        shareholdingRowsContainer.addEventListener('input', updateShareholdingTotals);
+        
+        shareholdingRowsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-row-btn')) {
+                const id = parseInt(e.target.dataset.id);
+                shareholdingData = shareholdingData.filter(a => a.id !== id);
+                renderShareholdingModal();
+            }
+        });
+
+        document.getElementById('add-shareholder-row').addEventListener('click', () => {
+            const newId = shareholdingData.length ? Math.max(...shareholdingData.map(a => a.id)) + 1 : 1;
+            shareholdingData.push({ id: newId, name: 'New Shareholder', nation: 'Country', shares: 0, value: 1000 });
+            renderShareholdingModal();
+        });
+        
+        function saveShareholdingData() {
+            const newData = [];
+            shareholdingRowsContainer.querySelectorAll('tr').forEach(row => {
+                newData.push({
+                    id: parseInt(row.dataset.id),
+                    name: row.querySelector('.sh-name').value,
+                    nation: row.querySelector('.sh-nation').value,
+                    shares: parseFloat(row.querySelector('.sh-shares').value) || 0,
+                    value: parseFloat(row.querySelector('.sh-value').value) || 0,
+                });
+            });
+            shareholdingData = newData;
+            
+            const totalValue = shareholdingData.reduce((acc, sh) => acc + (sh.shares * sh.value), 0);
+            document.getElementById('pos-capital').value = totalValue;
+            runAllCalculations();
+        }
+        
+        // --- Modal: Inventory (Note 7) ---
+        function renderInventoryModal() {
+            document.getElementById('inv-age-1-150').value = inventoryData.age_1_150;
+            updateInventoryTotal();
+        }
+        function updateInventoryTotal() {
+            const total = parseFloat(document.getElementById('inv-age-1-150').value) || 0;
+            document.getElementById('inv-total').textContent = total;
+        }
+        inventoryModal.addEventListener('input', updateInventoryTotal);
+        function saveInventoryData() {
+            inventoryData.age_1_150 = parseFloat(document.getElementById('inv-age-1-150').value) || 0;
+            document.getElementById('pos-inventory').value = inventoryData.age_1_150;
+            document.getElementById('cos-closing-inv').textContent = inventoryData.age_1_150;
+            runAllCalculations();
+        }
+
+        // --- START: Add New Inventory Calc Function ---
+        function updateInvAgeCalcTotal() {
+            // Get values from Note 16 data
+            const opening = costOfSalesData.opening;
+            const purchase = costOfSalesData.purchases;
+            
+            // Get value from Profit & Loss tab
+            const sales = getVal('pl-sales');
+            
+            // User's formula: (Opening + Purchase) - Sales
+            const total = (opening + purchase) - sales;
+            
+            // Update the display fields in the calculator
+            invCalcOpening.textContent = opening.toLocaleString();
+            invCalcPurchase.textContent = purchase.toLocaleString();
+            invCalcSales.textContent = sales.toLocaleString(); // Show the sales value
+            invCalcTotal.textContent = total;
+        }
+        // --- END: Add New Inventory Calc Function ---
+        
+        // --- Modal: Receivables (Note 8) ---
+        function renderReceivablesModal() {
+            document.getElementById('rec-age-1-60').value = receivablesData.age_1_60;
+            document.getElementById('rec-geo-uae').value = receivablesData.geo_uae;
+            updateReceivablesTotal();
+        }
+        function updateReceivablesTotal() {
+            const total = parseFloat(document.getElementById('rec-age-1-60').value) || 0;
+            document.getElementById('rec-total').textContent = total;
+        }
+        receivablesModal.addEventListener('input', updateReceivablesTotal);
+        function saveReceivablesData() {
+            receivablesData.age_1_60 = parseFloat(document.getElementById('rec-age-1-60').value) || 0;
+            receivablesData.geo_uae = parseFloat(document.getElementById('rec-geo-uae').value) || 0;
+            document.getElementById('pos-receivables').value = receivablesData.age_1_60;
+            runAllCalculations();
+        }
+
+        // --- Modal: Deposits (Note 10) ---
+        function renderDepositsModal() {
+            document.getElementById('dep-deposits').value = depositsData.deposits;
+            document.getElementById('dep-prepaid').value = depositsData.prepaid;
+            updateDepositsTotal();
+        }
+        function updateDepositsTotal() {
+            const total = (parseFloat(document.getElementById('dep-deposits').value) || 0) + 
+                          (parseFloat(document.getElementById('dep-prepaid').value) || 0);
+            document.getElementById('dep-total').textContent = total;
+        }
+        depositsModal.addEventListener('input', updateDepositsTotal);
+        function saveDepositsData() {
+            depositsData.deposits = parseFloat(document.getElementById('dep-deposits').value) || 0;
+            depositsData.prepaid = parseFloat(document.getElementById('dep-prepaid').value) || 0;
+            document.getElementById('pos-deposits').value = depositsData.deposits + depositsData.prepaid;
+            runAllCalculations();
+        }
+
+        // --- Modal: Shareholder Account (Note 12) ---
+        function renderShareholderAccModal() {
+            document.getElementById('sha-opening').value = shareholderAccData.opening;
+            document.getElementById('sha-funds').value = shareholderAccData.funds;
+            updateShareholderAccTotal();
+        }
+        function updateShareholderAccTotal() {
+            const total = (parseFloat(document.getElementById('sha-opening').value) || 0) - 
+                          (parseFloat(document.getElementById('sha-funds').value) || 0);
+            document.getElementById('sha-total').textContent = total;
+        }
+        shareholderAccModal.addEventListener('input', updateShareholderAccTotal);
+        function saveShareholderAccData() {
+            shareholderAccData.opening = parseFloat(document.getElementById('sha-opening').value) || 0;
+            shareholderAccData.funds = parseFloat(document.getElementById('sha-funds').value) || 0;
+            
+            // Note: PDF shows (132,042) but logic is 33,542 + 98,500 = 132,042.
+            // PDF is likely showing a credit balance (negative).
+            // Let's assume opening is a credit and funds contributed is a debit (drawing)
+            // No, PDF shows 33,542 + 98,500 = 132,042. This is an EQUITY account.
+            // Wait, PDF shows (132,042) on balance sheet. This means it's a LIABILITY to the shareholder.
+            // And CF shows 98,500 as "net movement".
+            // Let's re-read PDF...
+            // Equity section: Shareholder's current account: (132,042). This is a CONTRA-EQUITY account.
+            // Statement of Changes: Opening 33,542... Movements 98,500... Closing 132,042.
+            // This means 33,542 + 98,500 = 132,042.
+            // And on the Fin Position, it's (132,042).
+            // This is confusing. Let's follow the PDF math.
+            // Let's assume the final value should be negative.
+            // Opening 33,542. Movement 98,500. Closing 132,042.
+            // So on Fin Pos, we show -132,042.
+            // Let's change the logic to SUM them.
+            const total = shareholderAccData.opening + shareholderAccData.funds;
+            
+            // We store the values as entered. The PDF logic is Opening + Movement = Closing.
+            // 33,542 + 98,500 = 132,042.
+            // On the Fin Pos, this is shown as (132,042). So we'll use the negative.
+            document.getElementById('pos-shareholder').value = -total;
+            
+            // Link to CF
+            document.getElementById('cf-shareholder').value = shareholderAccData.funds;
+            
+            runAllCalculations();
+        }
+        
+        // --- Modal: Payables (Note 13) ---
+        function renderPayablesModal() {
+            document.getElementById('pay-age-1-30').value = payablesData.age_1_30;
+            updatePayablesTotal();
+        }
+        function updatePayablesTotal() {
+            const total = parseFloat(document.getElementById('pay-age-1-30').value) || 0;
+            document.getElementById('pay-total').textContent = total;
+        }
+        payablesModal.addEventListener('input', updatePayablesTotal);
+        function savePayablesData() {
+            payablesData.age_1_30 = parseFloat(document.getElementById('pay-age-1-30').value) || 0;
+            document.getElementById('pos-payables').value = payablesData.age_1_30;
+            runAllCalculations();
+        }
+        
+        // --- Modal: Cost of Sales (Note 16) ---
+        function renderCostOfSalesModal() {
+            document.getElementById('cos-opening-inv').value = costOfSalesData.opening;
+            document.getElementById('cos-purchases').value = costOfSalesData.purchases;
+            document.getElementById('cos-closing-inv').textContent = inventoryData.age_1_150; // Linked
+            updateCostOfSalesTotal();
+        }
+
+        function calculateCostOfSalesTotal() {
+            const opening = costOfSalesData.opening;
+            const purchases = costOfSalesData.purchases;
+            const closing = inventoryData.age_1_150;
+            return opening + purchases - closing;
+        }
+
+        function updateCostOfSalesTotal() {
+            const opening = parseFloat(document.getElementById('cos-opening-inv').value) || 0;
+            const purchases = parseFloat(document.getElementById('cos-purchases').value) || 0;
+            const closing = inventoryData.age_1_150;
+            const total = opening + purchases - closing;
+            document.getElementById('cos-total').textContent = total;
+        }
+        costOfSalesModal.addEventListener('input', updateCostOfSalesTotal);
+        function saveCostOfSalesData() {
+            costOfSalesData.opening = parseFloat(document.getElementById('cos-opening-inv').value) || 0;
+            costOfSalesData.purchases = parseFloat(document.getElementById('cos-purchases').value) || 0;
+            
+            const total = costOfSalesData.opening + costOfSalesData.purchases - inventoryData.age_1_150;
+            document.getElementById('pl-cost').value = -total;
+                    runAllCalculations();
+                }
+            
+                // --- START: Add New OI Calculator Function ---
+                function updateOiCalcTotal() {
+                    const purchase = parseFloat(oiCalcPurchase.value) || 0;
+                    const sales = parseFloat(oiCalcSales.value) || 0;
+                    const extra = parseFloat(oiCalcExtra.value) || 0;
+            
+                    // User's formula: Closing Purchase - Closing Sales + Extra
+                    const total = purchase - sales + extra;
+    oiCalcTotal.textContent = total;
+    }
+    
+    // --- START: Add New History Function ---
+    function renderOiCalcHistory() {
+        if (!openingInventoryCalcHistory || openingInventoryCalcHistory.length === 0) {
+            oiCalcHistoryContainer.innerHTML = '<p class="text-gray-500">No history saved for this draft.</p>';
+            return;
+        }
+
+        oiCalcHistoryContainer.innerHTML = ''; // Clear
+        
+        openingInventoryCalcHistory.forEach(entry => {
+            const el = document.createElement('div');
+            el.className = 'p-2 border rounded-lg bg-gray-50 text-sm';
+            el.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <strong class="text-gray-900">Total: ${entry.total.toLocaleString()}</strong>
+                    <span class="text-xs text-gray-500">${entry.date}</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    (${entry.purchase.toLocaleString()} P - ${entry.sales.toLocaleString()} S + ${entry.extra.toLocaleString()} E)
+                </p>
+            `;
+            oiCalcHistoryContainer.appendChild(el);
+        });
+    }
+    // --- END: Add New History Function ---
+
+// --- START: Add New Main Comments Function ---
+function renderMainCommentsList() {
+    if (!mainCommentsData || mainCommentsData.length === 0) {
+        mainCommentList.innerHTML = '<p class="text-gray-500">No comments added to this draft yet.</p>';
+        return;
+    }
+
+    mainCommentList.innerHTML = ''; // Clear
+
+    // Render in reverse order (newest first)
+    mainCommentsData.slice().reverse().forEach(comment => {
+        const el = document.createElement('div');
+        el.className = 'p-4 border rounded-lg bg-gray-50';
+
+        // Format date to be more readable
+        const commentDate = new Date(comment.timestamp).toLocaleString();
+
+        el.innerHTML = `
+            <div class="flex justify-between items-center mb-1">
+                <strong class="text-blue-600">${comment.email}</strong>
+                <span class="text-xs text-gray-500">${commentDate}</span>
+            </div>
+            <p class="text-gray-800 whitespace-pre-wrap">${comment.text}</p>
+        `;
+        mainCommentList.appendChild(el);
+    });
+}
+// --- END: Add New Main Comments Function ---
+    
+    // --- Main Calculation Functions ---
+        function calculateFinancialPositionTotals() {
+            const ppe = getVal('pos-ppe');
+            const inventory = getVal('pos-inventory');
+            const receivables = getVal('pos-receivables');
+            const cash = getVal('pos-cash');
+            const deposits = getVal('pos-deposits');
+            const totalAssets = ppe + inventory + receivables + cash + deposits;
+            
+            const capital = getVal('pos-capital');
+            const retained = getVal('pos-retained');
+            const shareholder = getVal('pos-shareholder');
+            const payables = getVal('pos-payables');
+            const accruals = getVal('pos-accruals');
+            const totalEquityLiabilities = capital + retained + shareholder + payables + accruals;
+            
+            return { totalAssets, totalEquityLiabilities };
+        }
+        
+        function calculateProfitLossTotal() {
+            const sales = getVal('pl-sales');
+            const cost = getVal('pl-cost');
+            const admin = getVal('pl-admin');
+            const remuneration = getVal('pl-remuneration');
+            const depreciation = getVal('pl-depreciation');
+            const netIncome = sales + cost + admin + remuneration + depreciation;
+            return netIncome;
+        }
+        
+        function calculateCashFlowTotals() {
+            const profit = getVal('cf-profit');
+            const inventory = getVal('cf-inventory');
+            const receivables = getVal('cf-receivables');
+            const deposits = getVal('cf-deposits');
+            const payables = getVal('cf-payables');
+            const accruals = getVal('cf-accruals');
+            const netOperating = profit + inventory + receivables + deposits + payables + accruals;
+            
+            const dividend = getVal('cf-dividend');
+            const shareholder = getVal('cf-shareholder');
+            const netFinancing = dividend + shareholder;
+            
+            const netChange = netOperating + netFinancing;
+            const cashBegin = getVal('cf-cash-begin');
+            const cashEnd = cashBegin + netChange;
+            
+            return { netOperating, netFinancing, netChange, cashEnd };
+        }
+        
+        // --- Review Tab Update ---
+        function updateReviewTab() {
+            const { totalAssets, totalEquityLiabilities } = calculateFinancialPositionTotals();
+            const netIncome = calculateProfitLossTotal();
+            const { netOperating, netFinancing, netChange, cashEnd } = calculateCashFlowTotals();
+
+            // Check if pos-cash matches calculated cashEnd
+            const posCash = getVal('pos-cash');
+            const cashCheck = (posCash === cashEnd);
+            
+            // Check if assets = equity + liabilities
+            const balanceCheck = (totalAssets === totalEquityLiabilities);
+
+            reviewPreviewArea.innerHTML = `
+                <h4 class="text-lg font-bold">Statement of Financial Position</h4>
+                <table>
+                    <thead><tr><th>Item</th><th class="text-right">AED</th></tr></thead>
+                    <tbody>
+                        <tr><td><a class="review-link" data-modal-target="#open-ppe-modal">Property, plant and equipment</a></td><td class="text-right">${getVal('pos-ppe').toLocaleString()}</td></tr>
+                        <tr><td><a class="review-link" data-modal-target="#open-inventory-modal">Inventory</a></td><td class="text-right">${getVal('pos-inventory').toLocaleString()}</td></tr>
+                        <tr><td><a class="review-link" data-modal-target="#open-receivables-modal">Trade receivables</a></td><td class="text-right">${getVal('pos-receivables').toLocaleString()}</td></tr>
+                        <tr><td><a class="review-link" data-tab-target="position" data-field-target="#pos-cash">Cash and balance with bank</a></td><td class="text-right">${getVal('pos-cash').toLocaleString()}</td></tr>
+                        <tr><td><a class="review-link" data-modal-target="#open-deposits-modal">Deposits and prepaid expenses</a></td><td class="text-right">${getVal('pos-deposits').toLocaleString()}</td></tr>
+                        <tr class="font-bold bg-gray-100"><td>Total Assets</td><td class="text-right">${totalAssets.toLocaleString()}</td></tr>
+                    </tbody>
+                </table>
+                <table>
+                    <thead><tr><th>Item</th><th class="text-right">AED</th></tr></thead>
+                    <tbody>
+                        <tr><td><a class="review-link" data-modal-target="#open-shareholding-modal">Share capital</a></td><td class="text-right">${getVal('pos-capital').toLocaleString()}</td></tr>
+                        <tr><td><a class="review-link" data-modal-target="#open-re-modal">Retained earnings</a></td><td class="text-right">${getVal('pos-retained').toLocaleString()}</td></tr>
+                        <tr><td><a class="review-link" data-modal-target="#open-shareholder-acc-modal">Shareholder's current account</a></td><td class="text-right">${getVal('pos-shareholder').toLocaleString()}</td></tr>
+                        <tr><td><a class="review-link" data-modal-target="#open-payables-modal">Trade payables</a></td><td class="text-right">${getVal('pos-payables').toLocaleString()}</td></tr>
+                        <tr><td><a class="review-link" data-tab-target="position" data-field-target="#pos-accruals">Accruals and other payables</a></td><td class="text-right">${getVal('pos-accruals').toLocaleString()}</td></tr>
+                        <tr class="font-bold bg-gray-100"><td>Total Equity and Liabilities</td><td class="text-right">${totalEquityLiabilities.toLocaleString()}</td></tr>
+                    </tbody>
+                </table>
+                
+                ${balanceCheck ? 
+                    '<p class="text-green-600 font-semibold p-3 bg-green-100 rounded-lg">Balance Check PASSED: Total Assets equal Total Equity & Liabilities.</p>' : 
+                    `<p class="text-red-600 font-semibold p-3 bg-red-100 rounded-lg">Balance Check FAILED: Total Assets (AED ${totalAssets.toLocaleString()}) do not equal Total Equity & Liabilities (AED ${totalEquityLiabilities.toLocaleString()}).</p>`
+                }
+
+                <hr class="my-6">
+                
+                <h4 class="text-lg font-bold">Statement of Profit or Loss</h4>
+                <table>
+                    <thead><tr><th>Item</th><th class="text-right">AED</th></tr></thead>
+                    <tbody>
+                        <tr><td><a class="review-link" data-tab-target="profitloss" data-field-target="#pl-sales">Sales</a></td><td class="text-right">${getVal('pl-sales').toLocaleString()}</td></tr>
+                        <tr><td><a class="review-link" data-modal-target="#open-cost-of-sales-modal">Cost of sales</a></td><td class="text-right">(${Math.abs(getVal('pl-cost')).toLocaleString()})</td></tr>
+                        <tr class="font-bold bg-gray-100"><td>Gross Profit</td><td class="text-right">${(getVal('pl-sales') + getVal('pl-cost')).toLocaleString()}</td></tr>
+                        <tr><td><a class="review-link" data-modal-target="#open-admin-exp-modal">Administration and selling expenses</a></td><td class="text-right">(${Math.abs(getVal('pl-admin')).toLocaleString()})</td></tr>
+                        <tr><td><a class="review-link" data-tab-target="profitloss" data-field-target="#pl-remuneration">Managerial remuneration</a></td><td class="text-right">(${Math.abs(getVal('pl-remuneration')).toLocaleString()})</td></tr>
+                        <tr><td><a class="review-link" data-modal-target="#open-ppe-modal">Depreciation for the Year</a></td><td class="text-right">(${Math.abs(getVal('pl-depreciation')).toLocaleString()})</td></tr>
+                        <tr class="font-bold bg-gray-100"><td>Net Income for the Year</td><td class="text-right">${netIncome.toLocaleString()}</td></tr>
+                    </tbody>
+                </table>
+
+                <hr class="my-6">
+
+                <h4 class="text-lg font-bold">Statement of Cash Flows</h4>
+                <table>
+                    <thead><tr><th>Item</th><th class="text-right">AED</th></tr></thead>
+                    <tbody>
+                        <tr><td>Net profit for the year</td><td class="text-right">${getVal('cf-profit').toLocaleString()}</td></tr>
+                        <tr><td>(Increase) / Decrease in Inventory</td><td class="text-right">${getVal('cf-inventory').toLocaleString()}</td></tr>
+                        <tr><td>(Increase) / Decrease in Trade receivables</td><td class="text-right">${getVal('cf-receivables').toLocaleString()}</td></tr>
+                        <tr><td>(Increase) / Decrease in Deposits</td><td class="text-right">${getVal('cf-deposits').toLocaleString()}</td></tr>
+                        <tr><td>Increase / (Decrease) in Trade payables</td><td class="text-right">${getVal('cf-payables').toLocaleString()}</td></tr>
+                        <tr><td>Increase / (Decrease) in Accruals</td><td class="text-right">${getVal('cf-accruals').toLocaleString()}</td></tr>
+                        <tr class="font-bold bg-gray-100"><td>Net cash from operating activities</td><td class="text-right">${netOperating.toLocaleString()}</td></tr>
+                        <tr><td>Dividend paid</td><td class="text-right">${getVal('cf-dividend').toLocaleString()}</td></tr>
+                        <tr><td>Net movement in shareholder's current account</td><td class="text-right">${getVal('cf-shareholder').toLocaleString()}</td></tr>
+                        <tr class="font-bold bg-gray-100"><td>Net cash from financing activities</td><td class="text-right">${netFinancing.toLocaleString()}</td></tr>
+                        <tr><td>Net (decrease) / increase in cash</td><td class="text-right">${netChange.toLocaleString()}</td></tr>
+                        <tr><td>Cash at beginning of the year</td><td class="text-right">${getVal('cf-cash-begin').toLocaleString()}</td></tr>
+                        <tr class="font-bold bg-gray-100"><td>Cash at end of the year</td><td class="text-right">${cashEnd.toLocaleString()}</td></tr>
+                    </tbody>
+                </table>
+                
+                ${cashCheck ? 
+                    `<p class="text-green-600 font-semibold p-3 bg-green-100 rounded-lg">Cash Check PASSED: Calculated Cash at End of Year (AED ${cashEnd.toLocaleString()}) matches the Financial Position (AED ${posCash.toLocaleString()}).</p>` : 
+                    `<p class="text-red-600 font-semibold p-3 bg-red-100 rounded-lg">Cash Check FAILED: Calculated Cash at End of Year (AED ${cashEnd.toLocaleString()}) does not match the Financial Position (AED ${posCash.toLocaleString()}).</pre>`
+                }
+            `;
+            
+            messageBox.style.display = (balanceCheck && cashCheck) ? 'none' : 'block';
+            messageBox.textContent = `Balance Check Failed. Please review your numbers.`;
+        }
+
+        // --- Run All Calculations and Link Fields ---
+        function runAllCalculations() {
+            // P&L
+            const netIncome = calculateProfitLossTotal();
+            // -> CF
+            setVal('cf-profit', netIncome);
+            // -> Retained Earnings Modal
+            document.getElementById('re-net-income').textContent = netIncome;
+            updateRetainedEarningsTotal();
+            
+            // Retained Earnings Modal -> Fin Pos
+            const reOpening = retainedEarningsData.opening;
+            const reDividend = retainedEarningsData.dividend;
+            const reClosing = reOpening + netIncome - reDividend;
+            setVal('pos-retained', reClosing);
+            
+            // CF -> Fin Pos
+            const { cashEnd } = calculateCashFlowTotals();
+            // setVal('pos-cash', cashEnd); // We don't auto-set this. The user enters it, and we check against it.
+
+            // Other Modals -> Fin Pos / P&L
+            const ppeClosing = ppeData.reduce((acc, a) => acc + (a.addition - Math.round(a.addition * a.rate / 100)), 0);
+            const ppeDepreciation = ppeData.reduce((acc, a) => acc + Math.round(a.addition * a.rate / 100), 0);
+            setVal('pos-ppe', ppeClosing);
+            setVal('pl-depreciation', -ppeDepreciation);
+            
+            const adminTotal = adminExpData.reduce((acc, a) => acc + a.amount, 0);
+            setVal('pl-admin', -adminTotal);
+            
+            const shareholdingTotal = shareholdingData.reduce((acc, a) => acc + (a.shares * a.value), 0);
+            setVal('pos-capital', shareholdingTotal);
+            
+            setVal('pos-inventory', inventoryData.age_1_150);
+            setVal('pos-receivables', receivablesData.age_1_60);
+            setVal('pos-deposits', depositsData.deposits + depositsData.prepaid);
+            
+            // Note 12 logic: 33542 + 98500 = 132042. Shown as (132,042) on Fin Pos.
+            const shaTotal = shareholderAccData.opening + shareholderAccData.funds;
+            setVal('pos-shareholder', -shaTotal);
+            setVal('cf-shareholder', shareholderAccData.funds);
+            
+            setVal('pos-payables', payablesData.age_1_30);
+            
+            const cosTotal = costOfSalesData.opening + costOfSalesData.purchases - inventoryData.age_1_150;
+            setVal('pl-cost', -cosTotal);
+            
+            // Final check
+            updateReviewTab();
+        }
+
+        // --- END OF PDF Generation ---
+        
+        // --- START: New function to set up the main app's listeners ---
+        function initializeMainAppListeners() {
+            // Attach listener to all inputs to re-calculate on change
+            allInputIds.forEach(id => {
+                document.getElementById(id).addEventListener('input', () => {
+                    // Special links
+                    if (id === 'cf-dividend') {
+                        // link cf-dividend to re-dividend-paid
+                        const cfDiv = getVal('cf-dividend'); // usually negative
+                        retainedEarningsData.dividend = -cfDiv;
+                    }
+                    runAllCalculations();
+                });
+            });
+            
+            // Attach listeners to modal add buttons
+            document.getElementById('add-ppe-row').onclick = () => {
+                const newId = ppeData.length ? Math.max(...ppeData.map(a => a.id)) + 1 : 1;
+                ppeData.push({ id: newId, particulars: 'New Asset', addition: 0, rate: 0 });
+                renderPpeModal();
+            };
+            document.getElementById('add-admin-exp-row').onclick = () => {
+                const newId = adminExpData.length ? Math.max(...adminExpData.map(a => a.id)) + 1 : 1;
+                adminExpData.push({ id: newId, item: 'New Expense', amount: 0 });
+                renderAdminExpModal();
+            };
+            document.getElementById('add-shareholder-row').onclick = () => {
+                const newId = shareholdingData.length ? Math.max(...shareholdingData.map(a => a.id)) + 1 : 1;
+                shareholdingData.push({ id: newId, name: 'New Shareholder', nation: 'Country', shares: 0, value: 1000 });
+                renderShareholdingModal();
+            };
+            
+            // Attach listener for starting a new form
+            startNewBtn.addEventListener('click', () => {
+                document.getElementById('financial-form').reset();
+                draftNameInput.value = '';
+                // Reset all modal data to default
+                ppeData = [
+                    { id: 1, particulars: 'Office Furniture', addition: 4418, rate: 5 },
+                    { id: 2, particulars: 'Computers', addition: 3895, rate: 40 },
+                    { id: 3, particulars: 'Printers', addition: 3200, rate: 40 },
+                    { id: 4, particulars: 'CCTV', addition: 0, rate: 40 },
+                    { id: 5, particulars: 'Vehicles', addition: 0, rate: 20 },
+                ];
+                adminExpData = [
+                    { id: 1, item: 'Salaries and benefits', amount: 8415 },
+                    { id: 2, item: 'Legal, professional and visa charges', amount: 36859 },
+                    { id: 3, item: 'Commission paid', amount: 24400 },
+                    { id: 4, item: 'Rent', amount: 105000 },
+                    { id: 5, item: 'Communication and utilities', amount: 4154 },
+                    { id: 6, item: 'Packing and Bailing & Packing Expenses', amount: 145500 },
+                    { id: 7, item: 'Travelling and conveyance', amount: 6625 },
+                    { id: 8, item: 'Insurance and BL Charges', amount: 132000 },
+                    { id: 9, item: 'Plastic regrinding expenses', amount: 343000 },
+                    { id: 10, item: 'Other expenses', amount: 14855 },
+                ];
+                shareholdingData = [
+                    { id: 1, name: 'Mr. NADEEM KHAN', nation: 'PAKISTAN', shares: 5, value: 1000 },
+                    { id: 2, name: 'Mr. MUHAMMAD USAMA SAQIB', nation: 'PAKISTAN', shares: 95, value: 1000 },
+                ];
+                retainedEarningsData = { opening: 61856, dividend: 0 };
+                inventoryData = { age_1_150: 67148 };
+                receivablesData = { age_1_60: 627000, geo_uae: 627000 };
+                depositsData = { deposits: 5541, prepaid: 8951 };
+                shareholderAccData = { opening: 33542, funds: 98500 };
+                payablesData = { age_1_30: 588000 };
+                costOfSalesData = { opening: 0, purchases: 1366842 };
+    
+                openingInventoryCalcHistory = [];
+
+// --- ADD THIS ---
+mainCommentsData = [];
+renderMainCommentsList(); // Clear comment list on new form
+    
+                letterheadBase64 = null;
+                
+                // Re-render linked fields
+                document.getElementById('cos-closing-inv').textContent = inventoryData.age_1_150;
+                document.getElementById('pl-cost').value = -calculateCostOfSalesTotal();
+                
+                // Init Letterhead
+                updateLetterheadPreview();
+                
+                // Run all cals and update UI
+                runAllCalculations();
+                updateReviewTab();
+                
+                // Go to first tab
+                tabs[0].click();
+                
+                showDraftMessage("Form has been reset to default values.", false);
+            });
+            
+            // --- ADD THIS NEW BLOCK FOR SETTINGS & COMPANIES ---
+            
+            // Toggle Settings Dropdown
+            settingsBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Stop click from bubbling up to the window
+                settingsDropdown.classList.toggle('hidden');
+            });
+
+            // Open Companies Modal
+            openCompaniesModalBtn.addEventListener('click', () => {
+                companiesModal.style.display = 'block';
+                settingsDropdown.classList.add('hidden'); // Hide dropdown
+            });
+
+            // Close/Cancel Companies Modal
+            closeCompaniesModalBtn.addEventListener('click', () => {
+                companiesModal.style.display = 'none';
+            });
+            cancelCompaniesModalBtn.addEventListener('click', () => {
+                companiesModal.style.display = 'none';
+            });
+            
+            // Save Company Details (Placeholder)
+            saveCompaniesDetailsBtn.addEventListener('click', () => {
+                const name = companyFormName.value.trim();
+                if (!name) {
+                    alert('Company Name is required.');
+                    return;
+                }
+
+                const newCompany = {
+                    id: Date.now(), // Simple unique ID
+                    name: name,
+                    nameAr: companyFormNameAr.value.trim(),
+                    signatory: companyFormSignatory.value.trim(),
+                    email: companyFormEmail.value.trim(),
+                    city: companyFormCity.value.trim(),
+                    country: companyFormCountry.value.trim(),
+                    address: companyFormAddress.value.trim()
+                };
+
+                companiesData.push(newCompany);
+                saveCompanies(); // Save to Firebase
+                renderCompanyList(); // Update the list in the modal
+                updateCompanySelector(); // Update the main dropdown
+
+                // Clear form for next entry
+                companyFormName.value = '';
+                companyFormNameAr.value = '';
+                companyFormSignatory.value = '';
+                companyFormEmail.value = '';
+                companyFormCity.value = '';
+                companyFormCountry.value = '';
+                companyFormAddress.value = '';
+            });
+            // --- END OF NEW BLOCK ---
+            
+            // --- ADD THIS NEW EVENT LISTENER ---
+            reviewPreviewArea.addEventListener('click', (e) => {
+                const target = e.target.closest('.review-link');
+                if (!target) return; // Didn't click a link
+
+                e.preventDefault(); // Stop the link from doing anything else
+
+                const modalTarget = target.dataset.modalTarget;
+                const tabTarget = target.dataset.tabTarget;
+                const fieldTarget = target.dataset.fieldTarget;
+
+                if (modalTarget) {
+                    // This is a link to open a modal
+                    // We just "click" the real button that opens the modal
+                    const modalButton = document.querySelector(modalTarget);
+                    if (modalButton) {
+                        modalButton.click();
+                    }
+                } else if (tabTarget) {
+                    // This is a link to switch to a tab
+                    const tabButton = document.querySelector(`.tab-btn[data-tab="${tabTarget}"]`);
+                    if (tabButton) {
+                        tabButton.click();
+                        
+                        // If it also has a field target, find it, focus, and select
+                        if (fieldTarget) {
+                            const field = document.querySelector(fieldTarget);
+                            if (field) {
+                                field.focus();
+                                field.select();
+                            }
+                        }
+                    }
+                }
+            });
+            // --- END OF NEW EVENT LISTENER ---
+            
+            // Close dropdown if clicking anywhere else on the page
+            window.addEventListener('click', (e) => {
+                if (!settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) {
+                    settingsDropdown.classList.add('hidden');
+                }
+            });
+
+            // --- ADD THIS NEW LISTENER ---
+            companySelector.addEventListener('change', (e) => {
+                const companyId = e.target.value;
+                if (!companyId) return;
+
+                const company = companiesData.find(c => c.id.toString() === companyId);
+                if (company) {
+                    // 1. Reset the entire form to a clean slate
+                    startNewBtn.click();
+
+                    // 2. Populate General Info from the selected company
+                    setVal('company-name', company.name);
+                    setVal('company-name-ar', company.nameAr);
+                    setVal('signatory', company.signatory);
+                    setVal('email', company.email);
+
+                    // Combine address fields
+                    const fullAddress = [company.address, company.city, company.country]
+                                        .filter(Boolean) // Remove empty parts
+                                        .join(', ');
+                    setVal('address', fullAddress);
+
+                    // Switch to the General tab
+                    document.querySelector('.tab-btn[data-tab="general"]').click();
+                }
+            });
+
+	        // --- START: Add New OI Calculator Listeners ---
+	        openOiCalcModalLink.addEventListener('click', (e) => {
+                e.preventDefault(); // Stop the link from jumping
+                
+                // Reset form
+                oiCalcPurchase.value = 0;
+                oiCalcSales.value = 0;
+                oiCalcExtra.value = 0;
+                oiCalcSaveHistory.checked = false; // Reset checkbox
+                updateOiCalcTotal();
+                
+                // Render history
+                renderOiCalcHistory();
+                
+                oiCalcModal.style.display = 'block';
+            });
+
+	        closeOiCalcModalBtn.addEventListener('click', () => {
+	            oiCalcModal.style.display = 'none';
+	        });
+	        oiCalcCancelBtn.addEventListener('click', () => {
+	            oiCalcModal.style.display = 'none';
+	        });
+
+	        // Live-update the calculation total
+	        oiCalcModal.addEventListener('input', updateOiCalcTotal);
+
+	        oiCalcApplyBtn.addEventListener('click', () => {
+                // Get the final calculated value
+                const result = parseFloat(oiCalcTotal.textContent) || 0;
+                
+                // Save to history if checked
+                if (oiCalcSaveHistory.checked) {
+                    const historyEntry = {
+                        date: new Date().toLocaleDateString(),
+                        purchase: parseFloat(oiCalcPurchase.value) || 0,
+                        sales: parseFloat(oiCalcSales.value) || 0,
+                        extra: parseFloat(oiCalcExtra.value) || 0,
+                        total: result
+                    };
+                    openingInventoryCalcHistory.push(historyEntry);
+                }
+
+                // Set the value in the "Cost of Sales" input
+                setVal('cos-opening-inv', result);
+                
+                // Close the calculator
+                oiCalcModal.style.display = 'none';
+                
+                // IMPORTANT: Update the "Cost of Sales" modal total
+                updateCostOfSalesTotal();
+            });
+	        // --- END: Add New OI Calculator Listeners ---
+
+            // --- START: Add New Inventory Calc Listeners ---
+            openInvAgeCalcLink.addEventListener('click', (e) => {
+                e.preventDefault(); // Stop the link from jumping
+                
+                // Update totals with the latest data
+                updateInvAgeCalcTotal(); 
+                
+                invAgeCalcModal.style.display = 'block';
+            });
+
+            closeInvAgeCalcModalBtn.addEventListener('click', () => {
+                invAgeCalcModal.style.display = 'none';
+            });
+            invCalcCancelBtn.addEventListener('click', () => {
+                invAgeCalcModal.style.display = 'none';
+            });
+
+            invCalcApplyBtn.addEventListener('click', () => {
+                // Get the final calculated value
+                const result = parseFloat(invCalcTotal.textContent) || 0;
+                
+                // Set the value in the "Inventory" input
+                setVal('inv-age-1-150', result);
+                
+                // Close the calculator
+                invAgeCalcModal.style.display = 'none';
+                
+                // IMPORTANT: Update the "Inventory" modal total
+                updateInventoryTotal();
+            });
+            // --- END: Add New Inventory Calc Listeners ---
+
+        // --- START: Add New Main Comment Listener ---
+        addMainCommentBtn.addEventListener('click', () => {
+            const text = mainCommentInput.value.trim();
+            if (!text) return; // Don't add empty comments
+
+            const user = auth.currentUser;
+            if (!user) {
+                alert("You must be signed in to comment.");
+                return;
+            }
+
+            const newComment = {
+                email: user.email,
+                text: text,
+                timestamp: new Date().toISOString() // Save as standard string
+            };
+
+            mainCommentsData.push(newComment);
+            renderMainCommentsList(); // Re-render the list
+
+            // Clear the input
+            mainCommentInput.value = '';
+        });
+        // --- END: Add New Main Comment Listener ---
+            
+            // --- ADDED THIS LINE ---
+            signOutBtn.addEventListener('click', handleSignOut);
+            
+            // Trigger initial calculations on load
+            document.getElementById('cos-closing-inv').textContent = inventoryData.age_1_150;
+            document.getElementById('pl-cost').value = -calculateCostOfSalesTotal();
+            
+            // Init Letterhead
+            updateLetterheadPreview();
+            
+            runAllCalculations();
+            updateReviewTab();
+        }
+        // --- END: New function ---
+
+
+        // --- Initial Load ---
+        window.onload = () => {
+            // Initialize Firebase
+            initFirebase();
+            
+            // --- Auth Event Listeners (for login screen) ---
+            signInBtn.addEventListener('click', handleSignIn);
+            registerBtn.addEventListener('click', handleRegister);
+        };
+        
+        // --- PDF Generation (THE BIG ONE) ---
+        generatePdfBtn.addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const companyName = document.getElementById('company-name').value;
+            const companyNameAr = document.getElementById('company-name-ar').value;
+            const reportDate = document.getElementById('report-date').value;
+            const signatory = document.getElementById('signatory').value;
+            const address = document.getElementById('address').value;
+            const email = document.getElementById('email').value;
+            
+            const finalY = 280; // Bottom of page for footer
+            const pageMargin = 15;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const contentWidth = pageWidth - (pageMargin * 2);
+
+            let currentPage = 1;
+            
+            // --- Helper: Add Header & Footer ---
+            const addHeaderFooter = (title) => {
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100);
+                
+                if (letterheadBase64) {
+                    const imgProps = doc.getImageProperties(letterheadBase64);
+                    const imgWidth = 70; // Fixed width for letterhead
+                    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+                    const xPos = (pageWidth - imgWidth) / 2;
+                    doc.addImage(letterheadBase64, 'PNG', xPos, 10, imgWidth, imgHeight);
+                } else {
+                    // Fallback to text header
+                    doc.setFontSize(14);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(companyName, pageWidth / 2, 20, { align: 'center' });
+                    doc.setFontSize(12);
+                    // Add Arabic font support if needed - jsPDF is limited here, this is a placeholder
+                    doc.text(companyNameAr, pageWidth / 2, 28, { align: 'center' });
+                }
+
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text(title, pageWidth / 2, 45, { align: 'center' });
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`As on ${reportDate}`, pageWidth / 2, 51, { align: 'center' });
+
+                // Footer
+                doc.setLineWidth(0.5);
+                doc.line(pageMargin, finalY, pageWidth - pageMargin, finalY);
+                doc.setFontSize(9);
+                doc.setTextColor(150);
+                doc.text(`Page ${currentPage}`, pageWidth / 2, finalY + 5, { align: 'center' });
+                doc.text(companyName, pageMargin, finalY + 5);
+                doc.text(address, pageWidth - pageMargin, finalY + 5, { align: 'right' });
+            };
+            
+            // --- Helper: Add Signature ---
+            const addSignature = (yPos) => {
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.text("BRANDSPOINT LLC", pageMargin, yPos);
+                doc.text("Authorized Signatory", pageMargin, yPos + 10);
+                doc.text(signatory, pageMargin, yPos + 15);
+                
+                // Placeholder for stamp
+                doc.setDrawColor(100);
+                doc.setLineWidth(0.5);
+                doc.ellipse(pageWidth - pageMargin - 20, yPos - 10, 20, 20);
+                doc.text("Sharjah - U.A.E", pageWidth - pageMargin - 20, yPos - 10, { align: 'center' });
+            };
+            
+            // --- Helper: Check Y Pos & Add Page ---
+            let currentY = 65;
+            const checkAndAddPage = (yIncrement) => {
+                if (currentY + yIncrement > finalY - 40) { // 40mm margin for signature/footer
+                    addSignature(finalY - 30);
+                    doc.addPage();
+                    currentPage++;
+                    currentY = 65;
+                    return true; // Page was added
+                }
+                currentY += yIncrement;
+                return false;
+            };
+
+            // === Page 1: Statement of Financial Position ===
+            addHeaderFooter("Statement of Financial Position");
+            
+            const { totalAssets, totalEquityLiabilities } = calculateFinancialPositionTotals();
+            
+            doc.autoTable({
+                startY: currentY,
+                theme: 'plain',
+                styles: { fontSize: 10, cellPadding: 1.5 },
+                columnStyles: {
+                    0: { cellWidth: contentWidth / 2 },
+                    1: { cellWidth: contentWidth / 4, halign: 'left' },
+                    2: { cellWidth: contentWidth / 4, halign: 'right' },
+                },
+                head: [
+                    [{ content: 'Non Current Assets:', colSpan: 2, styles: { fontStyle: 'bold' } }, { content: 'AED', styles: { fontStyle: 'bold', halign: 'right' } }]
+                ],
+                body: [
+                    ['Property, plant and equipment', '6', getVal('pos-ppe').toLocaleString()],
+                    [{ content: 'Current Assets:', colSpan: 3, styles: { fontStyle: 'bold', paddingTop: 4 } }],
+                    ['Inventory', '7', getVal('pos-inventory').toLocaleString()],
+                    ['Trade receivables', '8', getVal('pos-receivables').toLocaleString()],
+                    ['Cash and balance with bank', '9', getVal('pos-cash').toLocaleString()],
+                    ['Deposits and prepaid expenses', '10', getVal('pos-deposits').toLocaleString()],
+                ],
+                foot: [
+                    [{ content: 'Total Assets', colSpan: 2, styles: { fontStyle: 'bold', halign: 'right' } }, 
+                     { content: totalAssets.toLocaleString(), styles: { fontStyle: 'bold', halign: 'right', 'minCellHeight': 8, 'valign': 'middle' } }]
+                ],
+                didDrawPage: (data) => { currentY = data.cursor.y; }
+            });
+            
+            doc.autoTable({
+                startY: currentY + 5,
+                theme: 'plain',
+                styles: { fontSize: 10, cellPadding: 1.5 },
+                columnStyles: {
+                    0: { cellWidth: contentWidth / 2 },
+                    1: { cellWidth: contentWidth / 4, halign: 'left' },
+                    2: { cellWidth: contentWidth / 4, halign: 'right' },
+                },
+                head: [
+                    [{ content: 'Equity:', colSpan: 3, styles: { fontStyle: 'bold' } }]
+                ],
+                body: [
+                    ['Share capital', '2', getVal('pos-capital').toLocaleString()],
+                    ['Retained earnings', '11', getVal('pos-retained').toLocaleString()],
+                    ['Shareholder\'s current account', '12', `(${Math.abs(getVal('pos-shareholder')).toLocaleString()})`],
+                    [{ content: 'Current Liabilities:', colSpan: 3, styles: { fontStyle: 'bold', paddingTop: 4 } }],
+                    ['Trade payables', '13', getVal('pos-payables').toLocaleString()],
+                    ['Accruals and other payables', '14', getVal('pos-accruals').toLocaleString()],
+                ],
+                foot: [
+                    [{ content: 'Total Equity and Liabilities', colSpan: 2, styles: { fontStyle: 'bold', halign: 'right' } }, 
+                     { content: totalEquityLiabilities.toLocaleString(), styles: { fontStyle: 'bold', halign: 'right', 'minCellHeight': 8, 'valign': 'middle' } }]
+                ],
+                didDrawPage: (data) => { currentY = data.cursor.y; }
+            });
+            
+            addSignature(finalY - 30); // Add signature to first page
+
+            // === Page 2: Statement of Profit or Loss ===
+            doc.addPage();
+            currentPage++;
+            currentY = 65;
+            addHeaderFooter("Statement of Profit or Loss and Other Comprehensive Income");
+            
+            const netIncome = calculateProfitLossTotal();
+            const grossProfit = getVal('pl-sales') + getVal('pl-cost');
+            const totalOperating = getVal('pl-admin') + getVal('pl-remuneration') + getVal('pl-depreciation');
+
+            doc.autoTable({
+                startY: currentY,
+                theme: 'plain',
+                styles: { fontSize: 10, cellPadding: 1.5 },
+                columnStyles: {
+                    0: { cellWidth: contentWidth / 2 },
+                    1: { cellWidth: contentWidth / 4, halign: 'left' },
+                    2: { cellWidth: contentWidth / 4, halign: 'right' },
+                },
+                head: [
+                    [{}, {}, { content: 'AED', styles: { fontStyle: 'bold', halign: 'right' } }]
+                ],
+                body: [
+                    ['Sales', '15', getVal('pl-sales').toLocaleString()],
+                    ['Cost of sales', '16', `(${Math.abs(getVal('pl-cost')).toLocaleString()})`],
+                    [{ content: 'Gross Profit', colSpan: 2, styles: { fontStyle: 'bold' } }, 
+                     { content: grossProfit.toLocaleString(), styles: { fontStyle: 'bold', halign: 'right' } }],
+                    
+                    [{ content: 'Operating Expenses', colSpan: 3, styles: { fontStyle: 'bold', paddingTop: 4 } }],
+                    ['Administration and selling expenses', '17', `(${Math.abs(getVal('pl-admin')).toLocaleString()})`],
+                    ['Managerial remuneration', '18', `(${Math.abs(getVal('pl-remuneration')).toLocaleString()})`],
+                    ['Depreciation for the Year', '6', `(${Math.abs(getVal('pl-depreciation')).toLocaleString()})`],
+                    [{}, {}, { content: `(${Math.abs(totalOperating).toLocaleString()})`, styles: { halign: 'right' } }],
+                ],
+                foot: [
+                    [{ content: 'Net Income for the Year', colSpan: 2, styles: { fontStyle: 'bold' } }, 
+                     { content: netIncome.toLocaleString(), styles: { fontStyle: 'bold', halign: 'right', 'minCellHeight': 8, 'valign': 'middle' } }],
+                    [{ content: 'Other comprehensive income', colSpan: 3, styles: { paddingTop: 4 } }],
+                    [{ content: 'Total Comprehensive Income for the Year', colSpan: 2, styles: { fontStyle: 'bold' } },
+                     { content: netIncome.toLocaleString(), styles: { fontStyle: 'bold', halign: 'right' } }]
+                ],
+                didDrawPage: (data) => { currentY = data.cursor.y; }
+            });
+            
+            addSignature(finalY - 30);
+            
+            // === Page 3: Statement of Cash Flows ===
+            doc.addPage();
+            currentPage++;
+            currentY = 65;
+            addHeaderFooter("Statement of Cash Flows");
+            
+            const { netOperating, netFinancing, netChange, cashEnd } = calculateCashFlowTotals();
+
+            doc.autoTable({
+                startY: currentY,
+                theme: 'plain',
+                styles: { fontSize: 10, cellPadding: 1.5 },
+                columnStyles: {
+                    0: { cellWidth: contentWidth * 0.7, halign: 'left' },
+                    1: { cellWidth: contentWidth * 0.3, halign: 'right' },
+                },
+                head: [
+                    [{}, { content: 'AED', styles: { fontStyle: 'bold', halign: 'right' } }]
+                ],
+                body: [
+                    [{ content: 'Cash flows from operating activities', styles: { fontStyle: 'bold' } }, ''],
+                    ['Net profit for the year', getVal('cf-profit').toLocaleString()],
+                    ['Adjustment for:', ''],
+                    [{ content: 'Operating cash flows before changes in net operating assets', styles: { fontStyle: 'bold' } }, { content: getVal('cf-profit').toLocaleString(), styles: { fontStyle: 'bold' } }],
+                    ['(Increase) / Decrease in Current Assets', ''],
+                    ['Inventory', getVal('cf-inventory').toLocaleString()],
+                    ['Trade receivables', getVal('cf-receivables').toLocaleString()],
+                    ['Deposits and prepaid expenses', getVal('cf-deposits').toLocaleString()],
+                    ['Increase / (Decrease) in Current Liabilities', ''],
+                    ['Trade payables', getVal('cf-payables').toLocaleString()],
+                    ['Accruals and other payables', getVal('cf-accruals').toLocaleString()],
+                    [{ content: 'Net cash generated from operating activities (A)', styles: { fontStyle: 'bold' } }, { content: netOperating.toLocaleString(), styles: { fontStyle: 'bold' } }],
+                    
+                    [{ content: 'Cash flows from financing activities', styles: { fontStyle: 'bold', paddingTop: 4 } }, ''],
+                    ['Dividend paid', getVal('cf-dividend').toLocaleString()],
+                    ['Net movement in shareholder\'s current account', getVal('cf-shareholder').toLocaleString()],
+                    [{ content: 'Net cash used in financing activities (B)', styles: { fontStyle: 'bold' } }, { content: netFinancing.toLocaleString(), styles: { fontStyle: 'bold' } }],
+                    
+                    [{ content: 'Net (decrease) / increase in cash and cash equivalents (A+B)', styles: { fontStyle: 'bold', paddingTop: 4 } }, { content: netChange.toLocaleString(), styles: { fontStyle: 'bold' } }],
+                    ['Cash and cash equivalents at beginning of the year', getVal('cf-cash-begin').toLocaleString()],
+                    [{ content: 'Cash and cash equivalents at end of the year', styles: { fontStyle: 'bold' } }, { content: cashEnd.toLocaleString(), styles: { fontStyle: 'bold' } }],
+                ],
+                didDrawPage: (data) => { currentY = data.cursor.y; }
+            });
+
+            addSignature(finalY - 30);
+            
+            // === Page 4: Statement of Changes in Equity ===
+            doc.addPage();
+            currentPage++;
+            currentY = 65;
+            addHeaderFooter("Statement of Changes in Equity");
+            
+            const reOpening = retainedEarningsData.opening;
+            const reDividend = -getVal('cf-dividend'); // dividend is positive
+            const reClosing = getVal('pos-retained');
+            
+            const shaOpening = shareholderAccData.opening;
+            const shaMovement = shareholderAccData.funds;
+            const shaClosing = shaOpening + shaMovement;
+
+            doc.autoTable({
+                startY: currentY,
+                theme: 'grid',
+                styles: { fontSize: 9, cellPadding: 2, halign: 'right' },
+                headStyles: { fontStyle: 'bold', halign: 'center', valign: 'middle' },
+                columnStyles: { 0: { halign: 'left', cellWidth: '34%' } },
+                head: [
+                    ['', 'Share Capital', 'Retained Earnings', 'Shareholder\'s Current Account']
+                ],
+                body: [
+                    ['', 'AED', 'AED', 'AED'],
+                    ['At 1st January, 2024', getVal('pos-capital').toLocaleString(), reOpening.toLocaleString(), shaOpening.toLocaleString()],
+                    ['Total comprehensive income for the year', '', netIncome.toLocaleString(), ''],
+                    ['Dividend paid', '', `(${reDividend.toLocaleString()})`, ''],
+                    ['Movements in current account', '', '', shaMovement.toLocaleString()],
+                ],
+                foot: [
+                    [{ content: `At ${reportDate}`, styles: { fontStyle: 'bold', halign: 'left' } },
+                     { content: getVal('pos-capital').toLocaleString(), styles: { fontStyle: 'bold' } },
+                     { content: reClosing.toLocaleString(), styles: { fontStyle: 'bold' } },
+                     { content: shaClosing.toLocaleString(), styles: { fontStyle: 'bold' } },
+                    ]
+                ],
+                didDrawPage: (data) => { currentY = data.cursor.y; }
+            });
+            
+            addSignature(finalY - 30);
+            
+            // === Notes Pages (5-15) ===
+            // This will generate all the notes pages as defined in the PDF
+            
+            const addNotePage = (title, noteNumber, tableHead, tableBody, tableFoot, auto = true) => {
+                doc.addPage();
+                currentPage++;
+                currentY = 65;
+                addHeaderFooter("Notes to the Financial Statements");
+                
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`${noteNumber} ${title}`, pageMargin, currentY);
+                currentY += 10;
+                
+                if (auto) {
+                    doc.autoTable({
+                        startY: currentY,
+                        theme: 'grid',
+                        styles: { fontSize: 9, cellPadding: 2 },
+                        headStyles: { fontStyle: 'bold' },
+                        head: tableHead,
+                        body: tableBody,
+                        foot: tableFoot,
+                        didDrawPage: (data) => { currentY = data.cursor.y; }
+                    });
+                } else {
+                    doc.autoTable({
+                        startY: currentY,
+                        theme: 'plain',
+                        styles: { fontSize: 10, cellPadding: 1.5 },
+                        body: tableBody,
+                        didDrawPage: (data) => { currentY = data.cursor.y; }
+                    });
+                }
+                
+                addSignature(finalY - 30);
+            };
+
+            // Page 5: Note 1, 2
+            addNotePage("Legal status and activities", 1, [], [
+                ['1.1', 'BRANDSPOINT LLC was registered in the Sharjah Media City Free Zone... (text from PDF)'],
+                ['1.2', 'The company is controlled and managed by Mr. NADEEM KHAN... (text from PDF)'],
+                ['1.3', 'The company is primarily engaged in Non-specialized wholesale trade... (text from PDF)'],
+            ], [], 'plain');
+            
+            currentY += 5;
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text("2 Shareholding", pageMargin, currentY);
+            currentY += 10;
+            
+            const shBody = shareholdingData.map(sh => [
+                sh.name, (sh.shares / (shareholdingData.reduce((acc, s) => acc + s.shares, 0) || 1) * 100).toFixed(0) + '%', 
+                sh.nation, sh.shares.toLocaleString(), sh.value.toLocaleString(), (sh.shares * sh.value).toLocaleString()
+            ]);
+            const shTotalShares = shareholdingData.reduce((acc, s) => acc + s.shares, 0);
+            const shTotalValue = shareholdingData.reduce((acc, s) => acc + (s.shares * s.value), 0);
+            
+            doc.autoTable({
+                startY: currentY,
+                theme: 'grid',
+                styles: { fontSize: 9, cellPadding: 2, halign: 'right' },
+                headStyles: { fontStyle: 'bold', halign: 'center' },
+                columnStyles: { 0: { halign: 'left' }, 1: { halign: 'center' }, 2: { halign: 'left' } },
+                head: [['Name', 'Percentage %', 'Nationality', 'No. of shares', 'Value per share AED', 'Total value AED']],
+                body: shBody,
+                foot: [[
+                    { content: 'Total', colSpan: 2, styles: { fontStyle: 'bold', halign: 'right' } },
+                    { content: shTotalShares.toLocaleString(), styles: { fontStyle: 'bold' } },
+                    { content: (shTotalValue / shTotalShares).toLocaleString(), styles: { fontStyle: 'bold' } },
+                    { content: shTotalValue.toLocaleString(), styles: { fontStyle: 'bold' } },
+                    ''
+                ]],
+                didDrawPage: (data) => { currentY = data.cursor.y; }
+            });
+            currentY += 5;
+            doc.setFontSize(10);
+            doc.text(`2.2 The authorized and paid up share capital of the company is AED ${shTotalValue.toLocaleString()} divided into ${shTotalShares.toLocaleString()} shares of AED ${(shTotalValue / shTotalShares).toLocaleString()}/- each.`, pageMargin, currentY);
+
+            // Page 6, 7, 8, 9, 10: Summary of Significant Accounting Policies (Notes 3, 4, 5)
+            // These are text-heavy and would be added as plain text. This is a placeholder.
+            const addTextPage = (title, pageNum, content) => {
+                doc.addPage();
+                currentPage++;
+                currentY = 65;
+                addHeaderFooter("Notes to the Financial Statements");
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                // jsPDF's splitTextToSize is needed for long text blocks
+                const lines = doc.splitTextToSize(content, contentWidth);
+                doc.text(lines, pageMargin, currentY);
+                addSignature(finalY - 30);
+            };
+            
+            addTextPage(5, 5, "3 Application of New and Revised IFRS...\n\n4 Summary of Significant Accounting Policies...\n\nBasis of preparation...\n\n(Full text from PDF pages 5-10 would be inserted here, split across multiple pages)");
+            addTextPage(6, 6, "5 Summary of Significant Accounting Policies (Continued)\n\n(Full text from PDF page 6)");
+            addTextPage(7, 7, "5 Summary of Significant Accounting Policies (Continued)\n\n(Full text from PDF page 7)");
+            addTextPage(8, 8, "5 Summary of Significant Accounting Policies (Continued)\n\n(Full text from PDF page 8)");
+            addTextPage(9, 9, "5 Summary of Significant Accounting Policies (Continued)\n\n(Full text from PDF page 9)");
+            addTextPage(10, 10, "5 Critical Accounting Judgments and Key Sources of Estimation Uncertainty\n\n(Full text from PDF page 10)");
+
+            // Page 11: Note 6, 7, 8
+            doc.addPage();
+            currentPage++;
+            currentY = 65;
+            addHeaderFooter("Notes to the Financial Statements");
+            
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text("6 Property, plant and equipment", pageMargin, currentY);
+            currentY += 10;
+            
+            const ppeBody = ppeData.map(asset => {
+                const dep = Math.round(asset.addition * asset.rate / 100);
+                const cls = asset.addition - dep;
+                return [asset.particulars, asset.addition.toLocaleString(), asset.addition.toLocaleString(), `${asset.rate}%`, dep.toLocaleString(), cls.toLocaleString()];
+            });
+            const ppeTotalAdd = ppeData.reduce((acc, a) => acc + a.addition, 0);
+            const ppeTotalDep = ppeData.reduce((acc, a) => acc + Math.round(a.addition * a.rate / 100), 0);
+            const ppeTotalCls = ppeData.reduce((acc, a) => acc + (a.addition - Math.round(a.addition * a.rate / 100)), 0);
+
+            doc.autoTable({
+                startY: currentY,
+                theme: 'grid',
+                styles: { fontSize: 9, cellPadding: 2, halign: 'right' },
+                headStyles: { fontStyle: 'bold', halign: 'center' },
+                columnStyles: { 0: { halign: 'left' } },
+                head: [['Particulars', 'Addition', 'Total', 'Rate', 'Depreciation', 'Closing As on...']],
+                body: ppeBody,
+                foot: [[
+                    { content: 'Total', styles: { fontStyle: 'bold', halign: 'left' } },
+                    { content: ppeTotalAdd.toLocaleString(), styles: { fontStyle: 'bold' } },
+                    { content: ppeTotalAdd.toLocaleString(), styles: { fontStyle: 'bold' } },
+                    '',
+                    { content: ppeTotalDep.toLocaleString(), styles: { fontStyle: 'bold' } },
+                    { content: ppeTotalCls.toLocaleString(), styles: { fontStyle: 'bold' } },
+                ]],
+                didDrawPage: (data) => { currentY = data.cursor.y; }
+            });
+            currentY += 5;
+            
+            doc.autoTable({
+                startY: currentY, theme: 'plain', body: [
+                    ['7', 'Inventory', '(Note 7.1)', getVal('pos-inventory').toLocaleString()],
+                    ['7.1', 'Age analysis (1 to 150 days)', '', inventoryData.age_1_150.toLocaleString()],
+                    ['8', 'Trade receivables', '(Note 8.1)', getVal('pos-receivables').toLocaleString()],
+                    ['8.1', 'Age analysis (1 to 60 days)', '', receivablesData.age_1_60.toLocaleString()],
+                    ['', 'Geographical (Within U.A.E.)', '', receivablesData.geo_uae.toLocaleString()],
+                ],
+                styles: { fontSize: 10, cellPadding: 1.5 },
+                columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 70 }, 2: { cellWidth: 40 }, 3: { halign: 'right' } },
+                didDrawPage: (data) => { currentY = data.cursor.y; }
+            });
+            
+            addSignature(finalY - 30);
+            
+            // Page 12: Note 9, 10, 11, 12, 13, 14, 15, 16
+            doc.addPage();
+            currentPage++;
+            currentY = 65;
+            addHeaderFooter("Notes to the Financial Statements");
+            
+            doc.autoTable({
+                startY: currentY, theme: 'plain', body: [
+                    ['9', 'Cash and balance with bank', getVal('pos-cash').toLocaleString()],
+                    ['10', 'Deposits and prepaid expenses', ''],
+                    ['', 'Deposits', depositsData.deposits.toLocaleString()],
+                    ['', 'Prepaid expenses', depositsData.prepaid.toLocaleString()],
+                    ['', '', { content: getVal('pos-deposits').toLocaleString(), styles: { fontStyle: 'bold' } }],
+                    ['11', 'Retained earnings', ''],
+                    ['', 'Opening balance', reOpening.toLocaleString()],
+                    ['', 'Total comprehensive income for the year', netIncome.toLocaleString()],
+                    ['', 'Dividend paid', `(${reDividend.toLocaleString()})`],
+                    ['', '', { content: reClosing.toLocaleString(), styles: { fontStyle: 'bold' } }],
+                    ['12', 'Shareholder\'s current account', ''],
+                    ['', 'Opening balance', shaOpening.toLocaleString()],
+                    ['', 'Funds contributed during the year', shaMovement.toLocaleString()],
+                    ['', '', { content: shaClosing.toLocaleString(), styles: { fontStyle: 'bold' } }],
+                    ['13', 'Trade payables (1 to 30 days)', payablesData.age_1_30.toLocaleString()],
+                    ['14', 'Accruals and other payables', getVal('pos-accruals').toLocaleString()],
+                    ['15', 'Sales', getVal('pl-sales').toLocaleString()],
+                    ['16', 'Cost of sales', ''],
+                    ['', 'Opening inventory', costOfSalesData.opening.toLocaleString()],
+                    ['', 'Purchase and direct expenses', costOfSalesData.purchases.toLocaleString()],
+                    ['', 'Closing inventory', `(${inventoryData.age_1_150.toLocaleString()})`],
+                    ['', '', { content: Math.abs(getVal('pl-cost')).toLocaleString(), styles: { fontStyle: 'bold' } }],
+                ],
+                styles: { fontSize: 10, cellPadding: 1.5 },
+                columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 100 }, 2: { halign: 'right' } },
+                didDrawPage: (data) => { currentY = data.cursor.y; }
+            });
+            
+            addSignature(finalY - 30);
+
+            // Page 13: Note 17, 18
+            doc.addPage();
+            currentPage++;
+            currentY = 65;
+            addHeaderFooter("Notes to the Financial Statements");
+            
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text("17 Administration and selling expenses", pageMargin, currentY);
+            currentY += 10;
+            
+            const adminBody = adminExpData.map(exp => [exp.item, exp.amount.toLocaleString()]);
+            const adminTotal = adminExpData.reduce((acc, exp) => acc + exp.amount, 0);
+            
+            doc.autoTable({
+                startY: currentY,
+                theme: 'plain',
+                styles: { fontSize: 10, cellPadding: 1.5 },
+                columnStyles: { 0: { cellWidth: contentWidth * 0.7 }, 1: { halign: 'right' } },
+                body: adminBody,
+                foot: [[
+                    { content: 'Total', styles: { fontStyle: 'bold' } },
+                    { content: adminTotal.toLocaleString(), styles: { fontStyle: 'bold', halign: 'right' } }
+                ]],
+                didDrawPage: (data) => { currentY = data.cursor.y; }
+            });
+            currentY += 5;
+            
+            doc.autoTable({
+                startY: currentY, theme: 'plain', body: [
+                    ['18', 'Managerial remuneration', getVal('pl-remuneration').toLocaleString()],
+                    ['18.1', 'Such remuneration was paid under mutual agreement between the shareholders.', ''],
+                ],
+                styles: { fontSize: 10, cellPadding: 1.5 },
+                columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 100 }, 2: { halign: 'right' } },
+                didDrawPage: (data) => { currentY = data.cursor.y; }
+            });
+            
+            addSignature(finalY - 30);
+
+            // Page 14, 15: Other Notes (19-23)
+            addTextPage(14, 14, "19 Fair value of financial instruments...\n\n20 Liquidity and interest risk...\n\n21 Exchange rate risk...\n\n(Full text from PDF page 13)");
+            
+            // Final page
+            addSignature(finalY - 30);
+            
+            // Save the PDF
+            doc.save(`${companyName.replace(/ /g, '_')}_Financial_Statements_${reportDate.replace(/, /g, '_').replace(/ /g, '_')}.pdf`);
+        });
+        
+        
+        
+    </script>
+</body>
+</html>
