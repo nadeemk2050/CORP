@@ -551,6 +551,10 @@
                                 <svg class="w-3.5 h-3.5 mr-1 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                                 <span>Roll-Forward Opening</span>
                             </button>
+                            <button type="button" id="view-fetched-opening-btn" class="px-2.5 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-xs font-semibold text-emerald-800 transition shadow-2xs cursor-pointer flex items-center" title="View all baseline opening balances fetched from the previous corporate period">
+                                <svg class="w-3.5 h-3.5 mr-1 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                <span>View Fetched Opening Balances</span>
+                            </button>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2387,6 +2391,74 @@
                     <span>Load This Report Into Active Workspace</span>
                 </button>
                 <button type="button" id="close-comparative-detail-btn" class="btn-secondary !py-2 !px-5 text-xs font-semibold cursor-pointer">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Fetched Opening Balances Modal -->
+    <div id="view-opening-balances-modal" class="modal" style="display: none; z-index: 1055;">
+        <div class="modal-content !max-w-4xl" style="margin-top: 2.5%; max-height: 90vh; display: flex; flex-direction: column;">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-gray-200 shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shadow-xs shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-base sm:text-lg font-bold text-gray-900 leading-tight">Fetched Opening Balances</h3>
+                            <span id="vob-modal-status-tag" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">Auto-Locked Baseline</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-0.5">Exact baseline figures carried forward from the immediate prior confirmed report</p>
+                    </div>
+                </div>
+                <button type="button" id="close-view-opening-modal" class="text-gray-400 hover:text-gray-600 text-2xl font-bold p-1 leading-none cursor-pointer">&times;</button>
+            </div>
+
+            <!-- Meta Banner -->
+            <div id="vob-modal-banner" class="bg-emerald-50/90 border border-emerald-200 rounded-lg p-3 mb-3 flex flex-wrap items-center justify-between text-xs text-emerald-950 gap-2 shrink-0">
+                <div class="flex items-center space-x-2">
+                    <span class="font-bold" id="vob-modal-company">COMPANY NAME</span>
+                    <span class="text-emerald-300">|</span>
+                    <span class="font-semibold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded" id="vob-modal-current-serial">#CORP-002</span>
+                    <span class="text-emerald-300">|</span>
+                    <span id="vob-modal-source-label" class="font-medium text-gray-700">Source: #CORP-001 (Confirmed)</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span id="vob-modal-rule-badge" class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-200 text-emerald-900">✓ Continuity Verified</span>
+                </div>
+            </div>
+
+            <!-- Modal Body (Table of all 10 accounts) -->
+            <div class="overflow-y-auto pr-1 flex-1 space-y-3 text-xs text-gray-800">
+                <div class="border border-gray-200 rounded-xl overflow-hidden shadow-2xs">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b border-gray-200 font-semibold text-gray-700">
+                            <tr>
+                                <th class="p-2.5">Account / Line Item</th>
+                                <th class="p-2.5">Classification</th>
+                                <th class="p-2.5 text-right font-bold text-emerald-950 bg-emerald-50/60">Fetched Opening Balance</th>
+                                <th class="p-2.5">Prior Source Reference</th>
+                                <th class="p-2.5 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vob-modal-tbody">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-[11px] text-gray-500 italic p-2 bg-gray-50 rounded-lg border border-gray-200">
+                    💡 <strong>Accounting Standard:</strong> On subsequent corporate reports, these baseline values remain locked to guarantee zero audit discrepancies. Only current-period transactions and ending adjustments are editable.
+                </p>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-between pt-3 mt-3 border-t border-gray-200 shrink-0">
+                <button type="button" id="vob-modal-resync-btn" class="btn-secondary !py-2 !px-3 text-xs font-semibold flex items-center text-emerald-700 hover:text-emerald-900 cursor-pointer">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span>Re-Sync / Re-Fetch From Prior Confirmed Report</span>
+                </button>
+                <button type="button" id="close-view-opening-btn" class="btn-secondary !py-2 !px-5 text-xs font-semibold cursor-pointer">Close</button>
             </div>
         </div>
     </div>
@@ -7820,7 +7892,102 @@ function renderMainCommentsList() {
             if (modal) modal.style.display = 'none';
         }
 
-        // --- Review Tab Update with Comparative Multi-Report Support ---
+        // --- View Fetched Opening Balances Modal Functions ---
+        function openViewOpeningBalancesModal() {
+            const modal = document.getElementById('view-opening-balances-modal');
+            if (!modal) return;
+
+            const compName = (document.getElementById('company-name') ? document.getElementById('company-name').value.trim() : '') || 'BRANDSPOINT LLC';
+            const serialInput = document.getElementById('corporate-serial-number');
+            const currentSerial = (serialInput ? serialInput.value.trim().toUpperCase() : '') || 'CORP-001';
+
+            const compCompany = document.getElementById('vob-modal-company');
+            const compSerial = document.getElementById('vob-modal-current-serial');
+            const sourceLabel = document.getElementById('vob-modal-source-label');
+            const statusTag = document.getElementById('vob-modal-status-tag');
+            const ruleBadge = document.getElementById('vob-modal-rule-badge');
+            const tbody = document.getElementById('vob-modal-tbody');
+
+            if (compCompany) compCompany.textContent = compName;
+            if (compSerial) compSerial.textContent = '#' + currentSerial;
+
+            const precedingSerial = getPrecedingSerialNumber(currentSerial);
+            const prevReport = precedingSerial ? findPrecedingFinalizedReport(compName, currentSerial) : null;
+
+            let prevBalances = null;
+            if (prevReport && prevReport.data) {
+                prevBalances = extractReportClosingBalances(prevReport.data);
+            }
+
+            if (precedingSerial && prevReport) {
+                if (sourceLabel) sourceLabel.textContent = 'Source: #' + precedingSerial + ' (' + (prevReport.draftName || 'Confirmed Report') + ')';
+                if (statusTag) {
+                    statusTag.textContent = 'Auto-Locked from #' + precedingSerial;
+                    statusTag.className = 'px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800';
+                }
+                if (ruleBadge) {
+                    ruleBadge.textContent = '✓ Continuity Verified';
+                    ruleBadge.className = 'px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-200 text-emerald-900';
+                }
+            } else if (precedingSerial && !prevReport) {
+                if (sourceLabel) sourceLabel.textContent = 'Preceding Report #' + precedingSerial + ' Pending Confirmation';
+                if (statusTag) {
+                    statusTag.textContent = 'Draft Stage Baseline';
+                    statusTag.className = 'px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800';
+                }
+                if (ruleBadge) {
+                    ruleBadge.textContent = '⚠ Preceding Archive Pending';
+                    ruleBadge.className = 'px-2 py-0.5 text-[11px] font-bold rounded-full bg-amber-200 text-amber-900';
+                }
+            } else {
+                if (sourceLabel) sourceLabel.textContent = 'Initial Corporate Period (' + currentSerial + ')';
+                if (statusTag) {
+                    statusTag.textContent = 'Initial Setup';
+                    statusTag.className = 'px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800';
+                }
+                if (ruleBadge) {
+                    ruleBadge.textContent = 'Initial Baseline';
+                    ruleBadge.className = 'px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-200 text-blue-900';
+                }
+            }
+
+            // Gather current active opening figures
+            const curOpen = extractReportOpeningBalances(getFullDraftData());
+
+            const accounts = [
+                { name: 'Retained Earnings (Opening)', cls: 'Equity (Note 3)', val: curOpen.openingRetained, ref: 'Note 3 Statement of Changes in Equity', tag: 'Permanent Reserve' },
+                { name: 'Cash and Cash Equivalents (Beginning Cash)', cls: 'Liquidity / Cash Flow', val: curOpen.openingCash, ref: 'Statement of Cash Flows Opening Anchor', tag: 'Cash Baseline' },
+                { name: 'Opening Inventory', cls: 'Current Asset (Note 16)', val: curOpen.openingInventory, ref: 'Note 16 Cost of Sales Opening Stock', tag: 'Working Capital' },
+                { name: 'Trade Receivables (Opening)', cls: 'Current Asset (Note 7)', val: curOpen.openingReceivables, ref: 'Note 7 Trade Debtors Baseline', tag: 'Working Capital' },
+                { name: 'Deposits & Prepaid Expenses (Opening)', cls: 'Current Asset (Note 8)', val: curOpen.openingDeposits, ref: 'Note 8 Security Deposits Baseline', tag: 'Working Capital' },
+                { name: 'Share Capital (Registered Base)', cls: 'Equity (Note 2)', val: curOpen.shareCapital, ref: 'Note 2 Shareholding Structure', tag: 'Registered Equity' },
+                { name: 'Shareholder Current Account (Opening)', cls: 'Equity / Loan (Note 4)', val: curOpen.shareholderLoan, ref: "Note 4 Shareholder's Account Opening", tag: 'Director Loan' },
+                { name: 'Trade Payables (Opening)', cls: 'Current Liability (Note 10)', val: curOpen.openingPayables, ref: 'Note 10 Trade Creditors Baseline', tag: 'Working Capital' },
+                { name: 'Accruals & Other Payables (Opening)', cls: 'Current Liability (Note 14)', val: curOpen.openingAccruals, ref: 'Note 14 Accrued Liabilities Baseline', tag: 'Working Capital' },
+                { name: 'Property, Plant & Equipment (Opening Cost Base)', cls: 'Non-Current Asset (Note 6)', val: curOpen.ppeBalance, ref: 'Note 6 Historical Asset Pool', tag: 'Fixed Assets' }
+            ];
+
+            if (tbody) {
+                tbody.innerHTML = accounts.map((acc, idx) => {
+                    return '<tr class="hover:bg-emerald-50/40 transition-colors border-b border-gray-100">' +
+                        '<td class="p-2.5 font-medium text-gray-900">' + acc.name + '</td>' +
+                        '<td class="p-2.5 text-gray-600">' + acc.cls + '</td>' +
+                        '<td class="p-2.5 text-right font-bold text-emerald-900 bg-emerald-50/40">AED ' + (acc.val || 0).toLocaleString() + '</td>' +
+                        '<td class="p-2.5 text-gray-500 text-[11px]">' + acc.ref + '</td>' +
+                        '<td class="p-2.5 text-center"><span class="px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">' + acc.tag + '</span></td>' +
+                    '</tr>';
+                }).join('');
+            }
+
+            modal.style.display = 'block';
+        }
+
+        function closeViewOpeningBalancesModalFunc() {
+            const modal = document.getElementById('view-opening-balances-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // --- Review Tab Update with Comparative Multi-Report Support & Opening Balances Visibility ---
         function updateReviewTab() {
             const { totalAssets, totalEquityLiabilities } = calculateFinancialPositionTotals();
             const netIncome = calculateProfitLossTotal();
@@ -7843,6 +8010,22 @@ function renderMainCommentsList() {
             const currentEnd = document.getElementById('report-end-date') ? document.getElementById('report-end-date').value : '';
             const currentPeriodLabel = formatPeriodDisplay(currentStart, currentEnd) || 'Current Period';
             const currentSerial = (document.getElementById('corporate-serial-number') ? document.getElementById('corporate-serial-number').value.trim().toUpperCase() : '') || 'CORP-001';
+
+            // Extract active opening balance figures for visual green highlighted badges
+            const curOpenBalances = extractReportOpeningBalances(getFullDraftData());
+            const ppeOpening = curOpenBalances.ppeBalance || 0;
+            const invOpening = curOpenBalances.openingInventory || 0;
+            const recOpening = curOpenBalances.openingReceivables || 0;
+            const depOpening = curOpenBalances.openingDeposits || 0;
+            const cashOpening = curOpenBalances.openingCash || 0;
+            const capOpening = curOpenBalances.shareCapital || 0;
+            const retOpening = curOpenBalances.openingRetained || 0;
+            const shaOpening = curOpenBalances.shareholderLoan || 0;
+            const payOpening = curOpenBalances.openingPayables || 0;
+            const accOpening = curOpenBalances.openingAccruals || 0;
+
+            const obBadge = (val, label = 'Opening') => 
+                '<span class="inline-flex items-center ml-2 px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/90 rounded shadow-2xs whitespace-nowrap" title="' + label + ' balance fetched from prior corporate period">' + label + ': AED ' + (val || 0).toLocaleString() + '</span>';
 
             // Gather candidate comparative reports for this company
             const matchingConfirmed = (finalizedCorpsData || []).filter(r => {
@@ -7943,10 +8126,6 @@ function renderMainCommentsList() {
                     '</div>';
 
             if (isComparing && compTotals) {
-                const assetDiff = totalAssets - compTotals.totalAssets;
-                const netIncomeDiff = netIncome - compTotals.netIncome;
-                const cashDiff = posCash - compTotals.posCash;
-
                 toolbarHtml += 
                     '<div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-3 mt-3 border-t border-blue-200/60 text-xs">' +
                         '<div class="bg-white/90 border border-blue-100 rounded-lg p-2.5 shadow-2xs">' +
@@ -7993,31 +8172,31 @@ function renderMainCommentsList() {
             if (isComparing) {
                 positionRows = '<tbody>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-ppe-modal">Property, plant and equipment</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-ppe-modal">Property, plant and equipment</a>' + obBadge(ppeOpening, 'Opening Cost') + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-ppe-modal">' + getVal('pos-ppe').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="ppe">' + (compVals['pos-ppe'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('pos-ppe'), compVals['pos-ppe'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-inventory-modal">Inventory</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-inventory-modal">Inventory</a>' + obBadge(invOpening) + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-inventory-modal">' + getVal('pos-inventory').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="inventory">' + (compVals['pos-inventory'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('pos-inventory'), compVals['pos-inventory'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-receivables-modal">Trade receivables</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-receivables-modal">Trade receivables</a>' + obBadge(recOpening) + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-receivables-modal">' + getVal('pos-receivables').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="receivables">' + (compVals['pos-receivables'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('pos-receivables'), compVals['pos-receivables'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="position" data-field-target="#pos-cash">Cash and balance with bank</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-tab-target="position" data-field-target="#pos-cash">Cash and balance with bank</a>' + obBadge(cashOpening, 'Prior Closing') + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-tab-target="position" data-field-target="#pos-cash">' + getVal('pos-cash').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="cash">' + (compVals['pos-cash'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('pos-cash'), compVals['pos-cash'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-deposits-modal">Deposits and prepaid expenses</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-deposits-modal">Deposits and prepaid expenses</a>' + obBadge(depOpening) + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-deposits-modal">' + getVal('pos-deposits').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="deposits">' + (compVals['pos-deposits'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('pos-deposits'), compVals['pos-deposits'] || 0, false) + '</td>' +
@@ -8032,26 +8211,26 @@ function renderMainCommentsList() {
             } else {
                 positionRows = '<tbody>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-ppe-modal">Property, plant and equipment</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-ppe-modal">' + getVal('pos-ppe').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-ppe-modal">Property, plant and equipment</a>' + obBadge(ppeOpening, 'Opening Cost') + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-ppe-modal">' + getVal('pos-ppe').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-inventory-modal">Inventory</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-inventory-modal">' + getVal('pos-inventory').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-inventory-modal">Inventory</a>' + obBadge(invOpening) + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-inventory-modal">' + getVal('pos-inventory').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-receivables-modal">Trade receivables</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-receivables-modal">' + getVal('pos-receivables').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-receivables-modal">Trade receivables</a>' + obBadge(recOpening) + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-receivables-modal">' + getVal('pos-receivables').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="position" data-field-target="#pos-cash">Cash and balance with bank</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-tab-target="position" data-field-target="#pos-cash">' + getVal('pos-cash').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-tab-target="position" data-field-target="#pos-cash">Cash and balance with bank</a>' + obBadge(cashOpening, 'Prior Closing') + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-tab-target="position" data-field-target="#pos-cash">' + getVal('pos-cash').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-deposits-modal">Deposits and prepaid expenses</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-deposits-modal">' + getVal('pos-deposits').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-deposits-modal">Deposits and prepaid expenses</a>' + obBadge(depOpening) + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-deposits-modal">' + getVal('pos-deposits').toLocaleString() + '</a></td>' +
                     '</tr>' +
-                    '<tr class="font-bold bg-gray-100"><td>Total Assets</td><td class="text-right">' + totalAssets.toLocaleString() + '</td></tr>' +
+                    '<tr class="font-bold bg-gray-100"><td>Total Assets</td><td class="text-right font-bold text-gray-900">' + totalAssets.toLocaleString() + '</td></tr>' +
                 '</tbody>';
             }
 
@@ -8059,31 +8238,31 @@ function renderMainCommentsList() {
             if (isComparing) {
                 equityRows = '<tbody>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-shareholding-modal">Share capital</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-shareholding-modal">Share capital</a>' + obBadge(capOpening) + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-shareholding-modal">' + getVal('pos-capital').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="capital">' + (compVals['pos-capital'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('pos-capital'), compVals['pos-capital'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-re-modal">Retained earnings</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-re-modal">Retained earnings</a>' + obBadge(retOpening) + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-re-modal">' + getVal('pos-retained').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="retained">' + (compVals['pos-retained'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('pos-retained'), compVals['pos-retained'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-shareholder-acc-modal">Shareholder\'s current account</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-shareholder-acc-modal">Shareholder\'s current account</a>' + obBadge(shaOpening) + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link ' + (getVal('pos-shareholder') < 0 ? 'text-red-600' : '') + '" data-modal-target="#open-shareholder-acc-modal">' + getVal('pos-shareholder').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="shareholder">' + (compVals['pos-shareholder'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('pos-shareholder'), compVals['pos-shareholder'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-payables-modal">Trade payables</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-payables-modal">Trade payables</a>' + obBadge(payOpening) + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-payables-modal">' + getVal('pos-payables').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="payables">' + (compVals['pos-payables'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('pos-payables'), compVals['pos-payables'] || 0, true) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="position" data-field-target="#pos-accruals">Accruals and other payables</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-tab-target="position" data-field-target="#pos-accruals">Accruals and other payables</a>' + obBadge(accOpening) + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-tab-target="position" data-field-target="#pos-accruals">' + getVal('pos-accruals').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="accruals">' + (compVals['pos-accruals'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('pos-accruals'), compVals['pos-accruals'] || 0, true) + '</td>' +
@@ -8098,26 +8277,26 @@ function renderMainCommentsList() {
             } else {
                 equityRows = '<tbody>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-shareholding-modal">Share capital</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-shareholding-modal">' + getVal('pos-capital').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-shareholding-modal">Share capital</a>' + obBadge(capOpening) + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-shareholding-modal">' + getVal('pos-capital').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-re-modal">Retained earnings</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-re-modal">' + getVal('pos-retained').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-re-modal">Retained earnings</a>' + obBadge(retOpening) + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-re-modal">' + getVal('pos-retained').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-shareholder-acc-modal">Shareholder\'s current account</a></td>' +
-                        '<td class="text-right"><a class="review-link ' + (getVal('pos-shareholder') < 0 ? 'text-red-600' : '') + '" data-modal-target="#open-shareholder-acc-modal">' + getVal('pos-shareholder').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-shareholder-acc-modal">Shareholder\'s current account</a>' + obBadge(shaOpening) + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold ' + (getVal('pos-shareholder') < 0 ? 'text-red-600' : '') + '" data-modal-target="#open-shareholder-acc-modal">' + getVal('pos-shareholder').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-payables-modal">Trade payables</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-payables-modal">' + getVal('pos-payables').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-payables-modal">Trade payables</a>' + obBadge(payOpening) + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-payables-modal">' + getVal('pos-payables').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="position" data-field-target="#pos-accruals">Accruals and other payables</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-tab-target="position" data-field-target="#pos-accruals">' + getVal('pos-accruals').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-tab-target="position" data-field-target="#pos-accruals">Accruals and other payables</a>' + obBadge(accOpening) + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-tab-target="position" data-field-target="#pos-accruals">' + getVal('pos-accruals').toLocaleString() + '</a></td>' +
                     '</tr>' +
-                    '<tr class="font-bold bg-gray-100"><td>Total Equity and Liabilities</td><td class="text-right">' + totalEquityLiabilities.toLocaleString() + '</td></tr>' +
+                    '<tr class="font-bold bg-gray-100"><td>Total Equity and Liabilities</td><td class="text-right font-bold text-gray-900">' + totalEquityLiabilities.toLocaleString() + '</td></tr>' +
                 '</tbody>';
             }
 
@@ -8128,13 +8307,13 @@ function renderMainCommentsList() {
             if (isComparing) {
                 plRows = '<tbody>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="profitloss" data-field-target="#pl-sales">Sales</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-tab-target="profitloss" data-field-target="#pl-sales">Sales</a></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-tab-target="profitloss" data-field-target="#pl-sales">' + getVal('pl-sales').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="sales">' + (compVals['pl-sales'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('pl-sales'), compVals['pl-sales'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-cost-of-sales-modal">Cost of sales</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-cost-of-sales-modal">Cost of sales</a>' + obBadge(invOpening, 'Opening Stock') + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-cost-of-sales-modal">(' + Math.abs(getVal('pl-cost')).toLocaleString() + ')</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="cost-of-sales">(' + Math.abs(compVals['pl-cost'] || 0).toLocaleString() + ')</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(Math.abs(getVal('pl-cost')), Math.abs(compVals['pl-cost'] || 0), true) + '</td>' +
@@ -8146,19 +8325,19 @@ function renderMainCommentsList() {
                         '<td class="text-right border-l border-gray-200">' + formatVariance(grossProfitCurrent, grossProfitComp, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-admin-exp-modal">Administration and selling expenses</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-modal-target="#open-admin-exp-modal">Administration and selling expenses</a></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-admin-exp-modal">(' + Math.abs(getVal('pl-admin')).toLocaleString() + ')</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="admin">(' + Math.abs(compVals['pl-admin'] || 0).toLocaleString() + ')</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(Math.abs(getVal('pl-admin')), Math.abs(compVals['pl-admin'] || 0), true) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="profitloss" data-field-target="#pl-remuneration">Managerial remuneration</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-tab-target="profitloss" data-field-target="#pl-remuneration">Managerial remuneration</a></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-tab-target="profitloss" data-field-target="#pl-remuneration">(' + Math.abs(getVal('pl-remuneration')).toLocaleString() + ')</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="remuneration">(' + Math.abs(compVals['pl-remuneration'] || 0).toLocaleString() + ')</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(Math.abs(getVal('pl-remuneration')), Math.abs(compVals['pl-remuneration'] || 0), true) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-ppe-modal">Depreciation for the Year</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-ppe-modal">Depreciation for the Year</a>' + obBadge(ppeOpening, 'Asset Base') + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-ppe-modal">(' + Math.abs(getVal('pl-depreciation')).toLocaleString() + ')</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="ppe">(' + Math.abs(compVals['pl-depreciation'] || 0).toLocaleString() + ')</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(Math.abs(getVal('pl-depreciation')), Math.abs(compVals['pl-depreciation'] || 0), true) + '</td>' +
@@ -8173,27 +8352,27 @@ function renderMainCommentsList() {
             } else {
                 plRows = '<tbody>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="profitloss" data-field-target="#pl-sales">Sales</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-tab-target="profitloss" data-field-target="#pl-sales">' + getVal('pl-sales').toLocaleString() + '</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-tab-target="profitloss" data-field-target="#pl-sales">Sales</a></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-tab-target="profitloss" data-field-target="#pl-sales">' + getVal('pl-sales').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-cost-of-sales-modal">Cost of sales</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-cost-of-sales-modal">(' + Math.abs(getVal('pl-cost')).toLocaleString() + ')</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-cost-of-sales-modal">Cost of sales</a>' + obBadge(invOpening, 'Opening Stock') + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-cost-of-sales-modal">(' + Math.abs(getVal('pl-cost')).toLocaleString() + ')</a></td>' +
                     '</tr>' +
-                    '<tr class="font-bold bg-gray-100"><td>Gross Profit</td><td class="text-right">' + grossProfitCurrent.toLocaleString() + '</td></tr>' +
+                    '<tr class="font-bold bg-gray-100"><td>Gross Profit</td><td class="text-right font-bold text-gray-900">' + grossProfitCurrent.toLocaleString() + '</td></tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-admin-exp-modal">Administration and selling expenses</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-admin-exp-modal">(' + Math.abs(getVal('pl-admin')).toLocaleString() + ')</a></td>' +
-                    '</tr>' +
-                    '<tr>' +
-                        '<td><a class="review-link" data-tab-target="profitloss" data-field-target="#pl-remuneration">Managerial remuneration</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-tab-target="profitloss" data-field-target="#pl-remuneration">(' + Math.abs(getVal('pl-remuneration')).toLocaleString() + ')</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-modal-target="#open-admin-exp-modal">Administration and selling expenses</a></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-admin-exp-modal">(' + Math.abs(getVal('pl-admin')).toLocaleString() + ')</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-ppe-modal">Depreciation for the Year</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-ppe-modal">(' + Math.abs(getVal('pl-depreciation')).toLocaleString() + ')</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-tab-target="profitloss" data-field-target="#pl-remuneration">Managerial remuneration</a></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-tab-target="profitloss" data-field-target="#pl-remuneration">(' + Math.abs(getVal('pl-remuneration')).toLocaleString() + ')</a></td>' +
                     '</tr>' +
-                    '<tr class="font-bold bg-gray-100"><td>Net Income for the Year</td><td class="text-right">' + netIncome.toLocaleString() + '</td></tr>' +
+                    '<tr>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-ppe-modal">Depreciation for the Year</a>' + obBadge(ppeOpening, 'Asset Base') + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-ppe-modal">(' + Math.abs(getVal('pl-depreciation')).toLocaleString() + ')</a></td>' +
+                    '</tr>' +
+                    '<tr class="font-bold bg-gray-100"><td>Net Income for the Year</td><td class="text-right font-bold text-gray-900">' + netIncome.toLocaleString() + '</td></tr>' +
                 '</tbody>';
             }
 
@@ -8202,43 +8381,43 @@ function renderMainCommentsList() {
             if (isComparing) {
                 cfRows = '<tbody>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="profitloss" title="Go to Profit & Loss">Net profit for the year</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-tab-target="profitloss" title="Go to Profit & Loss">Net profit for the year</a></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-tab-target="profitloss">' + getVal('cf-profit').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="cash">' + (compVals['cf-profit'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('cf-profit'), compVals['cf-profit'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" href="#" data-custom-action="show-inv-calc">Adjustment for Inventory</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" href="#" data-custom-action="show-inv-calc">Adjustment for Inventory</a>' + obBadge(invOpening, 'Opening Base') + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" href="#" data-custom-action="show-inv-calc">' + getVal('cf-inventory').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="inventory">' + (compVals['cf-inventory'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('cf-inventory'), compVals['cf-inventory'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-receivables-modal">(Increase) / Decrease in Trade receivables</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-receivables-modal">(Increase) / Decrease in Trade receivables</a>' + obBadge(recOpening, 'Opening Base') + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-receivables-modal">' + getVal('cf-receivables').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="receivables">' + (compVals['cf-receivables'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('cf-receivables'), compVals['cf-receivables'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-deposits-modal">(Increase) / Decrease in Deposits</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-deposits-modal">(Increase) / Decrease in Deposits</a>' + obBadge(depOpening, 'Opening Base') + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-deposits-modal">' + getVal('cf-deposits').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="deposits">' + (compVals['cf-deposits'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('cf-deposits'), compVals['cf-deposits'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-payables-modal">Increase / (Decrease) in Trade payables</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-payables-modal">Increase / (Decrease) in Trade payables</a>' + obBadge(payOpening, 'Opening Base') + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-payables-modal">' + getVal('cf-payables').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="payables">' + (compVals['cf-payables'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('cf-payables'), compVals['cf-payables'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="position" data-field-target="#pos-accruals">Increase / (Decrease) in Accruals</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-tab-target="position" data-field-target="#pos-accruals">Increase / (Decrease) in Accruals</a>' + obBadge(accOpening, 'Opening Base') + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-tab-target="position" data-field-target="#pos-accruals">' + getVal('cf-accruals').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="accruals">' + (compVals['cf-accruals'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('cf-accruals'), compVals['cf-accruals'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="cashflow" data-field-target="#cf-old-payables">Payment of Old Payables</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-tab-target="cashflow" data-field-target="#cf-old-payables">Payment of Old Payables</a></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-tab-target="cashflow" data-field-target="#cf-old-payables">' + getVal('cf-old-payables').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="cash">' + (compVals['cf-old-payables'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('cf-old-payables'), compVals['cf-old-payables'] || 0, true) + '</td>' +
@@ -8251,7 +8430,7 @@ function renderMainCommentsList() {
                     '</tr>' +
                     '<tr><td colspan="4" class="font-bold pt-3 text-gray-700 bg-gray-50/50">Cash flows from investing activities</td></tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-ppe-modal">Purchase of property, plant and equipment</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-modal-target="#open-ppe-modal">Purchase of property, plant and equipment</a></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-ppe-modal">' + netInvesting.toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="ppe">' + (compTotals ? compTotals.netInvesting : 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(netInvesting, compTotals ? compTotals.netInvesting : 0, true) + '</td>' +
@@ -8264,25 +8443,25 @@ function renderMainCommentsList() {
                     '</tr>' +
                     '<tr><td colspan="4" class="font-bold pt-3 text-gray-700 bg-gray-50/50">Cash flows from financing activities</td></tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-re-modal">Dividend paid</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-modal-target="#open-re-modal">Dividend paid</a></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-re-modal">' + getVal('cf-dividend').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="retained">' + (compVals['cf-dividend'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('cf-dividend'), compVals['cf-dividend'] || 0, true) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-shareholder-acc-modal">Net movement in shareholder\'s current account</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-modal-target="#open-shareholder-acc-modal">Net movement in shareholder\'s current account</a></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" data-modal-target="#open-shareholder-acc-modal">' + getVal('cf-shareholder').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="shareholder">' + (compVals['cf-shareholder'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('cf-shareholder'), compVals['cf-shareholder'] || 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" href="#" data-custom-action="show-net-change-calc">Net (decrease) / increase in cash</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" href="#" data-custom-action="show-net-change-calc">Net (decrease) / increase in cash</a></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link" href="#" data-custom-action="show-net-change-calc">' + netChange.toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="cash">' + (compTotals ? compTotals.netChange : 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(netChange, compTotals ? compTotals.netChange : 0, false) + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link cursor-pointer hover:underline text-blue-600" href="#" data-custom-action="open-beginning-cash-modal">Cash at beginning of the year</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900 cursor-pointer hover:underline text-blue-600" href="#" data-custom-action="open-beginning-cash-modal">Cash at beginning of the year</a>' + obBadge(cashOpening, 'Prior Closing') + '</div></td>' +
                         '<td class="text-right bg-blue-50/20 border-l border-blue-100"><a class="review-link font-semibold text-blue-600 cursor-pointer hover:underline" href="#" data-custom-action="open-beginning-cash-modal">' + getVal('cf-cash-begin').toLocaleString() + '</a></td>' +
                         '<td class="text-right bg-purple-50/20 border-l border-purple-100"><a class="comp-review-link text-purple-700 font-semibold cursor-pointer hover:underline" data-comp-modal="cash-begin">' + (compVals['cf-cash-begin'] || 0).toLocaleString() + '</a></td>' +
                         '<td class="text-right border-l border-gray-100">' + formatVariance(getVal('cf-cash-begin'), compVals['cf-cash-begin'] || 0, false) + '</td>' +
@@ -8297,61 +8476,61 @@ function renderMainCommentsList() {
             } else {
                 cfRows = '<tbody>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="profitloss" title="Go to Profit & Loss">Net profit for the year</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-tab-target="profitloss" title="Go to Profit & Loss">' + getVal('cf-profit').toLocaleString() + '</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-tab-target="profitloss" title="Go to Profit & Loss">Net profit for the year</a></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-tab-target="profitloss" title="Go to Profit & Loss">' + getVal('cf-profit').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" href="#" data-custom-action="show-inv-calc" title="Click to see calculation">Adjustment for Inventory</a></td>' +
-                        '<td class="text-right"><a class="review-link" href="#" data-custom-action="show-inv-calc" title="Click to see calculation">' + getVal('cf-inventory').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" href="#" data-custom-action="show-inv-calc" title="Click to see calculation">Adjustment for Inventory</a>' + obBadge(invOpening, 'Opening Base') + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" href="#" data-custom-action="show-inv-calc" title="Click to see calculation">' + getVal('cf-inventory').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-receivables-modal">(Increase) / Decrease in Trade receivables</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-receivables-modal">' + getVal('cf-receivables').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-receivables-modal">(Increase) / Decrease in Trade receivables</a>' + obBadge(recOpening, 'Opening Base') + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-receivables-modal">' + getVal('cf-receivables').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-deposits-modal">(Increase) / Decrease in Deposits</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-deposits-modal">' + getVal('cf-deposits').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-deposits-modal">(Increase) / Decrease in Deposits</a>' + obBadge(depOpening, 'Opening Base') + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-deposits-modal">' + getVal('cf-deposits').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-payables-modal">Increase / (Decrease) in Trade payables</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-payables-modal">' + getVal('cf-payables').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-modal-target="#open-payables-modal">Increase / (Decrease) in Trade payables</a>' + obBadge(payOpening, 'Opening Base') + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-payables-modal">' + getVal('cf-payables').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="position" data-field-target="#pos-accruals">Increase / (Decrease) in Accruals</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-tab-target="position" data-field-target="#pos-accruals">' + getVal('cf-accruals').toLocaleString() + '</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900" data-tab-target="position" data-field-target="#pos-accruals">Increase / (Decrease) in Accruals</a>' + obBadge(accOpening, 'Opening Base') + '</div></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-tab-target="position" data-field-target="#pos-accruals">' + getVal('cf-accruals').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-tab-target="cashflow" data-field-target="#cf-old-payables">Payment of Old Payables</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-tab-target="cashflow" data-field-target="#cf-old-payables">' + getVal('cf-old-payables').toLocaleString() + '</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-tab-target="cashflow" data-field-target="#cf-old-payables">Payment of Old Payables</a></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-tab-target="cashflow" data-field-target="#cf-old-payables">' + getVal('cf-old-payables').toLocaleString() + '</a></td>' +
                     '</tr>' +
-                    '<tr class="font-bold bg-gray-100"><td>Net cash from operating activities</td><td class="text-right">' + netOperating.toLocaleString() + '</td></tr>' +
+                    '<tr class="font-bold bg-gray-100"><td>Net cash from operating activities</td><td class="text-right font-bold text-gray-900">' + netOperating.toLocaleString() + '</td></tr>' +
                     '<tr><td class="font-bold pt-4">Cash flows from investing activities</td><td></td></tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-ppe-modal">Purchase of property, plant and equipment</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-ppe-modal">' + netInvesting.toLocaleString() + '</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-modal-target="#open-ppe-modal">Purchase of property, plant and equipment</a></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-ppe-modal">' + netInvesting.toLocaleString() + '</a></td>' +
                     '</tr>' +
-                    '<tr class="font-bold bg-gray-100"><td>Net cash used in investing activities</td><td class="text-right">' + netInvesting.toLocaleString() + '</td></tr>' +
+                    '<tr class="font-bold bg-gray-100"><td>Net cash used in investing activities</td><td class="text-right font-bold text-gray-900">' + netInvesting.toLocaleString() + '</td></tr>' +
                     '<tr><td class="font-bold pt-4">Cash flows from financing activities</td><td></td></tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-re-modal">Dividend paid</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-re-modal">' + getVal('cf-dividend').toLocaleString() + '</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-modal-target="#open-re-modal">Dividend paid</a></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-re-modal">' + getVal('cf-dividend').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" data-modal-target="#open-shareholder-acc-modal">Net movement in shareholder\'s current account</a></td>' +
-                        '<td class="text-right"><a class="review-link" data-modal-target="#open-shareholder-acc-modal">' + getVal('cf-shareholder').toLocaleString() + '</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" data-modal-target="#open-shareholder-acc-modal">Net movement in shareholder\'s current account</a></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" data-modal-target="#open-shareholder-acc-modal">' + getVal('cf-shareholder').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link" href="#" data-custom-action="show-net-change-calc" title="See Calculation">Net (decrease) / increase in cash</a></td>' +
-                        '<td class="text-right"><a class="review-link" href="#" data-custom-action="show-net-change-calc" title="See Calculation">' + netChange.toLocaleString() + '</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900" href="#" data-custom-action="show-net-change-calc" title="See Calculation">Net (decrease) / increase in cash</a></td>' +
+                        '<td class="text-right"><a class="review-link font-semibold" href="#" data-custom-action="show-net-change-calc" title="See Calculation">' + netChange.toLocaleString() + '</a></td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td><a class="review-link cursor-pointer hover:underline text-blue-600" href="#" data-custom-action="open-beginning-cash-modal" title="Click to view/edit opening cash balance">Cash at beginning of the year</a></td>' +
+                        '<td><div class="flex items-center flex-wrap gap-1"><a class="review-link font-medium text-gray-900 cursor-pointer hover:underline text-blue-600" href="#" data-custom-action="open-beginning-cash-modal" title="Click to view/edit opening cash balance">Cash at beginning of the year</a>' + obBadge(cashOpening, 'Prior Closing') + '</div></td>' +
                         '<td class="text-right"><a class="review-link font-semibold text-blue-600 cursor-pointer hover:underline" href="#" data-custom-action="open-beginning-cash-modal" title="Click to view/edit opening cash balance">' + getVal('cf-cash-begin').toLocaleString() + '</a></td>' +
                     '</tr>' +
                     ((posCash !== cashEnd) ? 
                         '<tr class="text-red-600 font-bold bg-red-50"><td>Difference in Cash Balance (Unexplained)</td><td class="text-right">' + (posCash - cashEnd).toLocaleString() + '</td></tr>' : '') +
                     '<tr class="font-bold bg-gray-100">' +
-                        '<td><a class="review-link cursor-pointer hover:underline" data-tab-target="position" data-field-target="#pos-cash">Cash at end of the year</a></td>' +
+                        '<td><a class="review-link font-medium text-gray-900 cursor-pointer hover:underline" data-tab-target="position" data-field-target="#pos-cash">Cash at end of the year</a></td>' +
                         '<td class="text-right"><a class="review-link font-bold text-gray-900 cursor-pointer hover:underline" data-tab-target="position" data-field-target="#pos-cash">' + posCash.toLocaleString() + '</a></td>' +
                     '</tr>' +
                 '</tbody>';
@@ -8361,7 +8540,7 @@ function renderMainCommentsList() {
                 toolbarHtml +
                 '<!-- Accordion Toolbar -->' +
                 '<div class="flex items-center justify-between pb-3 mb-3 border-b border-gray-200 text-xs text-gray-500">' +
-                    '<span class="font-medium text-gray-700">Click statement headings to expand/collapse. Numerical amounts in both columns are interactive & clickable for deep breakdown inspection.</span>' +
+                    '<span class="font-medium text-gray-700">Click statement headings to expand/collapse. Green badges indicate exact rolled-over opening balances. Numerical amounts are interactive & clickable.</span>' +
                     '<button type="button" id="review-toggle-all-btn" class="text-blue-600 hover:text-blue-800 font-semibold cursor-pointer underline">' +
                         ((isOpenPosition && isOpenPL && isOpenCF) ? 'Collapse All' : 'Expand All') +
                     '</button>' +
@@ -8376,7 +8555,7 @@ function renderMainCommentsList() {
                             '</div>' +
                             '<div>' +
                                 '<h4 class="text-sm sm:text-base font-bold text-gray-900 leading-tight m-0">Statement of Financial Position</h4>' +
-                                '<p class="text-[11px] text-gray-500 m-0 mt-0.5">Assets, Equity & Liabilities comparison</p>' +
+                                '<p class="text-[11px] text-gray-500 m-0 mt-0.5">Assets, Equity & Liabilities with rolled-over opening baselines</p>' +
                             '</div>' +
                         '</div>' +
                         '<div class="flex items-center space-x-2">' +
@@ -8428,7 +8607,7 @@ function renderMainCommentsList() {
                             '</div>' +
                             '<div>' +
                                 '<h4 class="text-sm sm:text-base font-bold text-gray-900 leading-tight m-0">Statement of Cash Flows</h4>' +
-                                '<p class="text-[11px] text-gray-500 m-0 mt-0.5">Operating, Investing & Financing activity analysis</p>' +
+                                '<p class="text-[11px] text-gray-500 m-0 mt-0.5">Operating, Investing & Financing activities with working capital deltas</p>' +
                             '</div>' +
                         '</div>' +
                         '<div class="flex items-center space-x-2">' +
@@ -9565,12 +9744,34 @@ renderMainCommentsList(); // Clear comment list on new form
                     const isConf = activeComparativeReportState.isConfirmed;
                     if (confirm("Load comparative report \"" + name + "\" into your active workspace?\n\nAny unsaved changes in your current draft will be overwritten.")) {
                         closeComparativeDetailModalFunc();
+                    closeViewOpeningBalancesModalFunc();
                         if (isConf && activeComparativeReportState.id) {
                             loadFinalizedCorpById(activeComparativeReportState.id);
                         } else {
                             loadDraftByName(name);
                         }
                     }
+                };
+            }
+
+            // View Fetched Opening Balances Modal Listeners
+            const viewFetchedOpeningBtn = document.getElementById('view-fetched-opening-btn');
+            if (viewFetchedOpeningBtn) {
+                viewFetchedOpeningBtn.onclick = openViewOpeningBalancesModal;
+            }
+            const closeViewOpeningModal = document.getElementById('close-view-opening-modal');
+            if (closeViewOpeningModal) {
+                closeViewOpeningModal.onclick = closeViewOpeningBalancesModalFunc;
+            }
+            const closeViewOpeningBtn = document.getElementById('close-view-opening-btn');
+            if (closeViewOpeningBtn) {
+                closeViewOpeningBtn.onclick = closeViewOpeningBalancesModalFunc;
+            }
+            const resyncOpeningModalBtn = document.getElementById('vob-modal-resync-btn');
+            if (resyncOpeningModalBtn) {
+                resyncOpeningModalBtn.onclick = () => {
+                    triggerManualRollForward();
+                    openViewOpeningBalancesModal();
                 };
             }
 
