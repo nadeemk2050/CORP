@@ -8764,24 +8764,18 @@ function renderMainCommentsList() {
 
 
         // --- Run All Calculations and Link Fields ---
-        // --- Run All Calculations and Link Fields ---
         function runAllCalculations() {
-            // 1. Calculate Net Income (P&L)
-            const netIncome = calculateProfitLossTotal();
+            // 1. First update primary sub-components (Cost of Sales, Admin Expenses, PPE & Depreciation, Share Capital, Shareholder Account)
             
-            // 2. Link Net Income to Cash Flow
-            setVal('cf-profit', netIncome);
-            document.getElementById('re-net-income').textContent = netIncome;
-            updateRetainedEarningsTotal();
-            
-            // 3. Update Retained Earnings on Balance Sheet
-            const reOpening = retainedEarningsData.opening;
-            const reDividend = retainedEarningsData.dividend;
-            const reClosing = reOpening + netIncome - reDividend;
-            setVal('pos-retained', reClosing);
-            setVal('cf-dividend', -reDividend);
+            // A. Cost of Sales (Note 16)
+            const cosTotal = costOfSalesData.opening + costOfSalesData.purchases - inventoryData.age_1_150;
+            setVal('pl-cost', -cosTotal);
 
-            // 4. PPE Calculations (Depreciation on total base = Opening Cost + Additions)
+            // B. Admin & Selling Expenses (Note 17)
+            const adminTotal = adminExpData.reduce((acc, a) => acc + (parseFloat(a.amount) || 0), 0);
+            setVal('pl-admin', -adminTotal);
+
+            // C. Property, Plant & Equipment (Note 6: Total Cost Base = Opening Cost + Additions)
             const ppeClosing = ppeData.reduce((acc, a) => {
                 const op = (a.openingCost !== undefined) ? (parseFloat(a.openingCost) || 0) : (parseFloat(a.cost) || parseFloat(a.addition) || 0);
                 const add = (a.openingCost !== undefined) ? (parseFloat(a.addition) || 0) : 0;
@@ -8799,34 +8793,56 @@ function renderMainCommentsList() {
             }, 0);
             setVal('pos-ppe', ppeClosing);
             setVal('pl-depreciation', -ppeDepreciation);
-            
-            // 5. Admin Expenses & Share Capital
-            const adminTotal = adminExpData.reduce((acc, a) => acc + a.amount, 0);
-            setVal('pl-admin', -adminTotal);
-            const shareholdingTotal = shareholdingData.reduce((acc, a) => acc + (a.shares * a.value), 0);
+
+            // D. Share Capital & Registered Shareholding (Note 2)
+            const shareholdingTotal = shareholdingData.reduce((acc, a) => acc + ((parseFloat(a.shares) || 0) * (parseFloat(a.value) || 0)), 0);
             setVal('pos-capital', shareholdingTotal);
+
+            // E. Shareholder Current Account (Note 12)
+            const shaOpening = parseFloat(shareholderAccData.opening) || 0;
+            const shaFunds = parseFloat(shareholderAccData.funds) || 0;
+            const shaTotal = shaOpening + shaFunds;
+            const shaTotalEl = document.getElementById('sha-total');
+            if (shaTotalEl) shaTotalEl.textContent = shaTotal.toLocaleString();
+            setVal('pos-shareholder', shaTotal);
+            setVal('cf-shareholder', shaFunds);
+
+            // 2. Calculate Net Income (P&L) WITH all updated Cost, Admin, and Depreciation numbers
+            const netIncome = calculateProfitLossTotal();
             
-            // 6. AUTOMATIC LINKS TO CASH FLOW (Strict Working Capital Net Movement: Opening - Closing for Assets, Closing - Opening for Liabilities)
+            // 3. Dynamically Bind Net Income to Cash Flow Statement & Retained Earnings
+            setVal('cf-profit', netIncome);
+            const reNetIncomeEl = document.getElementById('re-net-income');
+            if (reNetIncomeEl) reNetIncomeEl.textContent = netIncome.toLocaleString();
+            updateRetainedEarningsTotal();
             
+            // 4. Update Retained Earnings on Balance Sheet & Dividend on Cash Flow
+            const reOpening = parseFloat(retainedEarningsData.opening) || 0;
+            const reDividend = parseFloat(retainedEarningsData.dividend) || 0;
+            const reClosing = reOpening + netIncome - reDividend;
+            setVal('pos-retained', reClosing);
+            setVal('cf-dividend', -reDividend);
+
+            // 5. Working Capital Deltas on Balance Sheet & Cash Flow
             // A. Inventory: Opening - Closing (Increase in inventory is cash outflow)
             const invOpening = (costOfSalesData && costOfSalesData.opening !== undefined) ? costOfSalesData.opening : (openingBalancesData.inventory || 0);
             const invClosing = inventoryData.age_1_150;
             setVal('pos-inventory', invClosing);
-            const invMovement = invOpening - invClosing; // = -(invClosing - invOpening)
+            const invMovement = invOpening - invClosing;
             setVal('cf-inventory', invMovement);
 
             // B. Trade Receivables: Opening - Closing (Increase in receivables is cash outflow)
             const recOpening = (openingBalancesData && openingBalancesData.receivables !== undefined) ? openingBalancesData.receivables : 0;
             const recClosing = receivablesData.age_1_60;
             setVal('pos-receivables', recClosing);
-            const recMovement = recOpening - recClosing; // = -(recClosing - recOpening)
+            const recMovement = recOpening - recClosing;
             setVal('cf-receivables', recMovement);
 
             // C. Deposits and Prepaid Expenses: Opening - Closing (Increase in deposits/prepaids is cash outflow)
             const depOpening = (openingBalancesData && openingBalancesData.deposits !== undefined) ? openingBalancesData.deposits : 0;
-            const totalDeposits = depositsData.deposits + depositsData.prepaid;
+            const totalDeposits = (parseFloat(depositsData.deposits) || 0) + (parseFloat(depositsData.prepaid) || 0);
             setVal('pos-deposits', totalDeposits);
-            const depMovement = depOpening - totalDeposits; // = -(totalDeposits - depOpening)
+            const depMovement = depOpening - totalDeposits;
             setVal('cf-deposits', depMovement);
 
             // D. Trade Payables: Closing - Opening (Increase in payables is cash preserved/inflow)
@@ -8842,45 +8858,11 @@ function renderMainCommentsList() {
             const accMovement = accruals - accOpening;
             setVal('cf-accruals', accMovement);
 
-            // Shareholder Account
-            // FIX: Use 'shareholderAccData.opening' instead of just 'shaOpening'
-            const shaTotal = shareholderAccData.opening + shareholderAccData.funds; 
-            
-            // Update the modal display text if it exists
-            const shaTotalEl = document.getElementById('sha-total');
-            if(shaTotalEl) shaTotalEl.textContent = shaTotal.toLocaleString();
-
-            setVal('pos-shareholder', shaTotal); // Keep original sign
-            setVal('cf-shareholder', shareholderAccData.funds); // Link movement to Cash Flow
-
-
-            // Cost of Sales Modal
-
-            // 7. Cost of Sales
-            const cosTotal = costOfSalesData.opening + costOfSalesData.purchases - inventoryData.age_1_150;
-            setVal('pl-cost', -cosTotal);
-            
-            // ============================================================
-            // UPDATED: AUTOMATIC OPENING CASH CALCULATION (With Investing)
-            // ============================================================
-            
-            // Step A: Operating
-            const netOperating = netIncome + invMovement + (-receivablesData.age_1_60) + (-totalDeposits) + payablesData.age_1_30 + accruals;
-            
-            // Step B: Financing
-            const netFinancing = (-reDividend) + shareholderAccData.funds;
-
-            // Step C: Investing (NEW - MUST BE ADDED HERE)
-            const ppeAdditions = ppeData.reduce((acc, asset) => acc + asset.addition, 0);
-            const netInvesting = -ppeAdditions;
-            
-                        // ============================================================
-
-            // Final Update
+            // 6. Refresh Total Review Tab
             updateReviewTab();
         }
 
-        // --- END OF PDF Generation ---
+        // --- END OF Calculations ---
         
         // --- START: New function to set up the main app's listeners ---
         function initializeMainAppListeners() {
