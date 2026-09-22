@@ -1062,25 +1062,35 @@
             </div>
             <div class="modal-body mt-4">
                 <div class="overflow-x-auto">
-                    <table class="modal-table">
+                    <div class="p-3 mb-3 bg-blue-50/80 border border-blue-200 rounded-lg text-xs text-blue-900 flex items-start space-x-2">
+                        <svg class="w-4 h-4 text-blue-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div>
+                            <span class="font-bold">Accounting Rule:</span> Prior-year assets are carried forward in <strong>Opening Cost</strong> to calculate depreciation without consuming current-year cash. Only <strong>New Additions (This Year)</strong> consume cash in Cash Flow Investing Activities.
+                        </div>
+                    </div>
+                    <table class="modal-table w-full">
                         <thead>
                             <tr>
-                                <th>Particulars</th>
-                                <th>Addition</th>
-                                <th>Rate (%)</th>
+                                <th class="text-left">Particulars</th>
+                                <th class="text-right">Opening Cost (Prior Year)</th>
+                                <th class="text-right">New Additions (This Year)</th>
+                                <th class="text-right">Total Base</th>
+                                <th class="text-right">Rate (%)</th>
                                 <th class="text-right">Depreciation</th>
-                                <th class="text-right">Closing Balance</th>
-                                <th>Action</th>
+                                <th class="text-right">Closing Net Value</th>
+                                <th class="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="ppe-rows-container"></tbody>
                         <tfoot>
-                            <tr class="bg-gray-50 font-bold">
+                            <tr class="bg-gray-50 font-bold text-xs">
                                 <th class="text-left font-bold pl-2">Total</th>
-                                <td id="ppe-total-addition" class="text-right font-bold pr-2">0</td>
+                                <td id="ppe-total-opening" class="text-right font-bold pr-2">0</td>
+                                <td id="ppe-total-addition" class="text-right font-bold pr-2 text-blue-700">0</td>
+                                <td id="ppe-total-base" class="text-right font-bold pr-2">0</td>
                                 <td></td>
-                                <td id="ppe-total-depreciation" class="calc-field font-bold text-right">0</td>
-                                <td id="ppe-total-closing" class="calc-field font-bold text-right">0</td>
+                                <td id="ppe-total-depreciation" class="calc-field font-bold text-right text-rose-600">0</td>
+                                <td id="ppe-total-closing" class="calc-field font-bold text-right text-green-700">0</td>
                                 <td></td>
                             </tr>
                         </tfoot>
@@ -2428,11 +2438,11 @@
         // --- State ---
         // Store data for row-based modals
         let ppeData = [
-            { id: 1, particulars: 'Office Furniture', addition: 4418, rate: 5 },
-            { id: 2, particulars: 'Computers', addition: 3895, rate: 40 },
-            { id: 3, particulars: 'Printers', addition: 3200, rate: 40 },
-            { id: 4, particulars: 'CCTV', addition: 0, rate: 40 },
-            { id: 5, particulars: 'Vehicles', addition: 0, rate: 20 },
+            { id: 1, particulars: 'Office Furniture', openingCost: 4418, addition: 0, rate: 5 },
+            { id: 2, particulars: 'Computers', openingCost: 3895, addition: 0, rate: 40 },
+            { id: 3, particulars: 'Printers', openingCost: 3200, addition: 0, rate: 40 },
+            { id: 4, particulars: 'CCTV', openingCost: 0, addition: 0, rate: 40 },
+            { id: 5, particulars: 'Vehicles', openingCost: 0, addition: 0, rate: 20 },
         ];
         let adminExpData = [
             { id: 1, item: 'Salaries and benefits', amount: 8415 },
@@ -6637,6 +6647,7 @@ const mainCommentList = document.getElementById('main-comment-list');
                     newData.push({
                         id: id,
                         particulars: row.querySelector('.ppe-particulars') ? row.querySelector('.ppe-particulars').value : '',
+                        openingCost: parseFloat(row.querySelector('.ppe-opening-cost') ? row.querySelector('.ppe-opening-cost').value : 0) || 0,
                         addition: parseFloat(row.querySelector('.ppe-addition') ? row.querySelector('.ppe-addition').value : 0) || 0,
                         rate: parseFloat(row.querySelector('.ppe-rate') ? row.querySelector('.ppe-rate').value : 0) || 0
                     });
@@ -6650,16 +6661,23 @@ const mainCommentList = document.getElementById('main-comment-list');
         function renderPpeModal() {
             ppeRowsContainer.innerHTML = '';
             ppeData.forEach(asset => {
-                const depreciation = Math.round(asset.addition * asset.rate / 100);
-                const closing = asset.addition - depreciation;
+                const openingCost = (asset.openingCost !== undefined) ? (parseFloat(asset.openingCost) || 0) : (parseFloat(asset.cost) || parseFloat(asset.addition) || 0);
+                const addition = (asset.openingCost !== undefined) ? (parseFloat(asset.addition) || 0) : 0;
+                const rate = parseFloat(asset.rate) || 0;
+                const totalBase = openingCost + addition;
+                const depreciation = Math.round(totalBase * rate / 100);
+                const closing = totalBase - depreciation;
+                
                 ppeRowsContainer.innerHTML += `
                     <tr data-id="${asset.id}">
-                        <td><input type="text" class="ppe-particulars" value="${escapeHtml(asset.particulars)}"></td>
-                        <td><input type="number" class="ppe-addition" value="${asset.addition}"></td>
-                        <td><input type="number" class="ppe-rate" value="${asset.rate}"></td>
-                        <td class="calc-field ppe-depreciation text-right">${depreciation}</td>
-                        <td class="calc-field ppe-closing text-right">${closing}</td>
-                        <td class="action-cell"><button type="button" class="remove-row-btn text-red-500 hover:text-red-700 font-bold" data-id="${asset.id}">&times;</button></td>
+                        <td><input type="text" class="ppe-particulars w-full" value="${escapeHtml(asset.particulars || '')}"></td>
+                        <td><input type="number" class="ppe-opening-cost text-right w-full" value="${openingCost}"></td>
+                        <td><input type="number" class="ppe-addition text-right w-full font-semibold text-blue-700" value="${addition}"></td>
+                        <td class="calc-field ppe-total-base text-right font-medium">${totalBase.toLocaleString()}</td>
+                        <td><input type="number" class="ppe-rate text-right w-full" value="${rate}"></td>
+                        <td class="calc-field ppe-depreciation text-right text-rose-600 font-medium">${depreciation.toLocaleString()}</td>
+                        <td class="calc-field ppe-closing text-right font-bold text-gray-900">${closing.toLocaleString()}</td>
+                        <td class="action-cell text-center"><button type="button" class="remove-row-btn text-red-500 hover:text-red-700 font-bold" data-id="${asset.id}">&times;</button></td>
                     </tr>
                 `;
             });
@@ -6667,26 +6685,43 @@ const mainCommentList = document.getElementById('main-comment-list');
         }
         
         function updatePpeTotals() {
+            let totalOpening = 0;
             let totalAddition = 0;
+            let totalBase = 0;
             let totalDepreciation = 0;
             let totalClosing = 0;
+            
             ppeRowsContainer.querySelectorAll('tr').forEach(row => {
-                const addition = parseFloat(row.querySelector('.ppe-addition').value) || 0;
-                const rate = parseFloat(row.querySelector('.ppe-rate').value) || 0;
-                const depreciation = Math.round(addition * rate / 100);
-                const closing = addition - depreciation;
+                const openingCost = parseFloat(row.querySelector('.ppe-opening-cost')?.value) || 0;
+                const addition = parseFloat(row.querySelector('.ppe-addition')?.value) || 0;
+                const rate = parseFloat(row.querySelector('.ppe-rate')?.value) || 0;
+                const base = openingCost + addition;
+                const depreciation = Math.round(base * rate / 100);
+                const closing = base - depreciation;
                 
-                row.querySelector('.ppe-depreciation').textContent = depreciation;
-                row.querySelector('.ppe-closing').textContent = closing;
+                const baseEl = row.querySelector('.ppe-total-base');
+                if (baseEl) baseEl.textContent = base.toLocaleString();
+                const depEl = row.querySelector('.ppe-depreciation');
+                if (depEl) depEl.textContent = depreciation.toLocaleString();
+                const clsEl = row.querySelector('.ppe-closing');
+                if (clsEl) clsEl.textContent = closing.toLocaleString();
                 
+                totalOpening += openingCost;
                 totalAddition += addition;
+                totalBase += base;
                 totalDepreciation += depreciation;
                 totalClosing += closing;
             });
+            
+            const totalOpeningEl = document.getElementById('ppe-total-opening');
+            if (totalOpeningEl) totalOpeningEl.textContent = totalOpening.toLocaleString();
+            
             const totalAdditionEl = document.getElementById('ppe-total-addition');
-            if (totalAdditionEl) {
-                totalAdditionEl.textContent = totalAddition.toLocaleString();
-            }
+            if (totalAdditionEl) totalAdditionEl.textContent = totalAddition.toLocaleString();
+            
+            const totalBaseEl = document.getElementById('ppe-total-base');
+            if (totalBaseEl) totalBaseEl.textContent = totalBase.toLocaleString();
+            
             if (ppeTotalDepreciation) ppeTotalDepreciation.textContent = totalDepreciation.toLocaleString();
             if (ppeTotalClosing) ppeTotalClosing.textContent = totalClosing.toLocaleString();
         }
@@ -6705,7 +6740,7 @@ const mainCommentList = document.getElementById('main-comment-list');
         document.getElementById('add-ppe-row').addEventListener('click', () => {
             syncPpeDataFromDOM();
             const newId = ppeData.length ? Math.max(...ppeData.map(a => a.id)) + 1 : 1;
-            ppeData.push({ id: newId, particulars: 'New Asset', addition: 0, rate: 0 });
+            ppeData.push({ id: newId, particulars: 'New Asset', openingCost: 0, addition: 0, rate: 20 });
             renderPpeModal();
         });
 
@@ -6714,15 +6749,24 @@ const mainCommentList = document.getElementById('main-comment-list');
             
             // Update the main form
             const totalClosing = ppeData.reduce((acc, asset) => {
-                const depreciation = Math.round(asset.addition * asset.rate / 100);
-                return acc + (asset.addition - depreciation);
-            }, 0);
-            const totalDepreciation = ppeData.reduce((acc, asset) => {
-                return acc + Math.round(asset.addition * asset.rate / 100);
+                const opening = (asset.openingCost !== undefined) ? (parseFloat(asset.openingCost) || 0) : (parseFloat(asset.cost) || parseFloat(asset.addition) || 0);
+                const add = (asset.openingCost !== undefined) ? (parseFloat(asset.addition) || 0) : 0;
+                const rate = parseFloat(asset.rate) || 0;
+                const base = opening + add;
+                const dep = Math.round(base * rate / 100);
+                return acc + (base - dep);
             }, 0);
             
-            document.getElementById('pos-ppe').value = totalClosing;
-            document.getElementById('pl-depreciation').value = -totalDepreciation;
+            const totalDepreciation = ppeData.reduce((acc, asset) => {
+                const opening = (asset.openingCost !== undefined) ? (parseFloat(asset.openingCost) || 0) : (parseFloat(asset.cost) || parseFloat(asset.addition) || 0);
+                const add = (asset.openingCost !== undefined) ? (parseFloat(asset.addition) || 0) : 0;
+                const rate = parseFloat(asset.rate) || 0;
+                const base = opening + add;
+                return acc + Math.round(base * rate / 100);
+            }, 0);
+            
+            setVal('pos-ppe', totalClosing);
+            setVal('pl-depreciation', -totalDepreciation);
             
             runAllCalculations();
         }
@@ -7185,10 +7229,13 @@ function renderMainCommentsList() {
             // --- UPDATE THE SUM ---
             const netOperating = profit + inventory + receivables + deposits + payables + accruals + oldPayables;
             
-            // B. NEW: Investing Activities (Machinery Purchase)
-            // We sum up all 'Additions' from the PPE Data (Note 6)
-            const ppeAdditions = ppeData.reduce((acc, asset) => acc + asset.addition, 0);
-            const netInvesting = -ppeAdditions; // Buying assets is a negative cash flow
+            // B. Investing Activities (Current-Year Asset Purchases ONLY)
+            // Only fresh additions during the current year consume cash. Prior-year opening assets do not consume cash!
+            const ppeAdditions = ppeData.reduce((acc, asset) => {
+                const add = (asset.openingCost !== undefined) ? (parseFloat(asset.addition) || 0) : 0;
+                return acc + add;
+            }, 0);
+            const netInvesting = -ppeAdditions; // Fresh asset purchases are cash outflow
             
             // C. Financing Activities (Personal Withdrawal)
             const dividend = getVal('cf-dividend'); // Ensure this is negative in calculation
@@ -7262,15 +7309,31 @@ function renderMainCommentsList() {
                 return isNaN(n) ? fallback : n;
             };
 
-            // Note 6 PPE closing & dep
+            // Note 6 PPE closing & dep (Depreciation on total base = Opening Cost + Additions)
             const ppe = reportState.ppeData || [];
             let ppeClosing = 0;
             let ppeDepreciation = 0;
             let ppeAdditions = 0;
             if (ppe.length > 0) {
-                ppeClosing = ppe.reduce((acc, a) => acc + ((parseFloat(a.addition) || 0) - Math.round((parseFloat(a.addition) || 0) * (parseFloat(a.rate) || 0) / 100)), 0);
-                ppeDepreciation = ppe.reduce((acc, a) => acc + Math.round((parseFloat(a.addition) || 0) * (parseFloat(a.rate) || 0) / 100), 0);
-                ppeAdditions = ppe.reduce((acc, a) => acc + (parseFloat(a.addition) || 0), 0);
+                ppeClosing = ppe.reduce((acc, a) => {
+                    const op = (a.openingCost !== undefined) ? (parseFloat(a.openingCost) || 0) : (parseFloat(a.cost) || parseFloat(a.addition) || 0);
+                    const add = (a.openingCost !== undefined) ? (parseFloat(a.addition) || 0) : 0;
+                    const rate = parseFloat(a.rate) || 0;
+                    const base = op + add;
+                    const dep = Math.round(base * rate / 100);
+                    return acc + (base - dep);
+                }, 0);
+                ppeDepreciation = ppe.reduce((acc, a) => {
+                    const op = (a.openingCost !== undefined) ? (parseFloat(a.openingCost) || 0) : (parseFloat(a.cost) || parseFloat(a.addition) || 0);
+                    const add = (a.openingCost !== undefined) ? (parseFloat(a.addition) || 0) : 0;
+                    const rate = parseFloat(a.rate) || 0;
+                    const base = op + add;
+                    return acc + Math.round(base * rate / 100);
+                }, 0);
+                ppeAdditions = ppe.reduce((acc, a) => {
+                    const add = (a.openingCost !== undefined) ? (parseFloat(a.addition) || 0) : 0;
+                    return acc + add;
+                }, 0);
             } else {
                 ppeClosing = getV('pos-ppe');
                 ppeDepreciation = Math.abs(getV('pl-depreciation'));
@@ -7440,20 +7503,28 @@ function renderMainCommentsList() {
                     if (modalTitle) modalTitle.textContent = 'Note 6: Property, Plant and Equipment';
                     if (modalSubtitle) modalSubtitle.textContent = 'Fixed assets schedule from comparative report';
                     if (state.ppeData && state.ppeData.length > 0) {
+                        let totalOpening = 0;
                         let totalAdd = 0;
+                        let totalBase = 0;
                         let totalDep = 0;
                         let totalClose = 0;
                         const rows = state.ppeData.map((a, idx) => {
-                            const add = parseFloat(a.addition) || 0;
+                            const opening = (a.openingCost !== undefined) ? (parseFloat(a.openingCost) || 0) : (parseFloat(a.cost) || parseFloat(a.addition) || 0);
+                            const add = (a.openingCost !== undefined) ? (parseFloat(a.addition) || 0) : 0;
                             const rate = parseFloat(a.rate) || 0;
-                            const dep = Math.round(add * rate / 100);
-                            const close = add - dep;
+                            const base = opening + add;
+                            const dep = Math.round(base * rate / 100);
+                            const close = base - dep;
+                            totalOpening += opening;
                             totalAdd += add;
+                            totalBase += base;
                             totalDep += dep;
                             totalClose += close;
                             return '<tr class="hover:bg-purple-50/40 transition-colors">' +
-                                '<td class="p-2 border-b border-gray-100 font-medium text-gray-900">' + (a.name || 'Asset ' + (idx + 1)) + '</td>' +
-                                '<td class="p-2 border-b border-gray-100 text-right">AED ' + add.toLocaleString() + '</td>' +
+                                '<td class="p-2 border-b border-gray-100 font-medium text-gray-900">' + (a.particulars || a.name || 'Asset ' + (idx + 1)) + '</td>' +
+                                '<td class="p-2 border-b border-gray-100 text-right">AED ' + opening.toLocaleString() + '</td>' +
+                                '<td class="p-2 border-b border-gray-100 text-right text-blue-700 font-semibold">AED ' + add.toLocaleString() + '</td>' +
+                                '<td class="p-2 border-b border-gray-100 text-right font-medium">AED ' + base.toLocaleString() + '</td>' +
                                 '<td class="p-2 border-b border-gray-100 text-right">' + rate + '%</td>' +
                                 '<td class="p-2 border-b border-gray-100 text-right text-rose-600">(AED ' + dep.toLocaleString() + ')</td>' +
                                 '<td class="p-2 border-b border-gray-100 text-right font-bold text-gray-900">AED ' + close.toLocaleString() + '</td>' +
@@ -7463,11 +7534,11 @@ function renderMainCommentsList() {
                         bodyHtml = '<div class="border border-gray-200 rounded-xl overflow-hidden shadow-2xs">' +
                             '<table class="w-full text-left text-xs">' +
                                 '<thead class="bg-gray-50 border-b border-gray-200 font-semibold text-gray-700">' +
-                                    '<tr><th class="p-2.5">Asset Category</th><th class="p-2.5 text-right">Cost / Additions</th><th class="p-2.5 text-right">Rate</th><th class="p-2.5 text-right">Depreciation</th><th class="p-2.5 text-right">Closing Net Value</th></tr>' +
+                                    '<tr><th class="p-2.5">Asset Category</th><th class="p-2.5 text-right">Opening Cost</th><th class="p-2.5 text-right">New Additions</th><th class="p-2.5 text-right">Total Base</th><th class="p-2.5 text-right">Rate</th><th class="p-2.5 text-right">Depreciation</th><th class="p-2.5 text-right">Closing Net Value</th></tr>' +
                                 '</thead>' +
                                 '<tbody>' + rows + '</tbody>' +
                                 '<tfoot class="bg-purple-50/60 font-bold border-t border-purple-200 text-purple-950">' +
-                                    '<tr><td class="p-2.5">Total Property, Plant & Equipment</td><td class="p-2.5 text-right">AED ' + totalAdd.toLocaleString() + '</td><td class="p-2.5 text-right">-</td><td class="p-2.5 text-right text-rose-700">(AED ' + totalDep.toLocaleString() + ')</td><td class="p-2.5 text-right text-purple-900">AED ' + totalClose.toLocaleString() + '</td></tr>' +
+                                    '<tr><td class="p-2.5">Total Property, Plant & Equipment</td><td class="p-2.5 text-right">AED ' + totalOpening.toLocaleString() + '</td><td class="p-2.5 text-right text-blue-800">AED ' + totalAdd.toLocaleString() + '</td><td class="p-2.5 text-right">AED ' + totalBase.toLocaleString() + '</td><td class="p-2.5 text-right">-</td><td class="p-2.5 text-right text-rose-700">(AED ' + totalDep.toLocaleString() + ')</td><td class="p-2.5 text-right text-purple-900">AED ' + totalClose.toLocaleString() + '</td></tr>' +
                                 '</tfoot>' +
                             '</table>' +
                         '</div>';
@@ -8311,9 +8382,22 @@ function renderMainCommentsList() {
             setVal('pos-retained', reClosing);
             setVal('cf-dividend', -reDividend);
 
-            // 4. PPE Calculations
-            const ppeClosing = ppeData.reduce((acc, a) => acc + (a.addition - Math.round(a.addition * a.rate / 100)), 0);
-            const ppeDepreciation = ppeData.reduce((acc, a) => acc + Math.round(a.addition * a.rate / 100), 0);
+            // 4. PPE Calculations (Depreciation on total base = Opening Cost + Additions)
+            const ppeClosing = ppeData.reduce((acc, a) => {
+                const op = (a.openingCost !== undefined) ? (parseFloat(a.openingCost) || 0) : (parseFloat(a.cost) || parseFloat(a.addition) || 0);
+                const add = (a.openingCost !== undefined) ? (parseFloat(a.addition) || 0) : 0;
+                const rate = parseFloat(a.rate) || 0;
+                const base = op + add;
+                const dep = Math.round(base * rate / 100);
+                return acc + (base - dep);
+            }, 0);
+            const ppeDepreciation = ppeData.reduce((acc, a) => {
+                const op = (a.openingCost !== undefined) ? (parseFloat(a.openingCost) || 0) : (parseFloat(a.cost) || parseFloat(a.addition) || 0);
+                const add = (a.openingCost !== undefined) ? (parseFloat(a.addition) || 0) : 0;
+                const rate = parseFloat(a.rate) || 0;
+                const base = op + add;
+                return acc + Math.round(base * rate / 100);
+            }, 0);
             setVal('pos-ppe', ppeClosing);
             setVal('pl-depreciation', -ppeDepreciation);
             
@@ -10043,27 +10127,40 @@ renderMainCommentsList(); // Clear comment list on new form
             doc.text("6 Property, plant and equipment", pageMargin, currentY);
             currentY += 10;
             
+            let ppeTotalOpening = 0;
+            let ppeTotalAdd = 0;
+            let ppeTotalBase = 0;
+            let ppeTotalDep = 0;
+            let ppeTotalCls = 0;
+
             const ppeBody = ppeData.map(asset => {
-                const dep = Math.round(asset.addition * asset.rate / 100);
-                const cls = asset.addition - dep;
-                return [asset.particulars, asset.addition.toLocaleString(), asset.addition.toLocaleString(), `${asset.rate}%`, dep.toLocaleString(), cls.toLocaleString()];
+                const op = (asset.openingCost !== undefined) ? (parseFloat(asset.openingCost) || 0) : (parseFloat(asset.cost) || parseFloat(asset.addition) || 0);
+                const add = (asset.openingCost !== undefined) ? (parseFloat(asset.addition) || 0) : 0;
+                const rate = parseFloat(asset.rate) || 0;
+                const base = op + add;
+                const dep = Math.round(base * rate / 100);
+                const cls = base - dep;
+                ppeTotalOpening += op;
+                ppeTotalAdd += add;
+                ppeTotalBase += base;
+                ppeTotalDep += dep;
+                ppeTotalCls += cls;
+                return [asset.particulars || '', op.toLocaleString(), add.toLocaleString(), base.toLocaleString(), `${rate}%`, dep.toLocaleString(), cls.toLocaleString()];
             });
-            const ppeTotalAdd = ppeData.reduce((acc, a) => acc + a.addition, 0);
-            const ppeTotalDep = ppeData.reduce((acc, a) => acc + Math.round(a.addition * a.rate / 100), 0);
-            const ppeTotalCls = ppeData.reduce((acc, a) => acc + (a.addition - Math.round(a.addition * a.rate / 100)), 0);
 
             doc.autoTable({
                 startY: currentY,
                 theme: 'grid',
-                styles: { fontSize: 9, cellPadding: 2, halign: 'right' },
+                styles: { fontSize: 8.5, cellPadding: 2, halign: 'right' },
                 headStyles: { fontStyle: 'bold', halign: 'center' },
                 columnStyles: { 0: { halign: 'left' } },
-                head: [['Particulars', 'Addition', 'Total', 'Rate', 'Depreciation', 'Closing As on...']],
+                head: [['Particulars', 'Opening Cost', 'Addition', 'Total Cost', 'Rate', 'Depreciation', 'Closing Net Value']],
                 body: ppeBody,
                 foot: [[
                     { content: 'Total', styles: { fontStyle: 'bold', halign: 'left' } },
+                    { content: ppeTotalOpening.toLocaleString(), styles: { fontStyle: 'bold' } },
                     { content: ppeTotalAdd.toLocaleString(), styles: { fontStyle: 'bold' } },
-                    { content: ppeTotalAdd.toLocaleString(), styles: { fontStyle: 'bold' } },
+                    { content: ppeTotalBase.toLocaleString(), styles: { fontStyle: 'bold' } },
                     '',
                     { content: ppeTotalDep.toLocaleString(), styles: { fontStyle: 'bold' } },
                     { content: ppeTotalCls.toLocaleString(), styles: { fontStyle: 'bold' } },
@@ -10293,13 +10390,21 @@ renderMainCommentsList(); // Clear comment list on new form
             const adminRows = adminExpData.map(item => [item.item, item.amount]);
             
             // Prepare PPE Data array
-            const ppeRows = ppeData.map(item => [item.particulars, item.addition, item.rate/100, (item.addition * item.rate/100), (item.addition - (item.addition * item.rate/100))]);
+            const ppeRows = ppeData.map(item => {
+                const op = (item.openingCost !== undefined) ? (parseFloat(item.openingCost) || 0) : (parseFloat(item.cost) || parseFloat(item.addition) || 0);
+                const add = (item.openingCost !== undefined) ? (parseFloat(item.addition) || 0) : 0;
+                const rate = parseFloat(item.rate) || 0;
+                const base = op + add;
+                const dep = Math.round(base * rate / 100);
+                const cls = base - dep;
+                return [item.particulars || '', op, add, base, rate/100, dep, cls];
+            });
 
             const notesData = [
                 ['NOTE 6: PROPERTY, PLANT AND EQUIPMENT'],
-                ['Particulars', 'Addition', 'Rate', 'Depreciation', 'Closing'],
+                ['Particulars', 'Opening Cost', 'Addition', 'Total Cost', 'Rate', 'Depreciation', 'Closing Net Value'],
                 ...ppeRows,
-                ['Total', '', '', Math.abs(getVal('pl-depreciation')), getVal('pos-ppe')],
+                ['Total', '', '', '', '', Math.abs(getVal('pl-depreciation')), getVal('pos-ppe')],
                 ['', '', '', '', ''],
                 ['NOTE 17: ADMIN & SELLING EXPENSES'],
                 ['Item', 'Amount'],
