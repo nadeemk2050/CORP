@@ -4822,53 +4822,146 @@ const mainCommentList = document.getElementById('main-comment-list');
 
         function extractReportClosingBalances(reportData) {
             if (!reportData) return null;
-            const fd = reportData.formData || {};
+            const d = reportData.data || reportData;
+            const fd = d.formData || reportData.formData || {};
             
+            const num = (v, fallback = 0) => {
+                if (v === undefined || v === null || v === '') return fallback;
+                const n = parseFloat(v);
+                return isNaN(n) ? fallback : n;
+            };
+
             // 1. Retained earnings closing balance
             let closingRetained = 0;
             if (fd['pos-retained'] !== undefined && fd['pos-retained'] !== '') {
-                closingRetained = parseFloat(fd['pos-retained']) || 0;
-            } else if (reportData.retainedEarningsData) {
-                const op = parseFloat(reportData.retainedEarningsData.opening) || 0;
-                const div = parseFloat(reportData.retainedEarningsData.dividend) || 0;
-                const sales = parseFloat(fd['pl-sales']) || 0;
-                const cost = parseFloat(fd['pl-cost']) || 0;
-                const admin = parseFloat(fd['pl-admin']) || 0;
-                const rem = Math.abs(parseFloat(fd['pl-remuneration']) || 0);
-                const dep = parseFloat(fd['pl-depreciation']) || 0;
+                closingRetained = num(fd['pos-retained']);
+            } else if (d.retainedEarningsData || reportData.retainedEarningsData) {
+                const reObj = d.retainedEarningsData || reportData.retainedEarningsData;
+                const op = num(reObj.opening);
+                const div = num(reObj.dividend);
+                const sales = num(fd['pl-sales']);
+                const cost = num(fd['pl-cost']);
+                const admin = num(fd['pl-admin']);
+                const rem = Math.abs(num(fd['pl-remuneration']));
+                const dep = num(fd['pl-depreciation']);
                 const netIncome = sales + cost + admin - rem + dep;
                 closingRetained = op + netIncome - div;
             }
 
             // 2. Cash and bank balance closing
-            const closingCash = parseFloat(fd['pos-cash']) || 0;
-
-            // 3. Closing inventory
-            let closingInventory = 0;
-            if (reportData.inventoryData && reportData.inventoryData.age_1_150 !== undefined) {
-                closingInventory = parseFloat(reportData.inventoryData.age_1_150) || 0;
-            } else if (fd['pos-inventory'] !== undefined && fd['pos-inventory'] !== '') {
-                closingInventory = parseFloat(fd['pos-inventory']) || 0;
+            let closingCash = 0;
+            if (fd['pos-cash'] !== undefined && fd['pos-cash'] !== '') {
+                closingCash = num(fd['pos-cash']);
             }
 
-            // 4. Share Capital closing
-            const closingShareCapital = parseFloat(fd['pos-capital']) || 0;
+            // 3. Closing inventory (Note 7 / Note 16)
+            let closingInventory = 0;
+            const invObj = d.inventoryData || reportData.inventoryData;
+            if (invObj && invObj.age_1_150 !== undefined) {
+                closingInventory = num(invObj.age_1_150);
+            } else if (invObj && invObj.total !== undefined) {
+                closingInventory = num(invObj.total);
+            } else if (fd['pos-inventory'] !== undefined && fd['pos-inventory'] !== '') {
+                closingInventory = num(fd['pos-inventory']);
+            }
 
-            // 5. Shareholder Loan / Current Account closing
-            const closingShareholderLoan = parseFloat(fd['pos-shareholder']) || 0;
+            // 4. Closing Trade Receivables (Note 8 / Note 8.1)
+            let closingReceivables = 0;
+            const recObj = d.receivablesData || reportData.receivablesData;
+            if (recObj && recObj.age_1_60 !== undefined) {
+                closingReceivables = num(recObj.age_1_60);
+            } else if (recObj && recObj.geo_uae !== undefined) {
+                closingReceivables = num(recObj.geo_uae);
+            } else if (recObj && recObj.total !== undefined) {
+                closingReceivables = num(recObj.total);
+            } else if (fd['pos-receivables'] !== undefined && fd['pos-receivables'] !== '') {
+                closingReceivables = num(fd['pos-receivables']);
+            }
 
-            // 6. PPE Net Book Value closing
-            const closingPpe = parseFloat(fd['pos-ppe']) || 0;
+            // 5. Closing Deposits & prepaid expenses (Note 10)
+            let closingDeposits = 0;
+            const depObj = d.depositsData || reportData.depositsData;
+            if (depObj && (depObj.deposits !== undefined || depObj.prepaid !== undefined)) {
+                closingDeposits = num(depObj.deposits) + num(depObj.prepaid);
+            } else if (depObj && depObj.total !== undefined) {
+                closingDeposits = num(depObj.total);
+            } else if (fd['pos-deposits'] !== undefined && fd['pos-deposits'] !== '') {
+                closingDeposits = num(fd['pos-deposits']);
+            }
+
+            // 6. Share Capital closing (Note 2)
+            let closingShareCapital = 0;
+            if (fd['pos-capital'] !== undefined && fd['pos-capital'] !== '') {
+                closingShareCapital = num(fd['pos-capital']);
+            } else {
+                const shList = d.shareholdingData || reportData.shareholdingData;
+                if (Array.isArray(shList) && shList.length > 0) {
+                    closingShareCapital = shList.reduce((sum, s) => sum + (num(s.shares) * num(s.value, 1000) || num(s.amount)), 0);
+                }
+            }
+
+            // 7. Shareholder Current Account / Loan closing (Note 12)
+            let closingShareholderLoan = 0;
+            const shaObj = d.shareholderAccData || reportData.shareholderAccData;
+            if (shaObj && shaObj.closing !== undefined) {
+                closingShareholderLoan = num(shaObj.closing);
+            } else if (shaObj && (shaObj.opening !== undefined || shaObj.funds !== undefined)) {
+                closingShareholderLoan = num(shaObj.opening) + num(shaObj.funds);
+            } else if (fd['pos-shareholder'] !== undefined && fd['pos-shareholder'] !== '') {
+                closingShareholderLoan = num(fd['pos-shareholder']);
+            }
+
+            // 8. Closing Trade Payables (Note 13)
+            let closingPayables = 0;
+            const payObj = d.payablesData || reportData.payablesData;
+            if (payObj && payObj.age_1_30 !== undefined) {
+                closingPayables = num(payObj.age_1_30);
+            } else if (payObj && payObj.total !== undefined) {
+                closingPayables = num(payObj.total);
+            } else if (fd['pos-payables'] !== undefined && fd['pos-payables'] !== '') {
+                closingPayables = num(fd['pos-payables']);
+            }
+
+            // 9. Closing Accruals & other payables (Note 14)
+            let closingAccruals = 0;
+            if (fd['pos-accruals'] !== undefined && fd['pos-accruals'] !== '') {
+                closingAccruals = num(fd['pos-accruals']);
+            } else {
+                const accObj = d.accrualsData || reportData.accrualsData;
+                if (accObj && accObj.total !== undefined) {
+                    closingAccruals = num(accObj.total);
+                }
+            }
+
+            // 10. PPE Net Book Value closing (Note 6)
+            const ppeList = d.ppeData || reportData.ppeData;
+            let closingPpe = 0;
+            if (Array.isArray(ppeList) && ppeList.length > 0) {
+                closingPpe = ppeList.reduce((acc, a) => {
+                    const op = (a.openingCost !== undefined) ? num(a.openingCost) : (num(a.cost) || num(a.addition));
+                    const add = (a.openingCost !== undefined) ? num(a.addition) : 0;
+                    const rate = num(a.rate);
+                    const base = op + add;
+                    const dep = Math.round(base * rate / 100);
+                    return acc + (base - dep);
+                }, 0);
+            } else if (fd['pos-ppe'] !== undefined && fd['pos-ppe'] !== '') {
+                closingPpe = num(fd['pos-ppe']);
+            }
 
             return {
                 closingRetained,
                 closingCash,
                 closingInventory,
+                closingReceivables,
+                closingDeposits,
                 closingShareCapital,
                 closingShareholderLoan,
+                closingPayables,
+                closingAccruals,
                 closingPpe,
-                shareholdingData: reportData.shareholdingData || null,
-                ppeData: reportData.ppeData || null
+                shareholdingData: d.shareholdingData || reportData.shareholdingData || null,
+                ppeData: d.ppeData || reportData.ppeData || null
             };
         }
 
@@ -4880,13 +4973,17 @@ const mainCommentList = document.getElementById('main-comment-list');
             let openingRetained = 0;
             if (draftData && draftData.retainedEarningsData && draftData.retainedEarningsData.opening !== undefined) {
                 openingRetained = parseFloat(draftData.retainedEarningsData.opening) || 0;
+            } else if (ob.retained !== undefined && ob.retained !== 0) {
+                openingRetained = parseFloat(ob.retained) || 0;
             } else if (document.getElementById('re-opening-balance')) {
                 openingRetained = parseFloat(document.getElementById('re-opening-balance').value) || (retainedEarningsData && retainedEarningsData.opening) || 0;
             }
 
             // 2. Beginning Cash on Cash Flow Statement
             let openingCash = 0;
-            if (fd['cf-cash-begin'] !== undefined && fd['cf-cash-begin'] !== '') {
+            if (ob.cash !== undefined && ob.cash !== 0) {
+                openingCash = parseFloat(ob.cash) || 0;
+            } else if (fd['cf-cash-begin'] !== undefined && fd['cf-cash-begin'] !== '') {
                 openingCash = parseFloat(fd['cf-cash-begin']) || 0;
             } else if (document.getElementById('cf-cash-begin')) {
                 openingCash = parseFloat(document.getElementById('cf-cash-begin').value) || 0;
@@ -4896,6 +4993,8 @@ const mainCommentList = document.getElementById('main-comment-list');
             let openingInventory = 0;
             if (draftData && draftData.costOfSalesData && draftData.costOfSalesData.opening !== undefined) {
                 openingInventory = parseFloat(draftData.costOfSalesData.opening) || 0;
+            } else if (ob.inventory !== undefined && ob.inventory !== 0) {
+                openingInventory = parseFloat(ob.inventory) || 0;
             } else if (fd['cos-opening-inv'] !== undefined && fd['cos-opening-inv'] !== '') {
                 openingInventory = parseFloat(fd['cos-opening-inv']) || 0;
             } else if (document.getElementById('cos-opening-inv')) {
@@ -4903,14 +5002,26 @@ const mainCommentList = document.getElementById('main-comment-list');
             }
 
             // 4. Opening Receivables
-            let openingReceivables = ob.receivables !== undefined ? parseFloat(ob.receivables) || 0 : 0;
+            let openingReceivables = 0;
+            if (ob.receivables !== undefined) {
+                openingReceivables = parseFloat(ob.receivables) || 0;
+            } else if (openingBalancesData && openingBalancesData.receivables !== undefined) {
+                openingReceivables = parseFloat(openingBalancesData.receivables) || 0;
+            }
 
             // 5. Opening Deposits
-            let openingDeposits = ob.deposits !== undefined ? parseFloat(ob.deposits) || 0 : 0;
+            let openingDeposits = 0;
+            if (ob.deposits !== undefined) {
+                openingDeposits = parseFloat(ob.deposits) || 0;
+            } else if (openingBalancesData && openingBalancesData.deposits !== undefined) {
+                openingDeposits = parseFloat(openingBalancesData.deposits) || 0;
+            }
 
             // 6. Share Capital
             let shareCapital = 0;
-            if (fd['pos-capital'] !== undefined && fd['pos-capital'] !== '') {
+            if (ob.capital !== undefined && ob.capital !== 0) {
+                shareCapital = parseFloat(ob.capital) || 0;
+            } else if (fd['pos-capital'] !== undefined && fd['pos-capital'] !== '') {
                 shareCapital = parseFloat(fd['pos-capital']) || 0;
             } else if (document.getElementById('pos-capital')) {
                 shareCapital = parseFloat(document.getElementById('pos-capital').value) || 0;
@@ -4920,6 +5031,8 @@ const mainCommentList = document.getElementById('main-comment-list');
             let shareholderLoan = 0;
             if (draftData && draftData.shareholderAccData && draftData.shareholderAccData.opening !== undefined) {
                 shareholderLoan = parseFloat(draftData.shareholderAccData.opening) || 0;
+            } else if (ob.shareholder !== undefined && ob.shareholder !== 0) {
+                shareholderLoan = parseFloat(ob.shareholder) || 0;
             } else if (fd['pos-shareholder'] !== undefined && fd['pos-shareholder'] !== '') {
                 shareholderLoan = parseFloat(fd['pos-shareholder']) || 0;
             } else if (document.getElementById('pos-shareholder')) {
@@ -4927,15 +5040,27 @@ const mainCommentList = document.getElementById('main-comment-list');
             }
 
             // 8. Opening Payables
-            let openingPayables = ob.payables !== undefined ? parseFloat(ob.payables) || 0 : 0;
+            let openingPayables = 0;
+            if (ob.payables !== undefined) {
+                openingPayables = parseFloat(ob.payables) || 0;
+            } else if (openingBalancesData && openingBalancesData.payables !== undefined) {
+                openingPayables = parseFloat(openingBalancesData.payables) || 0;
+            }
 
             // 9. Opening Accruals
-            let openingAccruals = ob.accruals !== undefined ? parseFloat(ob.accruals) || 0 : 0;
+            let openingAccruals = 0;
+            if (ob.accruals !== undefined) {
+                openingAccruals = parseFloat(ob.accruals) || 0;
+            } else if (openingBalancesData && openingBalancesData.accruals !== undefined) {
+                openingAccruals = parseFloat(openingBalancesData.accruals) || 0;
+            }
 
             // 10. PPE Opening Cost Base
             let ppeBalance = 0;
             if (draftData && draftData.ppeData && Array.isArray(draftData.ppeData)) {
                 ppeBalance = draftData.ppeData.reduce((acc, a) => acc + ((a.openingCost !== undefined ? parseFloat(a.openingCost) : parseFloat(a.addition)) || 0), 0);
+            } else if (ppeData && Array.isArray(ppeData)) {
+                ppeBalance = ppeData.reduce((acc, a) => acc + ((a.openingCost !== undefined ? parseFloat(a.openingCost) : parseFloat(a.addition)) || 0), 0);
             } else if (fd['pos-ppe'] !== undefined && fd['pos-ppe'] !== '') {
                 ppeBalance = parseFloat(fd['pos-ppe']) || 0;
             }
@@ -7451,10 +7576,10 @@ function renderMainCommentsList() {
                 shareholdingData: Array.isArray(d.shareholdingData) ? d.shareholdingData : (Array.isArray(reportObj.shareholdingData) ? reportObj.shareholdingData : []),
                 retainedEarningsData: d.retainedEarningsData || reportObj.retainedEarningsData || {},
                 inventoryData: d.inventoryData || reportObj.inventoryData || {},
-                receivablesData: Array.isArray(d.receivablesData) ? d.receivablesData : (Array.isArray(reportObj.receivablesData) ? reportObj.receivablesData : []),
-                depositsData: Array.isArray(d.depositsData) ? d.depositsData : (Array.isArray(reportObj.depositsData) ? reportObj.depositsData : []),
+                receivablesData: (d.receivablesData && typeof d.receivablesData === 'object' && !Array.isArray(d.receivablesData)) ? d.receivablesData : (reportObj.receivablesData || {}),
+                depositsData: (d.depositsData && typeof d.depositsData === 'object' && !Array.isArray(d.depositsData)) ? d.depositsData : (reportObj.depositsData || {}),
                 shareholderAccData: d.shareholderAccData || reportObj.shareholderAccData || {},
-                payablesData: Array.isArray(d.payablesData) ? d.payablesData : (Array.isArray(reportObj.payablesData) ? reportObj.payablesData : []),
+                payablesData: (d.payablesData && typeof d.payablesData === 'object' && !Array.isArray(d.payablesData)) ? d.payablesData : (reportObj.payablesData || {}),
                 raw: reportObj
             };
         }
@@ -7954,17 +8079,23 @@ function renderMainCommentsList() {
             // Gather current active opening figures
             const curOpen = extractReportOpeningBalances(getFullDraftData());
 
+            const getValOrPrev = (curVal, prevVal) => {
+                if (curVal !== undefined && curVal !== null && curVal !== 0) return curVal;
+                if (prevBalances && prevVal !== undefined && prevVal !== null) return prevVal;
+                return curVal || 0;
+            };
+
             const accounts = [
-                { name: 'Retained Earnings (Opening)', cls: 'Equity (Note 3)', val: curOpen.openingRetained, ref: 'Note 3 Statement of Changes in Equity', tag: 'Permanent Reserve' },
-                { name: 'Cash and Cash Equivalents (Beginning Cash)', cls: 'Liquidity / Cash Flow', val: curOpen.openingCash, ref: 'Statement of Cash Flows Opening Anchor', tag: 'Cash Baseline' },
-                { name: 'Opening Inventory', cls: 'Current Asset (Note 16)', val: curOpen.openingInventory, ref: 'Note 16 Cost of Sales Opening Stock', tag: 'Working Capital' },
-                { name: 'Trade Receivables (Opening)', cls: 'Current Asset (Note 7)', val: curOpen.openingReceivables, ref: 'Note 7 Trade Debtors Baseline', tag: 'Working Capital' },
-                { name: 'Deposits & Prepaid Expenses (Opening)', cls: 'Current Asset (Note 8)', val: curOpen.openingDeposits, ref: 'Note 8 Security Deposits Baseline', tag: 'Working Capital' },
-                { name: 'Share Capital (Registered Base)', cls: 'Equity (Note 2)', val: curOpen.shareCapital, ref: 'Note 2 Shareholding Structure', tag: 'Registered Equity' },
-                { name: 'Shareholder Current Account (Opening)', cls: 'Equity / Loan (Note 4)', val: curOpen.shareholderLoan, ref: "Note 4 Shareholder's Account Opening", tag: 'Director Loan' },
-                { name: 'Trade Payables (Opening)', cls: 'Current Liability (Note 10)', val: curOpen.openingPayables, ref: 'Note 10 Trade Creditors Baseline', tag: 'Working Capital' },
-                { name: 'Accruals & Other Payables (Opening)', cls: 'Current Liability (Note 14)', val: curOpen.openingAccruals, ref: 'Note 14 Accrued Liabilities Baseline', tag: 'Working Capital' },
-                { name: 'Property, Plant & Equipment (Opening Cost Base)', cls: 'Non-Current Asset (Note 6)', val: curOpen.ppeBalance, ref: 'Note 6 Historical Asset Pool', tag: 'Fixed Assets' }
+                { name: 'Retained Earnings (Opening)', cls: 'Equity (Note 3)', val: getValOrPrev(curOpen.openingRetained, prevBalances ? prevBalances.closingRetained : 0), ref: 'Note 3 Statement of Changes in Equity', tag: 'Permanent Reserve' },
+                { name: 'Cash and Cash Equivalents (Beginning Cash)', cls: 'Liquidity / Cash Flow', val: getValOrPrev(curOpen.openingCash, prevBalances ? prevBalances.closingCash : 0), ref: 'Statement of Cash Flows Opening Anchor', tag: 'Cash Baseline' },
+                { name: 'Opening Inventory', cls: 'Cost of Sales (Note 16)', val: getValOrPrev(curOpen.openingInventory, prevBalances ? prevBalances.closingInventory : 0), ref: 'Note 16 Cost of Sales Opening Stock', tag: 'Working Capital' },
+                { name: 'Trade Receivables (Opening)', cls: 'Current Asset (Note 8)', val: getValOrPrev(curOpen.openingReceivables, prevBalances ? prevBalances.closingReceivables : 0), ref: 'Note 8 Trade Debtors Baseline', tag: 'Working Capital' },
+                { name: 'Deposits & Prepaid Expenses (Opening)', cls: 'Current Asset (Note 10)', val: getValOrPrev(curOpen.openingDeposits, prevBalances ? prevBalances.closingDeposits : 0), ref: 'Note 10 Security Deposits Baseline', tag: 'Working Capital' },
+                { name: 'Share Capital (Registered Base)', cls: 'Equity (Note 2)', val: getValOrPrev(curOpen.shareCapital, prevBalances ? prevBalances.closingShareCapital : 0), ref: 'Note 2 Shareholding Structure', tag: 'Registered Equity' },
+                { name: 'Shareholder Current Account (Opening)', cls: 'Equity / Loan (Note 12)', val: getValOrPrev(curOpen.shareholderLoan, prevBalances ? prevBalances.closingShareholderLoan : 0), ref: "Note 12 Shareholder\'s Account Opening", tag: 'Director Loan' },
+                { name: 'Trade Payables (Opening)', cls: 'Current Liability (Note 13)', val: getValOrPrev(curOpen.openingPayables, prevBalances ? prevBalances.closingPayables : 0), ref: 'Note 13 Trade Creditors Baseline', tag: 'Working Capital' },
+                { name: 'Accruals & Other Payables (Opening)', cls: 'Current Liability (Note 14)', val: getValOrPrev(curOpen.openingAccruals, prevBalances ? prevBalances.closingAccruals : 0), ref: 'Note 14 Accrued Liabilities Baseline', tag: 'Working Capital' },
+                { name: 'Property, Plant & Equipment (Opening Cost Base)', cls: 'Non-Current Asset (Note 6)', val: getValOrPrev(curOpen.ppeBalance, prevBalances ? prevBalances.closingPpe : 0), ref: 'Note 6 Historical Asset Pool', tag: 'Fixed Assets' }
             ];
 
             if (tbody) {
