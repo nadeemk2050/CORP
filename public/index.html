@@ -2467,6 +2467,19 @@
             { id: 1, name: 'Mr. NADEEM KHAN', nation: 'PAKISTAN', shares: 5, value: 1000 },
             { id: 2, name: 'Mr. MUHAMMAD USAMA SAQIB', nation: 'PAKISTAN', shares: 95, value: 1000 },
         ];
+
+        // --- Working Capital Opening Balances (Auto-carried from prior confirmed corp or initial) ---
+        let openingBalancesData = {
+            inventory: 0,
+            receivables: 0,
+            deposits: 0,
+            capital: 100000,
+            retained: 0,
+            shareholder: 0,
+            payables: 0,
+            accruals: 0,
+            cash: 0
+        };
         // Store data for simple modals
         let retainedEarningsData = { opening: 61856, dividend: 0 }; // net income is calculated
         let inventoryData = { age_1_150: 67148 };
@@ -4302,6 +4315,7 @@ const mainCommentList = document.getElementById('main-comment-list');
                 costOfSalesData: costOfSalesData,
     
                 openingInventoryCalcHistory: openingInventoryCalcHistory,
+                openingBalancesData: openingBalancesData,
                 mainCommentsData: mainCommentsData,
     
                 letterheadBase64: letterheadBase64,
@@ -4347,6 +4361,17 @@ const mainCommentList = document.getElementById('main-comment-list');
             costOfSalesData = data.costOfSalesData || costOfSalesData;
     
             openingInventoryCalcHistory = data.openingInventoryCalcHistory || [];
+            openingBalancesData = data.openingBalancesData || {
+                inventory: data.costOfSalesData ? (data.costOfSalesData.opening || 0) : 0,
+                receivables: 0,
+                deposits: 0,
+                capital: 100000,
+                retained: data.retainedEarningsData ? (data.retainedEarningsData.opening || 0) : 0,
+                shareholder: data.shareholderAccData ? (data.shareholderAccData.opening || 0) : 0,
+                payables: 0,
+                accruals: 0,
+                cash: (data.formData && data.formData['cf-cash-begin']) ? parseFloat(data.formData['cf-cash-begin']) || 0 : 0
+            };
 
             // Comments
             mainCommentsData = data.mainCommentsData || [];
@@ -4777,6 +4802,7 @@ const mainCommentList = document.getElementById('main-comment-list');
 
         function extractReportOpeningBalances(draftData) {
             const fd = (draftData && draftData.formData) || {};
+            const ob = (draftData && draftData.openingBalancesData) || openingBalancesData || {};
             
             // 1. Opening Retained Earnings
             let openingRetained = 0;
@@ -4804,7 +4830,13 @@ const mainCommentList = document.getElementById('main-comment-list');
                 openingInventory = parseFloat(document.getElementById('cos-opening-inv').value) || (costOfSalesData && costOfSalesData.opening) || 0;
             }
 
-            // 4. Share Capital
+            // 4. Opening Receivables
+            let openingReceivables = ob.receivables !== undefined ? parseFloat(ob.receivables) || 0 : 0;
+
+            // 5. Opening Deposits
+            let openingDeposits = ob.deposits !== undefined ? parseFloat(ob.deposits) || 0 : 0;
+
+            // 6. Share Capital
             let shareCapital = 0;
             if (fd['pos-capital'] !== undefined && fd['pos-capital'] !== '') {
                 shareCapital = parseFloat(fd['pos-capital']) || 0;
@@ -4812,28 +4844,40 @@ const mainCommentList = document.getElementById('main-comment-list');
                 shareCapital = parseFloat(document.getElementById('pos-capital').value) || 0;
             }
 
-            // 5. Shareholder Loan / Current Account
+            // 7. Shareholder Current Account
             let shareholderLoan = 0;
-            if (fd['pos-shareholder'] !== undefined && fd['pos-shareholder'] !== '') {
+            if (draftData && draftData.shareholderAccData && draftData.shareholderAccData.opening !== undefined) {
+                shareholderLoan = parseFloat(draftData.shareholderAccData.opening) || 0;
+            } else if (fd['pos-shareholder'] !== undefined && fd['pos-shareholder'] !== '') {
                 shareholderLoan = parseFloat(fd['pos-shareholder']) || 0;
             } else if (document.getElementById('pos-shareholder')) {
                 shareholderLoan = parseFloat(document.getElementById('pos-shareholder').value) || 0;
             }
 
-            // 6. PPE Baseline
+            // 8. Opening Payables
+            let openingPayables = ob.payables !== undefined ? parseFloat(ob.payables) || 0 : 0;
+
+            // 9. Opening Accruals
+            let openingAccruals = ob.accruals !== undefined ? parseFloat(ob.accruals) || 0 : 0;
+
+            // 10. PPE Opening Cost Base
             let ppeBalance = 0;
-            if (fd['pos-ppe'] !== undefined && fd['pos-ppe'] !== '') {
+            if (draftData && draftData.ppeData && Array.isArray(draftData.ppeData)) {
+                ppeBalance = draftData.ppeData.reduce((acc, a) => acc + ((a.openingCost !== undefined ? parseFloat(a.openingCost) : parseFloat(a.addition)) || 0), 0);
+            } else if (fd['pos-ppe'] !== undefined && fd['pos-ppe'] !== '') {
                 ppeBalance = parseFloat(fd['pos-ppe']) || 0;
-            } else if (document.getElementById('pos-ppe')) {
-                ppeBalance = parseFloat(document.getElementById('pos-ppe').value) || 0;
             }
 
             return {
                 openingRetained,
                 openingCash,
                 openingInventory,
+                openingReceivables,
+                openingDeposits,
                 shareCapital,
                 shareholderLoan,
+                openingPayables,
+                openingAccruals,
                 ppeBalance
             };
         }
@@ -4945,22 +4989,66 @@ const mainCommentList = document.getElementById('main-comment-list');
                 posRetainedInput.value = balances.closingRetained + netIncome - (retainedEarningsData ? retainedEarningsData.dividend : 0);
             }
 
-            // 2. Cash at Beginning of Year
+            // 2. Cash at Beginning of Year (Cash Flow anchor)
             setVal('cf-cash-begin', balances.closingCash);
+            openingBalancesData.cash = balances.closingCash;
 
-            // 3. Opening Inventory
+            // 3. Opening Inventory (Cost of Sales & Working Capital delta anchor)
             costOfSalesData.opening = balances.closingInventory;
+            openingBalancesData.inventory = balances.closingInventory;
             const cosOpenInput = document.getElementById('cos-opening-inv');
             if (cosOpenInput) cosOpenInput.value = balances.closingInventory;
 
-            // 4. Share Capital & Shareholder Data
+            // 4. Opening Trade Receivables (Working Capital delta anchor)
+            openingBalancesData.receivables = balances.closingReceivables;
+
+            // 5. Opening Deposits & Prepayments (Working Capital delta anchor)
+            openingBalancesData.deposits = balances.closingDeposits;
+
+            // 6. Share Capital & Shareholding
             setVal('pos-capital', balances.closingShareCapital);
+            openingBalancesData.capital = balances.closingShareCapital;
             if (balances.shareholdingData && Array.isArray(balances.shareholdingData) && balances.shareholdingData.length > 0) {
                 shareholdingData = JSON.parse(JSON.stringify(balances.shareholdingData));
             }
 
-            // 5. Shareholder Current Account / Loan
+            // 7. Shareholder Current Account / Loan (Opening baseline)
+            if (shareholderAccData) {
+                shareholderAccData.opening = balances.closingShareholderLoan;
+                shareholderAccData.funds = 0; // Fresh additions this year start at 0
+            }
+            openingBalancesData.shareholder = balances.closingShareholderLoan;
             setVal('pos-shareholder', balances.closingShareholderLoan);
+
+            // 8. Opening Trade Payables (Working Capital delta anchor)
+            openingBalancesData.payables = balances.closingPayables;
+
+            // 9. Opening Accruals & Other Payables (Working Capital delta anchor)
+            openingBalancesData.accruals = balances.closingAccruals;
+
+            // 10. Property, Plant & Equipment (Note 6 Roll-Forward)
+            // Roll forward prior year closing net book values as opening cost base for current year, with fresh additions = 0
+            if (balances.ppeData && Array.isArray(balances.ppeData) && balances.ppeData.length > 0) {
+                ppeData = balances.ppeData.map(asset => {
+                    const op = (asset.openingCost !== undefined) ? (parseFloat(asset.openingCost) || 0) : (parseFloat(asset.cost) || parseFloat(asset.addition) || 0);
+                    const add = (asset.openingCost !== undefined) ? (parseFloat(asset.addition) || 0) : 0;
+                    const rate = parseFloat(asset.rate) || 0;
+                    const base = op + add;
+                    const dep = Math.round(base * rate / 100);
+                    const closingNbv = base - dep;
+                    return {
+                        id: asset.id,
+                        particulars: asset.particulars || asset.name || 'Asset',
+                        openingCost: closingNbv,
+                        addition: 0,
+                        rate: rate
+                    };
+                });
+            } else if (balances.closingPpe > 0) {
+                ppeData = [
+                    { id: 1, particulars: 'Property, plant and equipment', openingCost: balances.closingPpe, addition: 0, rate: 20 }
+                ];
+            }
 
             // Run calculations & update preview
             runAllCalculations();
@@ -4988,8 +5076,9 @@ const mainCommentList = document.getElementById('main-comment-list');
 
             const success = applyRollForwardBalances(prevReport);
             if (success) {
-                alert(`Universal Roll-Forward Applied Successfully!\n\nClosing balances from ${precedingSerial} ("${prevReport.draftName}") have been locked into the opening balances of ${currentSerial}:\n\n• Retained Earnings Opening: AED ${extractReportClosingBalances(prevReport.data).closingRetained.toLocaleString()}\n• Beginning Cash (CF): AED ${extractReportClosingBalances(prevReport.data).closingCash.toLocaleString()}\n• Opening Inventory (COS): AED ${extractReportClosingBalances(prevReport.data).closingInventory.toLocaleString()}\n• Share Capital: AED ${extractReportClosingBalances(prevReport.data).closingShareCapital.toLocaleString()}\n• Shareholder Current Account: AED ${extractReportClosingBalances(prevReport.data).closingShareholderLoan.toLocaleString()}`);
-                showDraftMessage(`Opening balances successfully rolled forward from ${precedingSerial} (${prevReport.draftName}).`, false);
+                const b = extractReportClosingBalances(prevReport.data);
+                alert(`Universal Roll-Forward Applied Successfully!\n\nAll 10 closing balances from ${precedingSerial} ("${prevReport.draftName}") have been locked into the opening balances of ${currentSerial}:\n\n• Retained Earnings Opening: AED ${b.closingRetained.toLocaleString()}\n• Beginning Cash (CF): AED ${b.closingCash.toLocaleString()}\n• Opening Inventory (COS): AED ${b.closingInventory.toLocaleString()}\n• Opening Trade Receivables: AED ${b.closingReceivables.toLocaleString()}\n• Opening Deposits & Prepayments: AED ${b.closingDeposits.toLocaleString()}\n• Opening Trade Payables: AED ${b.closingPayables.toLocaleString()}\n• Opening Accruals & Other Payables: AED ${b.closingAccruals.toLocaleString()}\n• Share Capital: AED ${b.closingShareCapital.toLocaleString()}\n• Shareholder Current Account: AED ${b.closingShareholderLoan.toLocaleString()}\n• PPE Net Book Value: AED ${b.closingPpe.toLocaleString()}`);
+                showDraftMessage(`All opening balances successfully rolled forward from ${precedingSerial} (${prevReport.draftName}).`, false);
             }
         }
 
@@ -8407,28 +8496,41 @@ function renderMainCommentsList() {
             const shareholdingTotal = shareholdingData.reduce((acc, a) => acc + (a.shares * a.value), 0);
             setVal('pos-capital', shareholdingTotal);
             
-            // 6. AUTOMATIC LINKS TO CASH FLOW (Movement Calculation)
+            // 6. AUTOMATIC LINKS TO CASH FLOW (Strict Working Capital Net Movement: Opening - Closing for Assets, Closing - Opening for Liabilities)
             
-            // Inventory
-            setVal('pos-inventory', inventoryData.age_1_150);
-            const invMovement = -(inventoryData.age_1_150 - costOfSalesData.opening);
+            // A. Inventory: Opening - Closing (Increase in inventory is cash outflow)
+            const invOpening = (costOfSalesData && costOfSalesData.opening !== undefined) ? costOfSalesData.opening : (openingBalancesData.inventory || 0);
+            const invClosing = inventoryData.age_1_150;
+            setVal('pos-inventory', invClosing);
+            const invMovement = invOpening - invClosing; // = -(invClosing - invOpening)
             setVal('cf-inventory', invMovement);
 
-            // Receivables (Assuming opening was 0, or just net impact)
-            setVal('pos-receivables', receivablesData.age_1_60);
-            setVal('cf-receivables', -receivablesData.age_1_60); 
+            // B. Trade Receivables: Opening - Closing (Increase in receivables is cash outflow)
+            const recOpening = (openingBalancesData && openingBalancesData.receivables !== undefined) ? openingBalancesData.receivables : 0;
+            const recClosing = receivablesData.age_1_60;
+            setVal('pos-receivables', recClosing);
+            const recMovement = recOpening - recClosing; // = -(recClosing - recOpening)
+            setVal('cf-receivables', recMovement);
 
-            // Deposits
+            // C. Deposits and Prepaid Expenses: Opening - Closing (Increase in deposits/prepaids is cash outflow)
+            const depOpening = (openingBalancesData && openingBalancesData.deposits !== undefined) ? openingBalancesData.deposits : 0;
             const totalDeposits = depositsData.deposits + depositsData.prepaid;
             setVal('pos-deposits', totalDeposits);
-            setVal('cf-deposits', -totalDeposits);
+            const depMovement = depOpening - totalDeposits; // = -(totalDeposits - depOpening)
+            setVal('cf-deposits', depMovement);
 
-            // Payables
-            setVal('pos-payables', payablesData.age_1_30);
-            setVal('cf-payables', payablesData.age_1_30); // Now it is active!
-            // Accruals
+            // D. Trade Payables: Closing - Opening (Increase in payables is cash preserved/inflow)
+            const payOpening = (openingBalancesData && openingBalancesData.payables !== undefined) ? openingBalancesData.payables : 0;
+            const payClosing = payablesData.age_1_30;
+            setVal('pos-payables', payClosing);
+            const payMovement = payClosing - payOpening;
+            setVal('cf-payables', payMovement);
+
+            // E. Accruals and Other Payables: Closing - Opening (Increase in accruals is cash preserved/inflow)
+            const accOpening = (openingBalancesData && openingBalancesData.accruals !== undefined) ? openingBalancesData.accruals : 0;
             const accruals = getVal('pos-accruals');
-            setVal('cf-accruals', accruals);
+            const accMovement = accruals - accOpening;
+            setVal('cf-accruals', accMovement);
 
             // Shareholder Account
             // FIX: Use 'shareholderAccData.opening' instead of just 'shaOpening'
