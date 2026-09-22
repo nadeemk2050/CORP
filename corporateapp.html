@@ -1857,7 +1857,7 @@
 
     <!-- Save Draft As Modal (Company Selection, Serial Assignment & Roll-Forward) -->
     <div id="save-draft-as-modal" class="modal" style="display: none; z-index: 65;">
-        <div class="modal-content" style="max-width: 580px; width: 95vw;">
+        <div class="modal-content !max-w-2xl" style="max-width: 680px; width: 95vw; max-height: 92vh; display: flex; flex-direction: column;">
             <div class="modal-header flex justify-between items-center pb-3 border-b border-gray-200">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shadow-xs">
@@ -5414,18 +5414,21 @@ const mainCommentList = document.getElementById('main-comment-list');
             }
 
             const serialVal = (saveAsSerialNumber.value || '').trim().toUpperCase();
-            const match = serialVal.match(/^CORP-(\d+)$/i);
+            const match = serialVal.match(/^CORP-(d+)$/i);
             const serialNum = match ? parseInt(match[1], 10) : 1;
 
             if (serialNum <= 1 || !match) {
-                saveAsRollforwardStatus.className = "p-3.5 rounded-xl border bg-blue-50/80 border-blue-200 text-blue-900 text-xs space-y-1";
+                saveAsRollforwardStatus.className = "p-3.5 rounded-xl border bg-blue-50/80 border-blue-200 text-blue-900 text-xs space-y-1.5";
                 saveAsRollforwardStatus.innerHTML = `
-                    <div class="flex items-center font-bold text-blue-800">
-                        <svg class="w-4 h-4 mr-1.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Initial Corporate Filing (${serialVal || 'CORP-001'}) - Manual Opening Balances
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center font-bold text-blue-800">
+                            <svg class="w-4 h-4 mr-1.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Initial Corporate Sequence (${escapeHtml(serialVal || 'CORP-001')})
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-800">Initial Setup</span>
                     </div>
-                    <p class="text-blue-800 pl-5 leading-relaxed text-[11.5px]">
-                        This is the initial corporate sequence for <strong>${escapeHtml(selectedCompanyName)}</strong>. Manual input of opening balances (Retained Earnings, Opening Inventory, Beginning Cash, Share Capital) is enabled since there is no prior confirmed report.
+                    <p class="text-blue-800 leading-relaxed text-[11.5px] m-0">
+                        This is the initial corporate sequence for <strong>${escapeHtml(selectedCompanyName)}</strong>. Opening balances can be entered directly as there is no prior confirmed corporate report.
                     </p>
                 `;
                 return;
@@ -5436,49 +5439,75 @@ const mainCommentList = document.getElementById('main-comment-list');
 
             if (prevReport && prevReport.data) {
                 const balances = extractReportClosingBalances(prevReport.data);
-                saveAsRollforwardStatus.className = "p-3.5 rounded-xl border bg-emerald-50/90 border-emerald-300 text-emerald-950 text-xs space-y-2";
+                const prevSerial = prevReport.serialNumber || (prevReport.data && prevReport.data.serialNumber) || precedingSerial;
+                saveAsRollforwardStatus.className = "p-3.5 rounded-xl border bg-emerald-50/90 border-emerald-300 text-emerald-950 text-xs space-y-2.5 shadow-2xs";
                 saveAsRollforwardStatus.innerHTML = `
-                    <div class="flex items-center font-bold text-emerald-800">
-                        <svg class="w-4 h-4 mr-1.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Automated Roll-Forward Active: Preceding Report Found
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center font-bold text-emerald-800">
+                            <svg class="w-4 h-4 mr-1.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Automated Roll-Forward Active: Preceding Report Found
+                        </div>
+                        <span class="px-2.5 py-0.5 text-[10.5px] font-bold rounded-full bg-emerald-200 text-emerald-900">Source: #${escapeHtml(prevSerial)}</span>
                     </div>
-                    <p class="text-emerald-900 pl-5 text-[11.5px]">
-                        Closing balances from <strong>${escapeHtml(precedingSerial)}</strong> (${escapeHtml(prevReport.draftName)}) will be automatically pulled into this draft's opening balances:
+                    <p class="text-emerald-900 text-[11.5px] m-0">
+                        All 10 closing baseline balances from <strong>#${escapeHtml(prevSerial)}</strong> (${escapeHtml(prevReport.draftName)}) will be automatically carried forward and locked into this draft:
                     </p>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pl-5 text-[11px] font-mono">
-                        <div class="p-1.5 bg-white rounded border border-emerald-200">
-                            <span class="text-gray-500 block text-[9.5px]">RE OPENING:</span>
-                            <strong class="text-emerald-700">AED ${(balances.closingRetained || 0).toLocaleString()}</strong>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-[11px] font-mono max-h-60 overflow-y-auto pr-1 p-1 bg-white/70 rounded-lg border border-emerald-200">
+                        <div class="p-2 bg-white rounded-lg border border-emerald-200/90 shadow-2xs">
+                            <span class="text-gray-500 block text-[9.5px] font-sans font-medium uppercase">Retained Earnings (Note 3)</span>
+                            <strong class="text-emerald-800 text-xs">AED ${(balances.closingRetained || 0).toLocaleString()}</strong>
                         </div>
-                        <div class="p-1.5 bg-white rounded border border-emerald-200">
-                            <span class="text-gray-500 block text-[9.5px]">BEGINNING CASH:</span>
-                            <strong class="text-emerald-700">AED ${(balances.closingCash || 0).toLocaleString()}</strong>
+                        <div class="p-2 bg-white rounded-lg border border-emerald-200/90 shadow-2xs">
+                            <span class="text-gray-500 block text-[9.5px] font-sans font-medium uppercase">Beginning Cash (CF Anchor)</span>
+                            <strong class="text-emerald-800 text-xs">AED ${(balances.closingCash || 0).toLocaleString()}</strong>
                         </div>
-                        <div class="p-1.5 bg-white rounded border border-emerald-200">
-                            <span class="text-gray-500 block text-[9.5px]">OPENING INVENTORY:</span>
-                            <strong class="text-emerald-700">AED ${(balances.closingInventory || 0).toLocaleString()}</strong>
+                        <div class="p-2 bg-white rounded-lg border border-emerald-200/90 shadow-2xs">
+                            <span class="text-gray-500 block text-[9.5px] font-sans font-medium uppercase">Opening Inventory (Note 16)</span>
+                            <strong class="text-emerald-800 text-xs">AED ${(balances.closingInventory || 0).toLocaleString()}</strong>
                         </div>
-                        <div class="p-1.5 bg-white rounded border border-emerald-200">
-                            <span class="text-gray-500 block text-[9.5px]">SHARE CAPITAL:</span>
-                            <strong class="text-emerald-700">AED ${(balances.closingShareCapital || 0).toLocaleString()}</strong>
+                        <div class="p-2 bg-white rounded-lg border border-emerald-200/90 shadow-2xs">
+                            <span class="text-gray-500 block text-[9.5px] font-sans font-medium uppercase">Trade Receivables (Note 8)</span>
+                            <strong class="text-emerald-800 text-xs">AED ${(balances.closingReceivables || 0).toLocaleString()}</strong>
                         </div>
-                        <div class="p-1.5 bg-white rounded border border-emerald-200 sm:col-span-2">
-                            <span class="text-gray-500 block text-[9.5px]">SHAREHOLDER ACCOUNT:</span>
-                            <strong class="text-emerald-700">AED ${(balances.closingShareholderLoan || 0).toLocaleString()}</strong>
+                        <div class="p-2 bg-white rounded-lg border border-emerald-200/90 shadow-2xs">
+                            <span class="text-gray-500 block text-[9.5px] font-sans font-medium uppercase">Deposits & Prepaids (Note 10)</span>
+                            <strong class="text-emerald-800 text-xs">AED ${(balances.closingDeposits || 0).toLocaleString()}</strong>
+                        </div>
+                        <div class="p-2 bg-white rounded-lg border border-emerald-200/90 shadow-2xs">
+                            <span class="text-gray-500 block text-[9.5px] font-sans font-medium uppercase">Share Capital (Note 2)</span>
+                            <strong class="text-emerald-800 text-xs">AED ${(balances.closingShareCapital || 0).toLocaleString()}</strong>
+                        </div>
+                        <div class="p-2 bg-white rounded-lg border border-emerald-200/90 shadow-2xs">
+                            <span class="text-gray-500 block text-[9.5px] font-sans font-medium uppercase">Shareholder Account (Note 12)</span>
+                            <strong class="text-emerald-800 text-xs">AED ${(balances.closingShareholderLoan || 0).toLocaleString()}</strong>
+                        </div>
+                        <div class="p-2 bg-white rounded-lg border border-emerald-200/90 shadow-2xs">
+                            <span class="text-gray-500 block text-[9.5px] font-sans font-medium uppercase">Trade Payables (Note 13)</span>
+                            <strong class="text-emerald-800 text-xs">AED ${(balances.closingPayables || 0).toLocaleString()}</strong>
+                        </div>
+                        <div class="p-2 bg-white rounded-lg border border-emerald-200/90 shadow-2xs">
+                            <span class="text-gray-500 block text-[9.5px] font-sans font-medium uppercase">Accruals & Other (Note 14)</span>
+                            <strong class="text-emerald-800 text-xs">AED ${(balances.closingAccruals || 0).toLocaleString()}</strong>
+                        </div>
+                        <div class="p-2 bg-white rounded-lg border border-emerald-200/90 shadow-2xs sm:col-span-2 md:col-span-3">
+                            <span class="text-gray-500 block text-[9.5px] font-sans font-medium uppercase">PPE Opening Cost Base (Note 6)</span>
+                            <strong class="text-emerald-800 text-xs">AED ${(balances.closingPpe || 0).toLocaleString()}</strong>
                         </div>
                     </div>
                 `;
             } else {
-                saveAsRollforwardStatus.className = "p-3.5 rounded-xl border bg-amber-50/90 border-amber-300 text-amber-950 text-xs space-y-1.5";
+                saveAsRollforwardStatus.className = "p-3.5 rounded-xl border bg-amber-50/90 border-amber-300 text-amber-950 text-xs space-y-1.5 shadow-2xs";
                 saveAsRollforwardStatus.innerHTML = `
-                    <div class="flex items-center font-bold text-amber-800">
-                        <svg class="w-4 h-4 mr-1.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        Draft Stage Serial: Preceding Report (${precedingSerial}) Pending
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center font-bold text-amber-800">
+                            <svg class="w-4 h-4 mr-1.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            Draft Stage Serial: Preceding Report (${escapeHtml(precedingSerial)}) Pending
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200">Pending Confirmation</span>
                     </div>
-                    <p class="text-amber-900 pl-5 leading-relaxed text-[11.5px]">
-                        Preceding report <strong>${escapeHtml(precedingSerial)}</strong> is not yet confirmed for <strong>${escapeHtml(selectedCompanyName)}</strong>.<br>
-                        <span class="text-amber-800">✓ You can freely save and edit this working draft now.<br>
-                        ⚠ Note: Before moving to Confirmed Area, <strong>${escapeHtml(precedingSerial)}</strong> must be finalized first to satisfy sequential rules.</span>
+                    <p class="text-amber-900 leading-relaxed text-[11.5px] m-0">
+                        Preceding corporate report <strong>${escapeHtml(precedingSerial)}</strong> is not yet confirmed in the corporate archive for <strong>${escapeHtml(selectedCompanyName)}</strong>.<br>
+                        <span class="text-amber-800">✓ You can freely save and edit this draft. When ${escapeHtml(precedingSerial)} is finalized, all 10 opening balances will seamlessly link.</span>
                     </p>
                 `;
             }
