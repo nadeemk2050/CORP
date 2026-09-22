@@ -2466,6 +2466,8 @@
     <script type="module">
         // --- Firebase Globals ---
         let db, auth, userId, draftsCollection;
+        let draftsUnsubscribe = null;
+        let isSavingDraftInProgress = false;
         
         // --- ADD THIS ---
         let companiesDocRef;
@@ -4238,6 +4240,10 @@ const mainCommentList = document.getElementById('main-comment-list');
                 const analytics = getAnalytics(app); // Added this line
 
                 onAuthStateChanged(auth, async (user) => {
+                    if (draftsUnsubscribe) {
+                        draftsUnsubscribe();
+                        draftsUnsubscribe = null;
+                    }
                     if (user) {
                         // User is signed in
                         userId = user.uid;
@@ -4267,6 +4273,10 @@ const mainCommentList = document.getElementById('main-comment-list');
                         initializeMainAppListeners();
                     } else {
                         // User is signed out
+                        if (draftsUnsubscribe) {
+                            draftsUnsubscribe();
+                            draftsUnsubscribe = null;
+                        }
                         userId = null;
                         draftsCollection = null;
                         
@@ -4363,8 +4373,11 @@ const mainCommentList = document.getElementById('main-comment-list');
             setTimeout(() => { draftMessageBox.style.display = 'none'; }, 3000);
         }
 
-        // Collects all data from the form and state
+                // Collects all data from the form and state
         function getFullDraftData() {
+            if (typeof syncShareholdingDataFromDOM === 'function') {
+                syncShareholdingDataFromDOM();
+            }
             const formData = {};
             allInputIds.forEach(id => {
                 const el = document.getElementById(id);
@@ -4374,21 +4387,21 @@ const mainCommentList = document.getElementById('main-comment-list');
             });
             
             return {
-                formData,
-                ppeData: ppeData,
-                adminExpData: adminExpData,
-                shareholdingData: shareholdingData,
-                retainedEarningsData: retainedEarningsData,
-                inventoryData: inventoryData,
-                receivablesData: receivablesData,
-                depositsData: depositsData,
-                shareholderAccData: shareholderAccData,
-                payablesData: payablesData,
-                costOfSalesData: costOfSalesData,
+                formData: JSON.parse(JSON.stringify(formData)),
+                ppeData: JSON.parse(JSON.stringify(ppeData || [])),
+                adminExpData: JSON.parse(JSON.stringify(adminExpData || [])),
+                shareholdingData: JSON.parse(JSON.stringify(shareholdingData || [])),
+                retainedEarningsData: JSON.parse(JSON.stringify(retainedEarningsData || {})),
+                inventoryData: JSON.parse(JSON.stringify(inventoryData || {})),
+                receivablesData: JSON.parse(JSON.stringify(receivablesData || {})),
+                depositsData: JSON.parse(JSON.stringify(depositsData || {})),
+                shareholderAccData: JSON.parse(JSON.stringify(shareholderAccData || {})),
+                payablesData: JSON.parse(JSON.stringify(payablesData || {})),
+                costOfSalesData: JSON.parse(JSON.stringify(costOfSalesData || {})),
     
-                openingInventoryCalcHistory: openingInventoryCalcHistory,
-                openingBalancesData: openingBalancesData,
-                mainCommentsData: mainCommentsData,
+                openingInventoryCalcHistory: JSON.parse(JSON.stringify(openingInventoryCalcHistory || [])),
+                openingBalancesData: JSON.parse(JSON.stringify(openingBalancesData || {})),
+                mainCommentsData: JSON.parse(JSON.stringify(mainCommentsData || [])),
     
                 letterheadBase64: letterheadBase64,
                 letterheadWidth: selectedLetterheadWidth,
@@ -4411,7 +4424,7 @@ const mainCommentList = document.getElementById('main-comment-list');
         function setFullDraftData(data) {
             if (!data) return;
             
-            // Restore form fields
+            // 1. Restore form fields
             if (data.formData) {
                 allInputIds.forEach(id => {
                     if (data.formData[id] !== undefined) {
@@ -4420,33 +4433,80 @@ const mainCommentList = document.getElementById('main-comment-list');
                 });
             }
             
-            // Restore modal data states
-            ppeData = data.ppeData || ppeData;
-            adminExpData = data.adminExpData || adminExpData;
-            shareholdingData = data.shareholdingData || shareholdingData;
-            retainedEarningsData = data.retainedEarningsData || retainedEarningsData;
-            inventoryData = data.inventoryData || inventoryData;
-            receivablesData = data.receivablesData || receivablesData;
-            depositsData = data.depositsData || depositsData;
-            shareholderAccData = data.shareholderAccData || shareholderAccData;
-            payablesData = data.payablesData || payablesData;
-            costOfSalesData = data.costOfSalesData || costOfSalesData;
+            // 2. Restore modal data states (deep clone to detach references)
+            ppeData = data.ppeData ? JSON.parse(JSON.stringify(data.ppeData)) : ppeData;
+            adminExpData = data.adminExpData ? JSON.parse(JSON.stringify(data.adminExpData)) : adminExpData;
+            shareholdingData = data.shareholdingData ? JSON.parse(JSON.stringify(data.shareholdingData)) : shareholdingData;
+            retainedEarningsData = data.retainedEarningsData ? JSON.parse(JSON.stringify(data.retainedEarningsData)) : retainedEarningsData;
+            inventoryData = data.inventoryData ? JSON.parse(JSON.stringify(data.inventoryData)) : inventoryData;
+            receivablesData = data.receivablesData ? JSON.parse(JSON.stringify(data.receivablesData)) : receivablesData;
+            depositsData = data.depositsData ? JSON.parse(JSON.stringify(data.depositsData)) : depositsData;
+            shareholderAccData = data.shareholderAccData ? JSON.parse(JSON.stringify(data.shareholderAccData)) : shareholderAccData;
+            payablesData = data.payablesData ? JSON.parse(JSON.stringify(data.payablesData)) : payablesData;
+            costOfSalesData = data.costOfSalesData ? JSON.parse(JSON.stringify(data.costOfSalesData)) : costOfSalesData;
     
-            openingInventoryCalcHistory = data.openingInventoryCalcHistory || [];
-            openingBalancesData = data.openingBalancesData || {
-                inventory: data.costOfSalesData ? (data.costOfSalesData.opening || 0) : 0,
-                receivables: 0,
-                deposits: 0,
-                capital: 100000,
-                retained: data.retainedEarningsData ? (data.retainedEarningsData.opening || 0) : 0,
-                shareholder: data.shareholderAccData ? (data.shareholderAccData.opening || 0) : 0,
-                payables: 0,
-                accruals: 0,
-                cash: (data.formData && data.formData['cf-cash-begin']) ? parseFloat(data.formData['cf-cash-begin']) || 0 : 0
-            };
+            openingInventoryCalcHistory = data.openingInventoryCalcHistory ? JSON.parse(JSON.stringify(data.openingInventoryCalcHistory)) : [];
+            
+            if (data.openingBalancesData) {
+                openingBalancesData = JSON.parse(JSON.stringify(data.openingBalancesData));
+            } else {
+                openingBalancesData = {
+                    inventory: data.costOfSalesData ? (data.costOfSalesData.opening || 0) : 0,
+                    receivables: 0,
+                    deposits: 0,
+                    capital: 100000,
+                    retained: data.retainedEarningsData ? (data.retainedEarningsData.opening || 0) : 0,
+                    shareholder: data.shareholderAccData ? (data.shareholderAccData.opening || 0) : 0,
+                    payables: 0,
+                    accruals: 0,
+                    cash: (data.formData && data.formData['cf-cash-begin']) ? parseFloat(data.formData['cf-cash-begin']) || 0 : 0
+                };
+            }
+
+            // 3. Sync restored data into modal DOM inputs so they match perfectly
+            if (retainedEarningsData) {
+                const reOpenInput = document.getElementById('re-opening-balance');
+                if (reOpenInput && retainedEarningsData.opening !== undefined) reOpenInput.value = retainedEarningsData.opening;
+                const reDivInput = document.getElementById('re-dividend');
+                if (reDivInput && retainedEarningsData.dividend !== undefined) reDivInput.value = retainedEarningsData.dividend;
+            }
+            if (costOfSalesData) {
+                const cosOpenInput = document.getElementById('cos-opening-inv');
+                if (cosOpenInput && costOfSalesData.opening !== undefined) cosOpenInput.value = costOfSalesData.opening;
+                const cosPurchInput = document.getElementById('cos-purchases');
+                if (cosPurchInput && costOfSalesData.purchases !== undefined) cosPurchInput.value = costOfSalesData.purchases;
+            }
+            if (shareholderAccData) {
+                const shaOpenInput = document.getElementById('sha-opening');
+                if (shaOpenInput && shareholderAccData.opening !== undefined) shaOpenInput.value = shareholderAccData.opening;
+                const shaFundsInput = document.getElementById('sha-funds');
+                if (shaFundsInput && shareholderAccData.funds !== undefined) shaFundsInput.value = shareholderAccData.funds;
+            }
+            if (inventoryData) {
+                const invInput = document.getElementById('inv-age-1-150');
+                if (invInput && inventoryData.age_1_150 !== undefined) invInput.value = inventoryData.age_1_150;
+            }
+            if (receivablesData) {
+                const recInput = document.getElementById('rec-age-1-60');
+                if (recInput && receivablesData.age_1_60 !== undefined) recInput.value = receivablesData.age_1_60;
+                const recGeoInput = document.getElementById('rec-geo-uae');
+                if (recGeoInput && receivablesData.geo_uae !== undefined) recGeoInput.value = receivablesData.geo_uae;
+            }
+            if (depositsData) {
+                const depInput = document.getElementById('dep-deposits');
+                if (depInput && depositsData.deposits !== undefined) depInput.value = depositsData.deposits;
+                const depPrepInput = document.getElementById('dep-prepaid');
+                if (depPrepInput && depositsData.prepaid !== undefined) depPrepInput.value = depositsData.prepaid;
+            }
+            if (payablesData) {
+                const payInput = document.getElementById('pay-age-1-60');
+                if (payInput && payablesData.age_1_60 !== undefined) payInput.value = payablesData.age_1_60;
+                const payGeoInput = document.getElementById('pay-geo-uae');
+                if (payGeoInput && payablesData.geo_uae !== undefined) payGeoInput.value = payablesData.geo_uae;
+            }
 
             // Comments
-            mainCommentsData = data.mainCommentsData || [];
+            mainCommentsData = data.mainCommentsData ? JSON.parse(JSON.stringify(data.mainCommentsData)) : [];
             renderMainCommentsList();
     
             // Restore letterhead
@@ -4488,7 +4548,7 @@ const mainCommentList = document.getElementById('main-comment-list');
             updateReviewTab();
         }
 
-        async function saveDraft(nameOverride = null) {
+                async function saveDraft(nameOverride = null) {
             // Mandatory Corporate Period Rule Check (Must be exactly 12 months)
             const startDateVal = document.getElementById('report-start-date') ? document.getElementById('report-start-date').value : '';
             const endDateVal = document.getElementById('report-end-date') ? document.getElementById('report-end-date').value : '';
@@ -4555,9 +4615,26 @@ const mainCommentList = document.getElementById('main-comment-list');
             if (activePeriodBadge) activePeriodBadge.classList.remove('hidden');
             syncCorporatePeriod();
 
+            // Optimistically update in-memory list
+            const existingIdx = allSavedDraftsList.findIndex(d => d.name === draftName || d.id === draftName);
+            const draftEntry = {
+                id: draftName,
+                name: draftName,
+                serialNumber: currentSerial,
+                companyName: currentComp,
+                savedAt: draftData.savedAt,
+                savedAtFormatted: draftData.savedAtFormatted,
+                data: draftData
+            };
+            if (existingIdx >= 0) {
+                allSavedDraftsList[existingIdx] = draftEntry;
+            } else {
+                allSavedDraftsList.unshift(draftEntry);
+            }
+            renderSavedDraftsCards();
+
             if (!userId) {
                 showDraftMessage(`Draft "${draftName}" saved locally!`, false);
-                loadDraftsList();
                 return;
             }
 
@@ -4565,11 +4642,9 @@ const mainCommentList = document.getElementById('main-comment-list');
                 const draftDoc = doc(db, `users/${userId}/financial_drafts`, draftName);
                 await setDoc(draftDoc, draftData);
                 showDraftMessage(`Draft "${draftName}" saved successfully!`, false);
-                loadDraftsList();
             } catch (error) {
                 console.error("Error saving draft to Firestore:", error);
                 showDraftMessage(`Saved locally. Cloud sync warning: ${error.message}`, false);
-                loadDraftsList();
             }
         }
         
@@ -4588,6 +4663,11 @@ const mainCommentList = document.getElementById('main-comment-list');
                     data: localDrafts[key]
                 }));
                 if (localList.length > 0) {
+                    localList.sort((a, b) => {
+                        const dateA = a.savedAt ? new Date(a.savedAt).getTime() : 0;
+                        const dateB = b.savedAt ? new Date(b.savedAt).getTime() : 0;
+                        return dateB - dateA;
+                    });
                     allSavedDraftsList = localList;
                     renderSavedDraftsCards();
                 }
@@ -4595,15 +4675,21 @@ const mainCommentList = document.getElementById('main-comment-list');
                 console.warn("Error reading local drafts:", e);
             }
 
-            // 2. Real-time sync with Firestore
+            // 2. Real-time sync with Firestore (attach singleton listener if not already active)
             if (!userId || !draftsCollection) {
                 renderSavedDraftsCards();
                 return;
             }
+
+            if (draftsUnsubscribe) {
+                // Singleton listener already attached and auto-syncing
+                return;
+            }
             
             try {
-                onSnapshot(draftsCollection, (snapshot) => {
+                draftsUnsubscribe = onSnapshot(draftsCollection, (snapshot) => {
                     const firestoreList = [];
+                    const localDrafts = {};
                     snapshot.forEach(docSnap => {
                         const d = docSnap.data();
                         firestoreList.push({
@@ -4615,21 +4701,25 @@ const mainCommentList = document.getElementById('main-comment-list');
                             savedAtFormatted: d.savedAtFormatted || (d.savedAt ? new Date(d.savedAt).toLocaleString() : ''),
                             data: d
                         });
+                        localDrafts[docSnap.id] = d;
                     });
 
-                    // Merge and sort
-                    const mergedMap = new Map();
-                    allSavedDraftsList.forEach(item => mergedMap.set(item.name, item));
-                    firestoreList.forEach(item => mergedMap.set(item.name, item));
-                    allSavedDraftsList = Array.from(mergedMap.values());
+                    // Update localStorage to match Firestore
+                    try {
+                        const localKey = `corp_drafts_${userId || 'default'}`;
+                        localStorage.setItem(localKey, JSON.stringify(localDrafts));
+                    } catch (e) {}
 
-                    allSavedDraftsList.sort((a, b) => {
+                    firestoreList.sort((a, b) => {
                         const dateA = a.savedAt ? new Date(a.savedAt).getTime() : 0;
                         const dateB = b.savedAt ? new Date(b.savedAt).getTime() : 0;
                         return dateB - dateA;
                     });
 
+                    allSavedDraftsList = firestoreList;
                     renderSavedDraftsCards();
+                }, (error) => {
+                    console.error("Firestore onSnapshot error for drafts:", error);
                 });
             } catch (error) {
                 console.error("Error loading drafts list from Firestore:", error);
@@ -5585,6 +5675,7 @@ const mainCommentList = document.getElementById('main-comment-list');
 
         async function handleSaveDraftAsSubmit() {
             if (!saveAsDraftName || !saveAsSerialNumber || !saveAsCompanySelect) return;
+            if (isSavingDraftInProgress) return;
 
             const newDraftName = saveAsDraftName.value.trim();
             if (!newDraftName) {
@@ -5604,78 +5695,75 @@ const mainCommentList = document.getElementById('main-comment-list');
             const selectedCompany = (companiesData || []).find(c => c.id.toString() === selectedCompanyId.toString());
             const companyName = selectedCompany ? selectedCompany.name : (saveAsCompanySelect.options[saveAsCompanySelect.selectedIndex]?.text || 'BRANDSPOINT LLC');
 
-            // 1. If company changed or activeCompanyId updated, sync company profile
-            if (selectedCompany && (!activeCompanyId || activeCompanyId.toString() !== selectedCompany.id.toString())) {
-                activeCompanyId = selectedCompany.id;
-                setVal('company-name', selectedCompany.name || '');
-                setVal('company-name-ar', selectedCompany.nameAr || '');
-                setVal('signatory', selectedCompany.signatory || '');
-                setVal('email', selectedCompany.email || '');
-                const fullAddress = [selectedCompany.address, selectedCompany.city, selectedCompany.country].filter(Boolean).join(', ');
-                setVal('address', fullAddress);
-
-                if (selectedCompany.letterheadBase64 && typeof selectedCompany.letterheadBase64 === 'string' && selectedCompany.letterheadBase64.startsWith('data:image')) {
-                    letterheadBase64 = selectedCompany.letterheadBase64;
-                    useLetterhead = true;
-                }
-                if (selectedCompany.stampBase64 && typeof selectedCompany.stampBase64 === 'string' && selectedCompany.stampBase64.startsWith('data:image')) {
-                    companyStampBase64 = selectedCompany.stampBase64;
-                    useStamp = true;
-                }
-                updateLetterheadPreview();
-                updateStampPreview();
-
-                if (currentActiveCompanyLabel) {
-                    currentActiveCompanyLabel.textContent = selectedCompany.name;
-                }
-                renderCompanyList();
-            } else {
-                setVal('company-name', companyName);
-                if (currentActiveCompanyLabel) {
-                    currentActiveCompanyLabel.textContent = companyName;
-                }
+            // Lock submit button to prevent double/triple creation
+            isSavingDraftInProgress = true;
+            if (submitSaveDraftAsBtn) {
+                submitSaveDraftAsBtn.disabled = true;
+                submitSaveDraftAsBtn.classList.add('opacity-50', 'cursor-not-allowed');
             }
 
-            // 2. Set serial number
-            const serialInput = document.getElementById('corporate-serial-number');
-            if (serialInput) {
-                serialInput.value = selectedSerial;
-            }
-            if (activeSerialText) activeSerialText.textContent = selectedSerial;
-            if (activeSerialBadge) activeSerialBadge.classList.remove('hidden');
+            try {
+                // 1. If company changed or activeCompanyId updated, sync company profile
+                if (selectedCompany && (!activeCompanyId || activeCompanyId.toString() !== selectedCompany.id.toString())) {
+                    activeCompanyId = selectedCompany.id;
+                    setVal('company-name', selectedCompany.name || '');
+                    setVal('company-name-ar', selectedCompany.nameAr || '');
+                    setVal('signatory', selectedCompany.signatory || '');
+                    setVal('email', selectedCompany.email || '');
+                    const fullAddress = [selectedCompany.address, selectedCompany.city, selectedCompany.country].filter(Boolean).join(', ');
+                    setVal('address', fullAddress);
 
-            // 3. Automated Opening Balance Roll-Forward if Serial > CORP-001
-            const match = selectedSerial.match(/^CORP-(\d+)$/i);
-            const serialNum = match ? parseInt(match[1], 10) : 1;
-            let rollForwardApplied = false;
-            let prevReportObj = null;
+                    if (selectedCompany.letterheadBase64 && typeof selectedCompany.letterheadBase64 === 'string' && selectedCompany.letterheadBase64.startsWith('data:image')) {
+                        letterheadBase64 = selectedCompany.letterheadBase64;
+                        useLetterhead = true;
+                    }
+                    if (selectedCompany.stampBase64 && typeof selectedCompany.stampBase64 === 'string' && selectedCompany.stampBase64.startsWith('data:image')) {
+                        companyStampBase64 = selectedCompany.stampBase64;
+                        useStamp = true;
+                    }
+                    updateLetterheadPreview();
+                    updateStampPreview();
 
-            if (serialNum > 1) {
-                prevReportObj = findPrecedingFinalizedReport(companyName, selectedSerial);
-                if (prevReportObj) {
-                    rollForwardApplied = applyRollForwardBalances(prevReportObj);
+                    if (currentActiveCompanyLabel) {
+                        currentActiveCompanyLabel.textContent = selectedCompany.name;
+                    }
+                    renderCompanyList();
+                } else {
+                    setVal('company-name', companyName);
+                    if (currentActiveCompanyLabel) {
+                        currentActiveCompanyLabel.textContent = companyName;
+                    }
+                }
+
+                // 2. Set serial number
+                const serialInput = document.getElementById('corporate-serial-number');
+                if (serialInput) {
+                    serialInput.value = selectedSerial;
+                }
+                if (activeSerialText) activeSerialText.textContent = selectedSerial;
+                if (activeSerialBadge) activeSerialBadge.classList.remove('hidden');
+
+                // 3. Update draft name in UI
+                if (draftNameInput) draftNameInput.value = newDraftName;
+                if (activeDraftNameText) activeDraftNameText.textContent = newDraftName;
+                if (activeDraftNameBadge) activeDraftNameBadge.classList.remove('hidden');
+
+                // 4. Save the active balanced draft state directly under the new draft name (Strict zero-data-loss state preservation)
+                await saveDraft(newDraftName);
+
+                // 5. Close modal
+                closeSaveDraftAsModalFunc();
+
+                let successMsg = `Draft successfully saved as "${newDraftName}" [${selectedSerial}] for ${companyName}!`;
+                showDraftMessage(`Draft "${newDraftName}" [${selectedSerial}] saved!`, false);
+                alert(successMsg);
+            } finally {
+                isSavingDraftInProgress = false;
+                if (submitSaveDraftAsBtn) {
+                    submitSaveDraftAsBtn.disabled = false;
+                    submitSaveDraftAsBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 }
             }
-
-            // 4. Update draft name in UI and save draft
-            if (draftNameInput) draftNameInput.value = newDraftName;
-            if (activeDraftNameText) activeDraftNameText.textContent = newDraftName;
-            if (activeDraftNameBadge) activeDraftNameBadge.classList.remove('hidden');
-
-            await saveDraft(newDraftName);
-
-            // 5. Close modal
-            closeSaveDraftAsModalFunc();
-            if (draftManagementModal && draftManagementModal.style.display !== 'none') {
-                loadDraftsList();
-            }
-
-            let successMsg = `Draft successfully saved as "${newDraftName}" [${selectedSerial}] for ${companyName}!`;
-            if (rollForwardApplied && prevReportObj) {
-                successMsg += `\n\nAutomated Roll-Forward: Opening balances were successfully synchronized with preceding report "${prevReportObj.draftName}".`;
-            }
-            showDraftMessage(`Draft "${newDraftName}" [${selectedSerial}] saved!`, false);
-            alert(successMsg);
         }
 
         // Check if a confirmed/finalized corporate report already exists for the company in this period
@@ -6867,7 +6955,7 @@ const mainCommentList = document.getElementById('main-comment-list');
                 return;
             }
 
-            // Delete from localStorage
+            // 1. Delete from localStorage
             try {
                 const localKey = `corp_drafts_${userId || 'default'}`;
                 const localDrafts = JSON.parse(localStorage.getItem(localKey) || '{}');
@@ -6875,7 +6963,11 @@ const mainCommentList = document.getElementById('main-comment-list');
                 localStorage.setItem(localKey, JSON.stringify(localDrafts));
             } catch (e) {}
 
-            // Delete from Firestore
+            // 2. Optimistically remove from in-memory list
+            allSavedDraftsList = allSavedDraftsList.filter(d => d.name !== draftName && d.id !== draftName);
+            renderSavedDraftsCards();
+
+            // 3. Delete from Firestore
             if (userId) {
                 try {
                     const draftDoc = doc(db, `users/${userId}/financial_drafts`, draftName);
@@ -6885,8 +6977,6 @@ const mainCommentList = document.getElementById('main-comment-list');
                 }
             }
 
-            allSavedDraftsList = allSavedDraftsList.filter(d => d.name !== draftName);
-            renderSavedDraftsCards();
             showDraftMessage(`Draft "${draftName}" deleted.`, false);
         }
 
