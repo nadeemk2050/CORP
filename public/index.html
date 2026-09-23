@@ -7638,7 +7638,7 @@ function renderMainCommentsList() {
             const remuneration = Math.abs(getVal('pl-remuneration'));
         
             // Math: Sales + (Negative Cost) + (Negative Admin) - (Positive Remuneration) + (Negative Depreciation)
-            const netIncome = sales + cost + admin - remuneration + depreciation;
+            const netIncome = Math.round(sales + cost + admin - remuneration + depreciation);
             
             return netIncome;
         }        
@@ -9021,7 +9021,7 @@ function renderMainCommentsList() {
             // 4. Update Retained Earnings on Balance Sheet & Dividend on Cash Flow
             const reOpening = parseFloat(retainedEarningsData.opening) || 0;
             const reDividend = parseFloat(retainedEarningsData.dividend) || 0;
-            const reClosing = reOpening + netIncome - reDividend;
+            const reClosing = Math.round(reOpening + netIncome - reDividend);
             setVal('pos-retained', reClosing);
             setVal('cf-dividend', -reDividend);
 
@@ -10477,7 +10477,7 @@ renderMainCommentsList(); // Clear comment list on new form
                 ],
                 body: [
                     ['', 'AED', 'AED', 'AED'],
-                    ['At 1st January, 2024', getVal('pos-capital').toLocaleString(), reOpening.toLocaleString(), shaOpening.toLocaleString()],
+                    [`At ${formatDate(startDateRaw) || '1st January, 2025'}`, getVal('pos-capital').toLocaleString(), reOpening.toLocaleString(), shaOpening.toLocaleString()],
                     ['Total comprehensive income for the year', '', netIncome.toLocaleString(), ''],
                     ['Dividend paid', '', `(${reDividend.toLocaleString()})`, ''],
                     ['Movements in current account', '', '', shaMovement.toLocaleString()],
@@ -10717,24 +10717,6 @@ renderMainCommentsList(); // Clear comment list on new form
                 { type: 'header', text: 'Impairment of non-financial assets' },
                 { type: 'para', text: 'The Company assesses whether there are indicators of impairment for all non-financial assets at each reporting date. If such indication exists, the recoverable amount is estimated using value in use calculations involving expected future cash flows and suitable discount rates.' }
             ]);
-            // === Page 14, 15: Other Notes (19-23) ===
-            addFullTextPage(12, [
-                { type: 'header', text: '19 Fair value of financial instruments' },
-                { type: 'para', text: 'The company\'s financial instruments are accounted for under the historical cost convention. Fair value represents the amount at which an asset could be exchanged or a liability settled between knowledgeable, willing parties in an arm\'s length transaction. Differences can arise between values under the historical cost method and fair value estimates. The fair value of the company\'s financial instruments is not materially different from the carrying value at the reporting date.' },
-
-                { type: 'header', text: '20 Liquidity and interest risk' },
-                { type: 'para', text: 'Liquidity risk is the risk that the company is unable to meet its payment obligations associated with its financial liabilities when they fall due and to replace funds when they are withdrawn. The company aims to maintain adequate cash and bank balances to meet its operating commitments. In addition, the company has an arrangement to settle its liabilities and obligations on a timely basis in order to ensure that the company has sufficient liquidity to meet its operating requirements.' },
-
-                { type: 'header', text: '21 Exchange rate risk' },
-                { type: 'para', text: 'Since the main underlying currencies of the financial instruments, other assets, other liabilities and transactions including cost of sales and sales are in U.A.E. Dirhams, the company is not exposed to a significant exchange rate risk.' },
-
-                { type: 'header', text: '22 Contingencies and commitments' },
-                { type: 'para', text: 'As at the reporting date, the company had no contingencies and commitments.' },
-
-                { type: 'header', text: '23 Comparative figures' },
-                { type: 'para', text: 'Previous year\\\'s figures have been reclassified/regrouped wherever necessary to conform to the presentation adopted in these financial statements. Figures of the company have been rounded off to nearest AED.' }
-            ]);
-
             // Page 11: Note 6, 7, 8
             doc.addPage();
             currentPage++;
