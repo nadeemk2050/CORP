@@ -4410,6 +4410,18 @@ const mainCommentList = document.getElementById('main-comment-list');
             if (typeof syncShareholdingDataFromDOM === 'function') {
                 syncShareholdingDataFromDOM();
             }
+            if (typeof syncPpeDataFromDOM === 'function') {
+                syncPpeDataFromDOM();
+            }
+            if (typeof syncAdminExpDataFromDOM === 'function') {
+                syncAdminExpDataFromDOM();
+            }
+            if (!shareholdingData || !Array.isArray(shareholdingData) || shareholdingData.length === 0) {
+                shareholdingData = [
+                    { id: 1, name: 'Mr. NADEEM KHAN', nation: 'PAKISTAN', shares: 5, value: 1000 },
+                    { id: 2, name: 'Mr. MUHAMMAD USAMA SAQIB', nation: 'PAKISTAN', shares: 95, value: 1000 }
+                ];
+            }
             const formData = {};
             allInputIds.forEach(id => {
                 const el = document.getElementById(id);
@@ -4468,7 +4480,14 @@ const mainCommentList = document.getElementById('main-comment-list');
             // 2. Restore modal data states (deep clone to detach references)
             ppeData = data.ppeData ? JSON.parse(JSON.stringify(data.ppeData)) : ppeData;
             adminExpData = data.adminExpData ? JSON.parse(JSON.stringify(data.adminExpData)) : adminExpData;
-            shareholdingData = data.shareholdingData ? JSON.parse(JSON.stringify(data.shareholdingData)) : shareholdingData;
+            if (data.shareholdingData && Array.isArray(data.shareholdingData) && data.shareholdingData.length > 0) {
+                shareholdingData = JSON.parse(JSON.stringify(data.shareholdingData));
+            } else if (!shareholdingData || !shareholdingData.length) {
+                shareholdingData = [
+                    { id: 1, name: 'Mr. NADEEM KHAN', nation: 'PAKISTAN', shares: 5, value: 1000 },
+                    { id: 2, name: 'Mr. MUHAMMAD USAMA SAQIB', nation: 'PAKISTAN', shares: 95, value: 1000 }
+                ];
+            }
             retainedEarningsData = data.retainedEarningsData ? JSON.parse(JSON.stringify(data.retainedEarningsData)) : retainedEarningsData;
             inventoryData = data.inventoryData ? JSON.parse(JSON.stringify(data.inventoryData)) : inventoryData;
             receivablesData = data.receivablesData ? JSON.parse(JSON.stringify(data.receivablesData)) : receivablesData;
@@ -7077,20 +7096,23 @@ const mainCommentList = document.getElementById('main-comment-list');
 
         // --- Modal: PPE (Note 6) ---
         function syncPpeDataFromDOM() {
+            if (!ppeRowsContainer) return;
+            const rows = ppeRowsContainer.querySelectorAll('tr');
+            if (rows.length === 0) return;
             const newData = [];
-            ppeRowsContainer.querySelectorAll('tr').forEach(row => {
+            rows.forEach(row => {
                 const id = parseInt(row.dataset.id);
                 if (!isNaN(id)) {
                     newData.push({
                         id: id,
-                        particulars: row.querySelector('.ppe-particulars') ? row.querySelector('.ppe-particulars').value : '',
+                        particulars: row.querySelector('.ppe-particulars') ? row.querySelector('.ppe-particulars').value.trim() : '',
                         openingCost: parseFloat(row.querySelector('.ppe-opening-cost') ? row.querySelector('.ppe-opening-cost').value : 0) || 0,
                         addition: parseFloat(row.querySelector('.ppe-addition') ? row.querySelector('.ppe-addition').value : 0) || 0,
                         rate: parseFloat(row.querySelector('.ppe-rate') ? row.querySelector('.ppe-rate').value : 0) || 0
                     });
                 }
             });
-            if (newData.length > 0 || ppeRowsContainer.querySelectorAll('tr').length === 0) {
+            if (newData.length > 0) {
                 ppeData = newData;
             }
         }
@@ -7210,18 +7232,21 @@ const mainCommentList = document.getElementById('main-comment-list');
 
         // --- Modal: Admin Expenses (Note 17) ---
         function syncAdminExpDataFromDOM() {
+            if (!adminExpRowsContainer) return;
+            const rows = adminExpRowsContainer.querySelectorAll('tr');
+            if (rows.length === 0) return;
             const newData = [];
-            adminExpRowsContainer.querySelectorAll('tr').forEach(row => {
+            rows.forEach(row => {
                 const id = parseInt(row.dataset.id);
                 if (!isNaN(id)) {
                     newData.push({
                         id: id,
-                        item: row.querySelector('.admin-exp-item') ? row.querySelector('.admin-exp-item').value : '',
+                        item: row.querySelector('.admin-exp-item') ? row.querySelector('.admin-exp-item').value.trim() : '',
                         amount: parseFloat(row.querySelector('.admin-exp-amount') ? row.querySelector('.admin-exp-amount').value : 0) || 0
                     });
                 }
             });
-            if (newData.length > 0 || adminExpRowsContainer.querySelectorAll('tr').length === 0) {
+            if (newData.length > 0) {
                 adminExpData = newData;
             }
         }
@@ -7307,34 +7332,49 @@ const mainCommentList = document.getElementById('main-comment-list');
 
         // --- Modal: Shareholding (Note 2) ---
         function syncShareholdingDataFromDOM() {
+            if (!shareholdingRowsContainer) return;
+            const rows = shareholdingRowsContainer.querySelectorAll('tr');
+            if (rows.length === 0) {
+                // If container is empty (modal not currently opened), preserve existing state
+                return;
+            }
             const newData = [];
-            shareholdingRowsContainer.querySelectorAll('tr').forEach(row => {
+            rows.forEach(row => {
                 const id = parseInt(row.dataset.id);
                 if (!isNaN(id)) {
                     newData.push({
                         id: id,
-                        name: row.querySelector('.sh-name') ? row.querySelector('.sh-name').value : '',
-                        nation: row.querySelector('.sh-nation') ? row.querySelector('.sh-nation').value : '',
+                        name: row.querySelector('.sh-name') ? row.querySelector('.sh-name').value.trim() : '',
+                        nation: row.querySelector('.sh-nation') ? row.querySelector('.sh-nation').value.trim() : '',
                         shares: parseFloat(row.querySelector('.sh-shares') ? row.querySelector('.sh-shares').value : 0) || 0,
                         value: parseFloat(row.querySelector('.sh-value') ? row.querySelector('.sh-value').value : 0) || 0
                     });
                 }
             });
-            if (newData.length > 0 || shareholdingRowsContainer.querySelectorAll('tr').length === 0) {
+            if (newData.length > 0) {
                 shareholdingData = newData;
             }
         }
 
         function renderShareholdingModal() {
+            if (!shareholdingData || !Array.isArray(shareholdingData) || shareholdingData.length === 0) {
+                shareholdingData = [
+                    { id: 1, name: 'Mr. NADEEM KHAN', nation: 'PAKISTAN', shares: 5, value: 1000 },
+                    { id: 2, name: 'Mr. MUHAMMAD USAMA SAQIB', nation: 'PAKISTAN', shares: 95, value: 1000 }
+                ];
+            }
             shareholdingRowsContainer.innerHTML = '';
             shareholdingData.forEach(sh => {
+                const sharesVal = parseFloat(sh.shares) || 0;
+                const priceVal = parseFloat(sh.value) || 0;
+                const totalVal = sharesVal * priceVal;
                 shareholdingRowsContainer.innerHTML += `
                     <tr data-id="${sh.id}">
-                        <td><input type="text" class="sh-name" value="${escapeHtml(sh.name)}"></td>
-                        <td><input type="text" class="sh-nation" value="${escapeHtml(sh.nation)}"></td>
-                        <td><input type="number" class="sh-shares text-right" value="${sh.shares}"></td>
-                        <td><input type="number" class="sh-value text-right" value="${sh.value}"></td>
-                        <td class="calc-field sh-total text-right">${(sh.shares * sh.value).toLocaleString()}</td>
+                        <td><input type="text" class="sh-name" value="${escapeHtml(sh.name || '')}"></td>
+                        <td><input type="text" class="sh-nation" value="${escapeHtml(sh.nation || '')}"></td>
+                        <td><input type="number" class="sh-shares text-right" value="${sharesVal}"></td>
+                        <td><input type="number" class="sh-value text-right" value="${priceVal}"></td>
+                        <td class="calc-field sh-total text-right">${totalVal.toLocaleString()}</td>
                         <td class="action-cell"><button type="button" class="remove-row-btn text-red-500 hover:text-red-700 font-bold" data-id="${sh.id}">&times;</button></td>
                     </tr>
                 `;
@@ -10570,13 +10610,32 @@ renderMainCommentsList(); // Clear comment list on new form
             doc.text("2 Shareholding", pageMargin, currentY);
             currentY += 10;
             
-            const shBody = shareholdingData.map(sh => [
-                sh.name, (sh.shares / (shareholdingData.reduce((acc, s) => acc + s.shares, 0) || 1) * 100).toFixed(0) + '%', 
-                sh.nation, sh.shares.toLocaleString(), sh.value.toLocaleString(), (sh.shares * sh.value).toLocaleString()
-            ]);
-            const shTotalShares = shareholdingData.reduce((acc, s) => acc + s.shares, 0);
-            const shTotalValue = shareholdingData.reduce((acc, s) => acc + (s.shares * s.value), 0);
+            // Ensure shareholdingData is populated and valid
+            let activeShareholders = (Array.isArray(shareholdingData) && shareholdingData.length > 0 && shareholdingData.some(s => (parseFloat(s.shares) || 0) > 0))
+                ? shareholdingData
+                : [
+                    { id: 1, name: 'Mr. NADEEM KHAN', nation: 'PAKISTAN', shares: 5, value: 1000 },
+                    { id: 2, name: 'Mr. MUHAMMAD USAMA SAQIB', nation: 'PAKISTAN', shares: 95, value: 1000 }
+                ];
             
+            const shTotalShares = activeShareholders.reduce((acc, s) => acc + (parseFloat(s.shares) || 0), 0) || 100;
+            const shTotalValue = activeShareholders.reduce((acc, s) => acc + ((parseFloat(s.shares) || 0) * (parseFloat(s.value) || 0)), 0) || getVal('pos-capital') || 100000;
+            const shValuePerShare = shTotalShares > 0 ? (shTotalValue / shTotalShares) : 1000;
+
+            const shBody = activeShareholders.map(sh => {
+                const sShares = parseFloat(sh.shares) || 0;
+                const sVal = parseFloat(sh.value) || 0;
+                const pct = shTotalShares > 0 ? ((sShares / shTotalShares) * 100).toFixed(0) + '%' : '0%';
+                return [
+                    sh.name || 'Shareholder',
+                    pct,
+                    sh.nation || 'UAE',
+                    sShares.toLocaleString(),
+                    sVal.toLocaleString(),
+                    (sShares * sVal).toLocaleString()
+                ];
+            });
+
             doc.autoTable({
                 startY: currentY,
                 theme: 'grid',
@@ -10588,7 +10647,7 @@ renderMainCommentsList(); // Clear comment list on new form
                 foot: [[
                     { content: 'Total', colSpan: 2, styles: { fontStyle: 'bold', halign: 'right' } },
                     { content: shTotalShares.toLocaleString(), styles: { fontStyle: 'bold' } },
-                    { content: (shTotalValue / shTotalShares).toLocaleString(), styles: { fontStyle: 'bold' } },
+                    { content: shValuePerShare.toLocaleString(), styles: { fontStyle: 'bold' } },
                     { content: shTotalValue.toLocaleString(), styles: { fontStyle: 'bold' } },
                     ''
                 ]],
@@ -10596,7 +10655,7 @@ renderMainCommentsList(); // Clear comment list on new form
             });
             currentY += 5;
             doc.setFontSize(10);
-            doc.text(`2.2 The authorized and paid up share capital of the company is AED ${shTotalValue.toLocaleString()} divided into ${shTotalShares.toLocaleString()} shares of AED ${(shTotalValue / shTotalShares).toLocaleString()}/- each.`, pageMargin, currentY);
+            doc.text(`2.2 The authorized and paid up share capital of the company is AED ${shTotalValue.toLocaleString()} divided into ${shTotalShares.toLocaleString()} shares of AED ${shValuePerShare.toLocaleString()}/- each.`, pageMargin, currentY);
 
             // --- Helper for Adding Text Pages ---
             const addFullTextPage = (pageNum, contentLines) => {
