@@ -612,27 +612,30 @@
                             <input type="email" id="email" value="alwaseemsharjah001@gmail.com" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 shadow-2xs">
-                        <div>
-                            <label for="license-reg-no" class="block text-xs font-bold text-gray-800 flex items-center justify-between">
-                                <span>1. Licence / Registration No.</span>
-                                <span class="text-[10px] text-blue-600 font-mono">Commercial</span>
-                            </label>
-                            <input type="text" id="license-reg-no" value="" placeholder="e.g. 2314587.01" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs font-mono">
+                    <div class="p-4 bg-slate-50/90 rounded-xl border border-slate-200 shadow-2xs space-y-2">
+                        <div class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center">
+                            <svg class="w-4 h-4 mr-1.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Corporate Registration & Tax Identification
                         </div>
-                        <div>
-                            <label for="corporate-reg-no" class="block text-xs font-bold text-gray-800 flex items-center justify-between">
-                                <span>2. Corporate Reg. No.</span>
-                                <span class="text-[10px] text-indigo-600 font-mono">Registry</span>
-                            </label>
-                            <input type="text" id="corporate-reg-no" value="" placeholder="e.g. 104523" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs font-mono">
-                        </div>
-                        <div>
-                            <label for="vat-trn-no" class="block text-xs font-bold text-gray-800 flex items-center justify-between">
-                                <span>3. VAT TRN No.</span>
-                                <span class="text-[10px] text-emerald-600 font-mono">Tax / TRN</span>
-                            </label>
-                            <input type="text" id="vat-trn-no" value="" placeholder="e.g. 100293847500003" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs font-mono">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                            <div class="bg-white p-2.5 rounded-lg border border-gray-200 shadow-2xs">
+                                <label for="license-reg-no" class="block text-xs font-bold text-gray-800 mb-1">
+                                    1. Licence / Registration No.
+                                </label>
+                                <input type="text" id="license-reg-no" value="" placeholder="e.g. 2326382.01" class="w-full px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 bg-slate-50/60 rounded border border-gray-300 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-gray-200 shadow-2xs">
+                                <label for="corporate-reg-no" class="block text-xs font-bold text-gray-800 mb-1">
+                                    2. Corporate Reg. No.
+                                </label>
+                                <input type="text" id="corporate-reg-no" value="" placeholder="e.g. 104155941800001" class="w-full px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 bg-slate-50/60 rounded border border-gray-300 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-gray-200 shadow-2xs">
+                                <label for="vat-trn-no" class="block text-xs font-bold text-gray-800 mb-1">
+                                    3. VAT TRN No.
+                                </label>
+                                <input type="text" id="vat-trn-no" value="" placeholder="e.g. 104155941800003" class="w-full px-2.5 py-1.5 text-xs font-mono font-bold text-gray-900 bg-slate-50/60 rounded border border-gray-300 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                            </div>
                         </div>
                     </div>
                     
@@ -10163,6 +10166,7 @@ renderMainCommentsList(); // Clear comment list on new form
             const doc = new jsPDF();
 
             const companyName = document.getElementById('company-name').value;
+            const reportYear = startDateRaw ? (new Date(startDateRaw).getFullYear()) : (new Date().getFullYear());
             const companyNameAr = document.getElementById('company-name-ar').value;
             const signatory = document.getElementById('signatory').value;
 
@@ -10298,26 +10302,35 @@ renderMainCommentsList(); // Clear comment list on new form
             doc.autoTable({
                 startY: currentY,
                 theme: 'plain',
-                styles: { fontSize: 10, cellPadding: 1.5 },
+                styles: { fontSize: 10, cellPadding: 2 },
                 columnStyles: {
-                    0: { cellWidth: contentWidth / 2 },
-                    1: { cellWidth: contentWidth / 4, halign: 'left' },
-                    2: { cellWidth: contentWidth / 4, halign: 'right' },
+                    0: { cellWidth: contentWidth * 0.55 },
+                    1: { cellWidth: contentWidth * 0.15, halign: 'center' },
+                    2: { cellWidth: contentWidth * 0.30, halign: 'right' },
                 },
                 head: [
-                    [{ content: 'Non Current Assets:', colSpan: 2, styles: { fontStyle: 'bold' } }, { content: 'AED', styles: { fontStyle: 'bold', halign: 'right' } }]
+                    ['Item', { content: 'Note', styles: { halign: 'center' } }, { content: 'AED', styles: { fontStyle: 'bold', halign: 'right' } }]
                 ],
                 body: [
-                    ['Property, plant and equipment', '6', getVal('pos-ppe').toLocaleString()],
-                    [{ content: 'Current Assets:', colSpan: 3, styles: { fontStyle: 'bold', paddingTop: 4 } }],
-                    ['Inventory', '7', getVal('pos-inventory').toLocaleString()],
-                    ['Trade receivables', '8', getVal('pos-receivables').toLocaleString()],
-                    ['Cash and balance with bank', '9', getVal('pos-cash').toLocaleString()],
-                    ['Deposits and prepaid expenses', '10', getVal('pos-deposits').toLocaleString()],
+                    ['Sales', '15', getVal('pl-sales').toLocaleString()],
+                    ['Cost of sales', '16', `(${Math.abs(getVal('pl-cost')).toLocaleString()})`],
+                    [{ content: 'Gross Profit', colSpan: 2, styles: { fontStyle: 'bold', paddingTop: 3, paddingBottom: 3 } }, 
+                     { content: grossProfit.toLocaleString(), styles: { fontStyle: 'bold', halign: 'right', paddingTop: 3, paddingBottom: 3 } }],
+                    
+                    [{ content: 'Operating Expenses', colSpan: 3, styles: { fontStyle: 'bold', paddingTop: 4, paddingBottom: 1 } }],
+                    ['Administration and selling expenses', '17', `(${Math.abs(getVal('pl-admin')).toLocaleString()})`],
+                    ['Managerial remuneration', '18', `(${Math.abs(getVal('pl-remuneration')).toLocaleString()})`],
+                    ['Depreciation for the Year', '6', `(${Math.abs(getVal('pl-depreciation')).toLocaleString()})`],
+                    
+                    [{ content: 'Total Operating Expenses', colSpan: 2, styles: { fontStyle: 'italic', halign: 'left' } }, 
+                     { content: `(${Math.abs(totalOperating).toLocaleString()})`, styles: { halign: 'right', fontStyle: 'bold' } }],
                 ],
                 foot: [
-                    [{ content: 'Total Assets', colSpan: 2, styles: { fontStyle: 'bold', halign: 'right' } }, 
-                     { content: totalAssets.toLocaleString(), styles: { fontStyle: 'bold', halign: 'right', 'minCellHeight': 8, 'valign': 'middle' } }]
+                    [{ content: 'Net Income for the Year', colSpan: 2, styles: { fontStyle: 'bold', paddingTop: 3 } }, 
+                     { content: netIncome.toLocaleString(), styles: { fontStyle: 'bold', halign: 'right', paddingTop: 3 } }],
+                    [{ content: 'Other comprehensive income', colSpan: 3, styles: { paddingTop: 2 } }],
+                    [{ content: 'Total Comprehensive Income for the Year', colSpan: 2, styles: { fontStyle: 'bold', paddingTop: 2 } },
+                     { content: netIncome.toLocaleString(), styles: { fontStyle: 'bold', halign: 'right', paddingTop: 2 } }]
                 ],
                 didDrawPage: (data) => { currentY = data.cursor.y; }
             });
@@ -10606,7 +10619,7 @@ renderMainCommentsList(); // Clear comment list on new form
             // === Page 5: Notes 3 & 4 (IFRS & Significant Policies) ===
             addFullTextPage(5, [
                 { type: 'header', text: '3 Application of New and Revised International Financial Reporting Standards (IFRS)' },
-                { type: 'para', text: 'The Company has adopted all of the new and revised standards and interpretations issued by the International Accounting Standards Board (IASB) and the International Financial Reporting Interpretations Committee (IFRIC) of the IASB that are relevant to its operations and effective for accounting periods beginning on or after 1st January 2024.' },
+                { type: 'para', text: 'The Company has adopted all of the new and revised standards and interpretations issued by the International Accounting Standards Board (IASB) and the International Financial Reporting Interpretations Committee (IFRIC) of the IASB that are relevant to its operations and effective for accounting periods beginning on or after 1st January ${reportYear}.' },
                 { type: 'para', text: 'Relevant standards include: Amendments to IFRS 16 (COVID-19-Related Rent Concessions), Amendments to IAS 1 and IAS 8 (Definition of Material), Amendments to IFRS 3 (Definition of a Business), and Amendments to IFRS 9, IAS 39 and IFRS 7 (Interest Rate Benchmark Reform).' },
                 
                 { type: 'header', text: '4 Summary of Significant Accounting Policies' },
@@ -10691,31 +10704,22 @@ renderMainCommentsList(); // Clear comment list on new form
                 { type: 'para', text: 'Recorded initially at the rate of exchange at the date of the transaction. Monetary assets and liabilities are translated at the closing rate at the balance sheet date. Exchange differences are recognized in the Statement of Profit or Loss.' }
             ]);
 
-            // === Page 10: Note 5 (Impairment & Critical Judgments) ===
-            addFullTextPage(10, [
+            // === Page 11: Note 5 (Impairment, Judgments & Estimation Uncertainties) ===
+            addFullTextPage(11, [
                 { type: 'header', text: 'Impairment of assets' },
-                { type: 'para', text: 'The entity reviews carrying amounts of tangible and intangible assets whenever events indicate that the carrying amount may not be recoverable. An impairment loss is recognized for the amount by which the asset\\\'s carrying amount exceeds its recoverable amount.' },
+                { type: 'para', text: 'The entity reviews carrying amounts of tangible and intangible assets whenever events indicate that the carrying amount may not be recoverable. An impairment loss is recognized for the amount by which the asset\'s carrying amount exceeds its recoverable amount.' },
 
                 { type: 'header', text: 'Staff terminal benefits - Gratuity' },
-                { type: 'para', text: 'Amounts required to cover end of service indemnity are computed pursuant to the UAE Federal Labor Law based on employees\\\' accumulated period of service and current basic remuneration.' },
+                { type: 'para', text: 'Amounts required to cover end of service indemnity are computed pursuant to the UAE Federal Labor Law based on employees\' accumulated period of service and current basic remuneration.' },
 
                 { type: 'header', text: 'Critical Accounting Judgments and Key Sources of Estimation Uncertainty' },
-                { type: 'para', text: 'Management is required to make judgments, estimates and assumptions about carrying amounts of assets and liabilities. Estimates are based on historical experience and other relevant factors. Actual results may differ from these estimates.' },
+                { type: 'para', text: 'Management makes judgments, estimates and assumptions about carrying amounts of assets and liabilities. The estimates and underlying assumptions are reviewed on an ongoing basis.' },
 
                 { type: 'header', text: 'Critical judgments in applying accounting policies' },
-                { type: 'para', text: '1. Satisfaction of performance obligations (IFRS 15): Determining whether obligations are satisfied over time or at a point in time.\n2. Determination of transaction prices: Assessing variable consideration (discounts, rebates) using the most likely amount method.' }
-            ]);
+                { type: 'para', text: '1. Satisfaction of performance obligations (IFRS 15): Determining point-in-time vs over-time control transfer.\n2. Determination of transaction prices: Assessing variable consideration using the expected value or most likely amount method.' },
 
-            // === Page 11: Note 5 (Key Sources of Estimation) ===
-            addFullTextPage(11, [
-                { type: 'header', text: 'Key sources of estimation uncertainty' },
-                { type: 'para', text: 'The key assumptions concerning the future that have a significant risk of causing a material adjustment to the carrying amounts of assets and liabilities within the next financial year are:' },
-
-                { type: 'header', text: 'Impairment of financial assets' },
-                { type: 'para', text: 'Loss allowances are based on assumptions about risk of default and expected loss rates. The Company uses judgment in making these assumptions based on past history, existing market conditions, and forward-looking estimates.' },
-
-                { type: 'header', text: 'Impairment of non-financial assets' },
-                { type: 'para', text: 'The Company assesses whether there are indicators of impairment for all non-financial assets at each reporting date. If such indication exists, the recoverable amount is estimated using value in use calculations involving expected future cash flows and suitable discount rates.' }
+                { type: 'header', text: 'Key sources of estimation uncertainty & Impairment allowances' },
+                { type: 'para', text: 'Loss allowances for financial assets are based on default risk assumptions and expected loss rates. Non-financial assets are reviewed at each reporting date for impairment indicators, calculating recoverable amounts based on value-in-use projections.' }
             ]);
             // Page 11: Note 6, 7, 8
             doc.addPage();
