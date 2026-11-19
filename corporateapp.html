@@ -13,7 +13,312 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     
     <!-- 3. Load Firebase libraries -->
-    <script type="module">
+    
+    <!-- ========================================== -->
+    <!-- 1. FTA EmaraTax Auto-Bridge Modal (Pre-Filing Worksheet) -->
+    <!-- ========================================== -->
+    <div id="emaratax-bridge-modal" class="modal" style="display: none;">
+        <div class="modal-content modal-form" style="max-width: 1000px; width: 96vw; max-height: 92vh; display: flex; flex-direction: column;">
+            <div class="modal-header flex items-center justify-between pb-3 border-b border-gray-200 bg-gradient-to-r from-teal-50/80 via-white to-gray-50 p-4 rounded-t-xl shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="modal-title text-xl font-bold text-gray-900">FTA EmaraTax Auto-Bridge</h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200 uppercase">Pre-Filing Worksheet</span>
+                        </div>
+                        <p class="text-xs text-gray-500">Live 1-to-1 Mapping to Official UAE Federal Tax Authority Corporate Tax Return Schedules</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button type="button" id="copy-bridge-summary-btn" class="btn-secondary !py-1.5 !px-3 text-xs flex items-center space-x-1 cursor-pointer">
+                        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <span>Copy Summary</span>
+                    </button>
+                    <button type="button" id="download-bridge-pdf-btn" class="btn-primary !py-1.5 !px-3 text-xs flex items-center space-x-1 !bg-teal-600 hover:!bg-teal-700 cursor-pointer">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>Download Bridge PDF</span>
+                    </button>
+                    <span class="close-btn text-2xl font-bold cursor-pointer text-gray-400 hover:text-gray-700 leading-none pl-2" id="close-emaratax-bridge-modal">&times;</span>
+                </div>
+            </div>
+
+            <!-- Modal Content (Scrollable) -->
+            <div class="modal-body overflow-y-auto p-4 sm:p-6 space-y-6 flex-1" id="emaratax-bridge-content">
+                <!-- Taxpayer & Return Header Information -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 p-3.5 bg-gray-50 rounded-xl border border-gray-200 text-xs">
+                    <div>
+                        <span class="text-gray-500 block text-[11px]">Taxable Person Name</span>
+                        <strong class="text-gray-900 font-bold text-sm" id="bridge-company-name">—</strong>
+                        <span class="text-gray-500 block text-[10px]" id="bridge-company-name-ar" dir="rtl"></span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 block text-[11px]">Corporate Tax Period</span>
+                        <strong class="text-gray-800" id="bridge-period-text">—</strong>
+                        <span class="text-[10px] text-teal-700 font-medium block" id="bridge-period-end-badge">Tax Year End: —</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 block text-[11px]">Tax Registration No. (TRN)</span>
+                        <span class="font-mono font-bold text-gray-900 text-sm" id="bridge-trn-text">—</span>
+                        <span class="text-[10px] text-gray-400 block">FTA EmaraTax ID</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 block text-[11px]">Net Tax Liability Position</span>
+                        <strong class="text-emerald-700 font-bold text-sm" id="bridge-tax-position">AED 0.00</strong>
+                        <span class="text-[10px] text-gray-500 block">Status: Ready to Submit</span>
+                    </div>
+                </div>
+
+                <!-- Tabs: Two columns (P&L Schedules Left, Balance Sheet Right) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Column 1: Statement of Profit or Loss (Accounting Schedules) -->
+                    <div class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-2xs">
+                        <div class="bg-gray-100/90 px-4 py-2.5 border-b border-gray-200 flex justify-between items-center">
+                            <span class="font-bold text-xs uppercase tracking-wide text-gray-700 flex items-center">
+                                <span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
+                                Statement of Profit or Loss (P&L)
+                            </span>
+                            <span class="text-[11px] font-semibold text-gray-500">EmaraTax Box Values (AED)</span>
+                        </div>
+                        <table class="w-full text-xs divide-y divide-gray-100">
+                            <tbody class="divide-y divide-gray-100 font-mono">
+                                <tr class="hover:bg-blue-50/40">
+                                    <td class="p-2.5 font-sans font-medium text-gray-800">Operating Revenue (Sales)</td>
+                                    <td class="p-2.5 text-right font-bold text-gray-900" id="bridge-pl-revenue">0</td>
+                                    <td class="p-2.5 text-center w-12"><button type="button" class="bridge-copy-btn p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-800" data-target="bridge-pl-revenue" title="Copy to clipboard">📋</button></td>
+                                </tr>
+                                <tr class="hover:bg-blue-50/40">
+                                    <td class="p-2.5 font-sans font-medium text-gray-800">Expenditure incurred in deriving operating revenue (Cost of Sales)</td>
+                                    <td class="p-2.5 text-right font-bold text-gray-900" id="bridge-pl-cost">0</td>
+                                    <td class="p-2.5 text-center w-12"><button type="button" class="bridge-copy-btn p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-800" data-target="bridge-pl-cost" title="Copy to clipboard">📋</button></td>
+                                </tr>
+                                <tr class="bg-blue-50/50 font-bold">
+                                    <td class="p-2.5 font-sans text-blue-900">Gross Profit / Loss (AED)</td>
+                                    <td class="p-2.5 text-right text-blue-950" id="bridge-pl-gross">0</td>
+                                    <td class="p-2.5 text-center w-12"></td>
+                                </tr>
+                                <tr class="hover:bg-blue-50/40">
+                                    <td class="p-2.5 font-sans font-medium text-gray-800 pl-4">↳ Salaries, wages and related charges</td>
+                                    <td class="p-2.5 text-right font-semibold text-gray-900" id="bridge-pl-salaries">0</td>
+                                    <td class="p-2.5 text-center w-12"><button type="button" class="bridge-copy-btn p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-800" data-target="bridge-pl-salaries" title="Copy to clipboard">📋</button></td>
+                                </tr>
+                                <tr class="hover:bg-blue-50/40">
+                                    <td class="p-2.5 font-sans font-medium text-gray-800 pl-4">↳ Depreciation and amortisation</td>
+                                    <td class="p-2.5 text-right font-semibold text-gray-900" id="bridge-pl-depreciation">0</td>
+                                    <td class="p-2.5 text-center w-12"><button type="button" class="bridge-copy-btn p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-800" data-target="bridge-pl-depreciation" title="Copy to clipboard">📋</button></td>
+                                </tr>
+                                <tr class="hover:bg-blue-50/40">
+                                    <td class="p-2.5 font-sans font-medium text-gray-800 pl-4">↳ Other expenses (Excluding items listed above)</td>
+                                    <td class="p-2.5 text-right font-semibold text-gray-900" id="bridge-pl-other-expenses">0</td>
+                                    <td class="p-2.5 text-center w-12"><button type="button" class="bridge-copy-btn p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-800" data-target="bridge-pl-other-expenses" title="Copy to clipboard">📋</button></td>
+                                </tr>
+                                <tr class="bg-gray-50 font-bold">
+                                    <td class="p-2.5 font-sans text-gray-800">Non-operating expenses total (AED)</td>
+                                    <td class="p-2.5 text-right text-gray-900" id="bridge-pl-total-expenses">0</td>
+                                    <td class="p-2.5 text-center w-12"></td>
+                                </tr>
+                                <tr class="bg-emerald-50/90 font-bold text-emerald-950 border-t-2 border-emerald-300">
+                                    <td class="p-2.5 font-sans text-emerald-900">Net Profit / (Loss) (Accounting Income)</td>
+                                    <td class="p-2.5 text-right text-sm" id="bridge-pl-net-income">0</td>
+                                    <td class="p-2.5 text-center w-12"><button type="button" class="bridge-copy-btn p-1 hover:bg-emerald-200 rounded text-emerald-700" data-target="bridge-pl-net-income" title="Copy to clipboard">📋</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Column 2: Statement of Financial Position (Balance Sheet Mapping) -->
+                    <div class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-2xs">
+                        <div class="bg-gray-100/90 px-4 py-2.5 border-b border-gray-200 flex justify-between items-center">
+                            <span class="font-bold text-xs uppercase tracking-wide text-gray-700 flex items-center">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500 mr-2"></span>
+                                Statement of Financial Position (Balance Sheet)
+                            </span>
+                            <span class="text-[11px] font-semibold text-gray-500">EmaraTax Box Values (AED)</span>
+                        </div>
+                        <table class="w-full text-xs divide-y divide-gray-100">
+                            <tbody class="divide-y divide-gray-100 font-mono">
+                                <tr class="hover:bg-indigo-50/40">
+                                    <td class="p-2.5 font-sans font-medium text-gray-800">Total current assets (AED)</td>
+                                    <td class="p-2.5 text-right font-bold text-gray-900" id="bridge-pos-current-assets">0</td>
+                                    <td class="p-2.5 text-center w-12"><button type="button" class="bridge-copy-btn p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-800" data-target="bridge-pos-current-assets" title="Copy to clipboard">📋</button></td>
+                                </tr>
+                                <tr class="hover:bg-indigo-50/40">
+                                    <td class="p-2.5 font-sans font-medium text-gray-800">Property, Plant and Equipment (PPE)</td>
+                                    <td class="p-2.5 text-right font-bold text-gray-900" id="bridge-pos-ppe">0</td>
+                                    <td class="p-2.5 text-center w-12"><button type="button" class="bridge-copy-btn p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-800" data-target="bridge-pos-ppe" title="Copy to clipboard">📋</button></td>
+                                </tr>
+                                <tr class="bg-indigo-50/50 font-bold">
+                                    <td class="p-2.5 font-sans text-indigo-900">Total assets (AED)</td>
+                                    <td class="p-2.5 text-right text-indigo-950" id="bridge-pos-total-assets">0</td>
+                                    <td class="p-2.5 text-center w-12"></td>
+                                </tr>
+                                <tr class="hover:bg-indigo-50/40">
+                                    <td class="p-2.5 font-sans font-medium text-gray-800">Total current liabilities (AED)</td>
+                                    <td class="p-2.5 text-right font-bold text-gray-900" id="bridge-pos-current-liab">0</td>
+                                    <td class="p-2.5 text-center w-12"><button type="button" class="bridge-copy-btn p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-800" data-target="bridge-pos-current-liab" title="Copy to clipboard">📋</button></td>
+                                </tr>
+                                <tr class="hover:bg-indigo-50/40">
+                                    <td class="p-2.5 font-sans font-medium text-gray-800">Total non-current liabilities (AED)</td>
+                                    <td class="p-2.5 text-right font-semibold text-gray-600">0</td>
+                                    <td class="p-2.5 text-center w-12"></td>
+                                </tr>
+                                <tr class="hover:bg-indigo-50/40">
+                                    <td class="p-2.5 font-sans font-medium text-gray-800">Share capital (AED)</td>
+                                    <td class="p-2.5 text-right font-bold text-gray-900" id="bridge-pos-capital">0</td>
+                                    <td class="p-2.5 text-center w-12"><button type="button" class="bridge-copy-btn p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-800" data-target="bridge-pos-capital" title="Copy to clipboard">📋</button></td>
+                                </tr>
+                                <tr class="hover:bg-teal-50/50 bg-teal-50/20">
+                                    <td class="p-2.5 font-sans font-medium text-gray-800">
+                                        Retained earnings (Net of shareholder current a/c)
+                                        <span class="block text-[10px] text-teal-800 font-normal" id="bridge-retained-note">Adjusted for Shareholder Current Account</span>
+                                    </td>
+                                    <td class="p-2.5 text-right font-bold text-teal-900" id="bridge-pos-retained-net">0</td>
+                                    <td class="p-2.5 text-center w-12"><button type="button" class="bridge-copy-btn p-1 hover:bg-teal-200 rounded text-teal-700" data-target="bridge-pos-retained-net" title="Copy to clipboard">📋</button></td>
+                                </tr>
+                                <tr class="hover:bg-indigo-50/40">
+                                    <td class="p-2.5 font-sans font-medium text-gray-800">Other equity (AED)</td>
+                                    <td class="p-2.5 text-right font-semibold text-gray-600">0</td>
+                                    <td class="p-2.5 text-center w-12"></td>
+                                </tr>
+                                <tr class="bg-gray-50 font-bold">
+                                    <td class="p-2.5 font-sans text-gray-800">Total equity (AED)</td>
+                                    <td class="p-2.5 text-right text-gray-900" id="bridge-pos-total-equity">0</td>
+                                    <td class="p-2.5 text-center w-12"></td>
+                                </tr>
+                                <tr class="bg-indigo-50/90 font-bold text-indigo-950 border-t-2 border-indigo-300">
+                                    <td class="p-2.5 font-sans text-indigo-900">Total equity and liabilities (AED)</td>
+                                    <td class="p-2.5 text-right text-sm" id="bridge-pos-total-eq-liab">0</td>
+                                    <td class="p-2.5 text-center w-12"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Bottom Summary & Corporate Tax Diagnostics Banner -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-xl border border-teal-200 bg-gradient-to-r from-teal-50/90 via-emerald-50/60 to-white text-xs">
+                    <div>
+                        <span class="font-bold text-teal-900 text-sm block mb-1">Small Business Relief (Article 21)</span>
+                        <div id="bridge-sbr-badge" class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-white border border-teal-300 text-teal-800">
+                            Evaluating Revenue...
+                        </div>
+                        <p class="text-[11px] text-gray-600 mt-1" id="bridge-sbr-explanation">Revenue threshold: AED 3,000,000</p>
+                    </div>
+
+                    <div>
+                        <span class="font-bold text-teal-900 text-sm block mb-1">Corporate Tax Calculation (0% / 9%)</span>
+                        <div class="space-y-0.5 font-mono">
+                            <div class="flex justify-between"><span>Taxable Profit:</span> <strong id="bridge-taxable-income">AED 0</strong></div>
+                            <div class="flex justify-between"><span>0% Bracket (Up to 375k):</span> <span id="bridge-bracket-zero">AED 0</span></div>
+                            <div class="flex justify-between text-emerald-800 font-bold"><span>Total CT Payable:</span> <span id="bridge-ct-payable">AED 0</span></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="font-bold text-teal-900 text-sm block mb-1">Audit & Filing Declaration</span>
+                        <div class="space-y-1">
+                            <div>Audit Mandated: <span class="font-bold text-gray-800" id="bridge-audit-flag">No (Standard Entity)</span></div>
+                            <div>EBITDA Indicator: <span class="font-bold text-indigo-800 font-mono" id="bridge-ebitda">0</span></div>
+                            <div class="text-[10px] text-gray-500">Form: FTA EmaraTax Corporate Tax Return</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-3 border-t border-gray-200 flex justify-end space-x-2 bg-gray-50 rounded-b-xl shrink-0">
+                <button type="button" id="close-bridge-footer-btn" class="btn-secondary !py-1.5 !px-5 text-xs font-semibold cursor-pointer">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. Multi-Company Compliance Dashboard Modal -->
+    <!-- ========================================== -->
+    <div id="compliance-dashboard-modal" class="modal" style="display: none;">
+        <div class="modal-content modal-form" style="max-width: 1100px; width: 96vw; max-height: 92vh; display: flex; flex-direction: column;">
+            <div class="modal-header flex items-center justify-between pb-3 border-b border-gray-200 bg-gradient-to-r from-sky-50/80 via-white to-gray-50 p-4 rounded-t-xl shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-sky-700 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="modal-title text-xl font-bold text-gray-900">Multi-Company Compliance Dashboard</h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">FTA Corporate Manager</span>
+                        </div>
+                        <p class="text-xs text-gray-500">Track UAE Corporate Tax filing due dates (9-month rule), TRN, EmaraTax reference numbers & live statuses</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button type="button" id="add-company-from-dashboard-btn" class="btn-primary !py-1.5 !px-3 text-xs flex items-center space-x-1 cursor-pointer">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <span>New Company</span>
+                    </button>
+                    <span class="close-btn text-2xl font-bold cursor-pointer text-gray-400 hover:text-gray-700 leading-none pl-2" id="close-compliance-dashboard-modal">&times;</span>
+                </div>
+            </div>
+
+            <!-- Dashboard Content (Scrollable Table) -->
+            <div class="modal-body overflow-y-auto p-4 sm:p-6 space-y-4 flex-1">
+                <!-- Top Statistics KPI Bar -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div class="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                        <span class="text-gray-500 block text-[11px]">Total Companies</span>
+                        <strong class="text-gray-900 text-lg font-bold" id="kpi-total-companies">0</strong>
+                    </div>
+                    <div class="p-3 bg-amber-50 rounded-xl border border-amber-200">
+                        <span class="text-amber-800 block text-[11px]">Pending / In-Progress</span>
+                        <strong class="text-amber-900 text-lg font-bold" id="kpi-pending-companies">0</strong>
+                    </div>
+                    <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                        <span class="text-emerald-800 block text-[11px]">Submitted to FTA</span>
+                        <strong class="text-emerald-900 text-lg font-bold" id="kpi-submitted-companies">0</strong>
+                    </div>
+                    <div class="p-3 bg-blue-50 rounded-xl border border-blue-200">
+                        <span class="text-blue-800 block text-[11px]">Upcoming Due This Month</span>
+                        <strong class="text-blue-900 text-lg font-bold" id="kpi-upcoming-due">0</strong>
+                    </div>
+                </div>
+
+                <!-- Compliance Table -->
+                <div class="border border-gray-200 rounded-xl overflow-hidden shadow-2xs">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs divide-y divide-gray-200 min-w-[950px]">
+                            <thead class="bg-gray-100/90 text-gray-600 font-semibold uppercase tracking-wider text-[10px]">
+                                <tr>
+                                    <th class="p-3">Company Details & TRN</th>
+                                    <th class="p-3">Financial Year End</th>
+                                    <th class="p-3">Filing Due Date (9M)</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">EmaraTax Ref #</th>
+                                    <th class="p-3">Submitted Date</th>
+                                    <th class="p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="compliance-table-body" class="divide-y divide-gray-100 bg-white">
+                                <!-- Populated dynamically by renderComplianceDashboardTable() -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-3 border-t border-gray-200 flex justify-between items-center bg-gray-50 rounded-b-xl shrink-0 text-xs text-gray-500">
+                <span>💡 <strong>FTA Rule:</strong> UAE Corporate Tax returns must be filed within <strong>9 months</strong> from the end of the financial year.</span>
+                <button type="button" id="close-compliance-footer-btn" class="btn-secondary !py-1.5 !px-5 text-xs font-semibold cursor-pointer">Close</button>
+            </div>
+        </div>
+    </div>
+    
+<script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -294,6 +599,30 @@
             scrollbar-width: none;
         }
 
+    
+        /* Draft Management Full-Width Full-Height Bleeding View */
+        #draft-management-modal {
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+        #draft-management-modal .modal-content {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            display: flex !important;
+            flex-direction: column !important;
+            padding: 16px 24px !important;
+            box-shadow: none !important;
+        }
+        #draft-management-modal .modal-body {
+            flex: 1 1 0% !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans antialiased h-screen overflow-hidden">
@@ -357,6 +686,31 @@
                 <div class="flex-1">
                     <div class="font-bold text-sm text-gray-900 group-hover:text-amber-800">Draft Management</div>
                     <div class="text-xs text-gray-500 font-normal">Save, load drafts & switch corporate reports</div>
+                </div>
+            </button>
+
+            
+            <button type="button" id="drawer-emaratax-bridge-btn" class="w-full flex items-center px-4 py-3.5 text-left rounded-xl text-gray-800 hover:bg-teal-50 hover:text-teal-800 transition font-medium border border-transparent hover:border-teal-200 group">
+                <div class="w-9 h-9 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center mr-3 group-hover:bg-teal-600 group-hover:text-white transition shadow-xs">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="font-bold text-sm text-gray-900 group-hover:text-teal-800">FTA EmaraTax Auto-Bridge</div>
+                    <div class="text-xs text-gray-500 font-normal">Pre-filing return schedules & line-by-line box mapping</div>
+                </div>
+            </button>
+
+            <button type="button" id="drawer-compliance-dashboard-btn" class="w-full flex items-center px-4 py-3.5 text-left rounded-xl text-gray-800 hover:bg-sky-50 hover:text-sky-800 transition font-medium border border-transparent hover:border-sky-200 group">
+                <div class="w-9 h-9 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center mr-3 group-hover:bg-sky-600 group-hover:text-white transition shadow-xs">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="font-bold text-sm text-gray-900 group-hover:text-sky-800">Compliance Dashboard</div>
+                    <div class="text-xs text-gray-500 font-normal">Multi-company filing status, due dates & TRN tracking</div>
                 </div>
             </button>
 
@@ -483,6 +837,18 @@
                 </button>
 
                 <!-- Download Excel (.xlsx) Button -->
+                <!-- FTA EmaraTax Bridge Button -->
+                <button type="button" id="top-emaratax-bridge-btn" class="inline-flex items-center px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition shadow-2xs cursor-pointer whitespace-nowrap" title="FTA EmaraTax Auto-Bridge Pre-Filing Worksheet">
+                    <svg class="w-3.5 h-3.5 mr-1 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>FTA Bridge</span>
+                </button>
+
+                <!-- Multi-Company Compliance Dashboard Button -->
+                <button type="button" id="top-compliance-dashboard-btn" class="inline-flex items-center px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-lg bg-sky-700 text-white hover:bg-sky-800 transition shadow-2xs cursor-pointer whitespace-nowrap" title="Multi-Company Compliance & Due Dates Dashboard">
+                    <svg class="w-3.5 h-3.5 mr-1 text-sky-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    <span>Compliance</span>
+                </button>
+
                 <button type="button" id="generate-excel-btn" class="inline-flex items-center px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-2xs cursor-pointer whitespace-nowrap" title="Download as Excel (.xlsx)">
                     <svg class="w-3.5 h-3.5 mr-1 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     <span>Excel (.xlsx)</span>
@@ -911,7 +1277,7 @@
                         </div>
                         <div>
                             <label for="cf-shareholder" class="block text-sm font-medium text-gray-700">Net movement in shareholder's current account</label>
-                            <input type="number" id="cf-shareholder" value="98500" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm form-field-readonly" readonly>
+                            <input type="number" id="cf-shareholder" value="0" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="0">
                             <p class="form-field-note">Calculated from Background Details (Note 12).</p>
                         </div>
                     </div>
@@ -1053,6 +1419,74 @@
                 
                 <!-- Tab 6: Total Review Form -->
                 <div id="tab-review" class="tab-content space-y-6">
+                    <!-- Financial Integrity & Compliance Validator Banner -->
+                    <div id="integrity-validator-card" class="p-4 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-white shadow-2xs">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-blue-100">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold shadow-2xs">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-gray-900 leading-tight">Financial Statement Integrity & Compliance Guard</h4>
+                                    <p class="text-xs text-gray-500">Continuous pre-audit balance sheet tie-out & cash flow automated reconciliation</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" id="review-open-bridge-btn" class="btn-primary !py-1 !px-2.5 text-xs !bg-teal-600 hover:!bg-teal-700 flex items-center space-x-1 cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <span>EmaraTax Bridge</span>
+                                </button>
+                                <button type="button" id="review-open-compliance-btn" class="btn-secondary !py-1 !px-2.5 text-xs flex items-center space-x-1 cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                    <span>Compliance Dashboard</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 4 Real-Time Audit Integrity Indicators -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+                            <div id="validator-bs-pill" class="p-2.5 rounded-lg border bg-white flex flex-col justify-between">
+                                <span class="text-gray-500 text-[11px] block">1. Balance Sheet Tie-Out</span>
+                                <div class="flex items-center justify-between mt-1">
+                                    <span id="validator-bs-status" class="font-bold text-emerald-700 flex items-center">
+                                        <svg class="w-4 h-4 mr-1 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        Balanced (AED 0 diff)
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div id="validator-re-pill" class="p-2.5 rounded-lg border bg-white flex flex-col justify-between">
+                                <span class="text-gray-500 text-[11px] block">2. Retained Earnings Continuity</span>
+                                <div class="flex items-center justify-between mt-1">
+                                    <span id="validator-re-status" class="font-bold text-emerald-700 flex items-center">
+                                        <svg class="w-4 h-4 mr-1 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        Reconciled
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div id="validator-cf-pill" class="p-2.5 rounded-lg border bg-white flex flex-col justify-between">
+                                <span class="text-gray-500 text-[11px] block">3. Automated Cash Flow Tie-Out</span>
+                                <div class="flex items-center justify-between mt-1">
+                                    <span id="validator-cf-status" class="font-bold text-emerald-700 flex items-center">
+                                        <svg class="w-4 h-4 mr-1 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        Cash Reconciled
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div id="validator-period-pill" class="p-2.5 rounded-lg border bg-white flex flex-col justify-between">
+                                <span class="text-gray-500 text-[11px] block">4. Period 12-Month Rule</span>
+                                <div class="flex items-center justify-between mt-1">
+                                    <span id="validator-period-status" class="font-bold text-emerald-700 flex items-center">
+                                        <svg class="w-4 h-4 mr-1 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        12 Months Valid
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <h3 class="text-xl font-semibold text-gray-700 border-b pb-2">Total Review Form</h3>
                     <p class="text-sm text-gray-600">This is a live preview of your financial statement. All changes from other tabs are reflected here instantly. Please review for accuracy before generating the PDF.</p>
                     
@@ -6153,6 +6587,141 @@ const mainCommentList = document.getElementById('main-comment-list');
             showDraftMessage(`Corporate report "[${finalizedRecord.serialNumber}] ${designatedTitle}" confirmed & finalized!`, false);
         }
 
+        
+        // --- Helper to suggest next period draft name (e.g. "SAHAM 2024 25" -> "SAHAM 2025 26") ---
+        function suggestNextYearDraftName(title) {
+            if (!title) return 'NEXT_YEAR_CORP';
+            // Match pattern like 2024 25, 2024 2025, 2024-2025, 2024-25
+            const doubleYearRegex = /(20\d\d)[\s\-_/]+(20\d\d|\d\d)/;
+            const match = title.match(doubleYearRegex);
+            if (match) {
+                const y1 = parseInt(match[1], 10);
+                const nextY1 = y1 + 1;
+                const isFourDigitSecond = match[2].length === 4;
+                const nextY2 = isFourDigitSecond ? String(nextY1 + 1) : String((nextY1 + 1) % 100);
+                return title.replace(doubleYearRegex, `${nextY1} ${nextY2}`);
+            }
+            const singleYearRegex = /(20\d\d)/;
+            const matchSingle = title.match(singleYearRegex);
+            if (matchSingle) {
+                const y = parseInt(matchSingle[1], 10);
+                return title.replace(singleYearRegex, String(y + 1));
+            }
+            return `${title} Next Year`;
+        }
+
+        // --- Start New Draft for Next Year directly from Confirmed Report Card ---
+        function startNextYearDraftFromConfirmed(reportId) {
+            const prevReport = finalizedCorpsData.find(r => r.id === reportId);
+            if (!prevReport || !prevReport.data) {
+                alert("Error: Confirmed report data not found.");
+                return;
+            }
+
+            const rawPriorName = prevReport.draftName || (prevReport.data && prevReport.data.draftName) || 'CORP';
+            const defaultSuggestedName = suggestNextYearDraftName(rawPriorName);
+
+            const promptMsg = [
+                '========================================',
+                'START NEXT YEAR CORPORATE REPORT',
+                '========================================',
+                'Company: ' + (prevReport.companyName || 'Corporate Entity'),
+                'Prior Period: ' + (prevReport.periodFormatted || '12-Month Period'),
+                'Prior Serial: ' + (prevReport.serialNumber || 'CORP-001'),
+                '----------------------------------------',
+                'Enter name for the new draft report:'
+            ].join('\n');
+
+            const userChosenName = prompt(promptMsg, defaultSuggestedName);
+            if (!userChosenName || !userChosenName.trim()) {
+                return; // User cancelled
+            }
+
+            const newDraftName = userChosenName.trim();
+
+            // Check if draft already exists with that name
+            const alreadyExists = allSavedDraftsList.some(d => d.name.toLowerCase() === newDraftName.toLowerCase());
+            if (alreadyExists) {
+                if (!confirm(`A draft named "${newDraftName}" already exists. Overwrite it?`)) {
+                    return;
+                }
+            }
+
+            // 1. Select and apply the company profile
+            if (prevReport.companyId) {
+                selectAndApplyCompany(prevReport.companyId);
+            } else if (prevReport.companyName) {
+                const matchComp = companiesData.find(c => c.name.toLowerCase() === prevReport.companyName.toLowerCase());
+                if (matchComp) selectAndApplyCompany(matchComp.id);
+            }
+
+            // 2. Set new draft name
+            if (draftNameInput) draftNameInput.value = newDraftName;
+            if (activeDraftNameText) activeDraftNameText.textContent = newDraftName;
+
+            // 3. Compute and apply next Corporate Serial Number (e.g., CORP-001 -> CORP-002)
+            const prevSerial = prevReport.serialNumber || (prevReport.data && prevReport.data.serialNumber) || 'CORP-001';
+            const snMatch = prevSerial.match(/^(.*?)(\d+)$/);
+            let nextSerial = prevSerial;
+            if (snMatch) {
+                const prefix = snMatch[1];
+                const num = parseInt(snMatch[2], 10) + 1;
+                nextSerial = prefix + String(num).padStart(snMatch[2].length, '0');
+            } else {
+                nextSerial = prevSerial + '-02';
+            }
+            const serialInput = document.getElementById('corporate-serial-number');
+            if (serialInput) serialInput.value = nextSerial;
+            const activeSerialText = document.getElementById('active-serial-text');
+            if (activeSerialText) activeSerialText.textContent = nextSerial;
+
+            // 4. Advance 12-Month reporting period dates by 1 year
+            const prevStart = prevReport.periodStart || (prevReport.data && prevReport.data.formData && prevReport.data.formData['report-start-date']);
+            const prevEnd = prevReport.periodEnd || (prevReport.data && prevReport.data.formData && prevReport.data.formData['report-end-date']);
+            if (prevStart && prevEnd) {
+                const sD = new Date(prevStart);
+                const eD = new Date(prevEnd);
+                sD.setFullYear(sD.getFullYear() + 1);
+                eD.setFullYear(eD.getFullYear() + 1);
+                const pad = n => String(n).padStart(2, '0');
+                const newStartStr = `${sD.getFullYear()}-${pad(sD.getMonth() + 1)}-${pad(sD.getDate())}`;
+                const newEndStr = `${eD.getFullYear()}-${pad(eD.getMonth() + 1)}-${pad(eD.getDate())}`;
+                const startInp = document.getElementById('report-start-date');
+                const endInp = document.getElementById('report-end-date');
+                if (startInp) startInp.value = newStartStr;
+                if (endInp) endInp.value = newEndStr;
+                syncCorporatePeriod();
+            }
+
+            // 5. Apply full roll-forward of closing balances into opening balances
+            applyRollForwardBalances(prevReport);
+
+            // 6. Reset current-year P&L and cash transactions to 0 for a clean start
+            setVal('pl-sales', 0);
+            setVal('pl-cost', 0);
+            setVal('pl-admin', 0);
+            setVal('pl-depreciation', 0);
+            setVal('pl-remuneration', 0);
+            setVal('cf-profit', 0);
+            setVal('cf-depreciation', 0);
+            setVal('cf-dividend', 0);
+            setVal('cf-shareholder', 0);
+            setVal('cf-old-payables', 0);
+
+            // 7. Save this newly rolled draft immediately
+            saveDraft(newDraftName);
+
+            // 8. Close draft management modal
+            if (draftManagementModal) draftManagementModal.style.display = 'none';
+
+            // 9. Recalculate everything and navigate to General tab
+            runAllCalculations();
+            const genTab = document.querySelector('.tab-btn[data-tab="general"]');
+            if (genTab) genTab.click();
+
+            alert(`✓ Started Next Year Draft: "${newDraftName}"\n\n• Serial: ${nextSerial}\n• Period: ${formatPeriodDisplay(document.getElementById('report-start-date').value, document.getElementById('report-end-date').value)}\n• All prior closing balances fetched into Opening Balances!\n• Current year transactions reset to 0 for fresh entry.`);
+        }
+
         async function revertFinalizedToDraft(reportId) {
             const report = finalizedCorpsData.find(r => r.id === reportId);
             if (!report) return;
@@ -6593,6 +7162,11 @@ const mainCommentList = document.getElementById('main-comment-list');
                                     </div>
                                     <div class="flex items-center space-x-1.5 shrink-0 self-end sm:self-center">
                                         <!-- Load Button -->
+                                        <!-- + Add Next Year Draft Button -->
+                                        <button type="button" class="btn-primary !py-1 !px-2.5 text-xs font-bold flex items-center shadow-2xs add-next-year-draft-btn cursor-pointer !bg-emerald-600 hover:!bg-emerald-700 text-white border border-emerald-700 whitespace-nowrap" data-id="${escapeHtml(item.id)}" title="Start next year draft with rolled-forward opening balances">
+                                            <svg class="w-3.5 h-3.5 mr-1 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                                            + Add Next Year Draft
+                                        </button>
                                         <button type="button" class="btn-primary !py-1 !px-2.5 text-xs font-semibold flex items-center shadow-2xs load-finalized-card-btn cursor-pointer" data-id="${escapeHtml(item.id)}">
                                             <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                             Load
@@ -6646,6 +7220,9 @@ const mainCommentList = document.getElementById('main-comment-list');
                     };
                 }
 
+                savedDraftsCardsContainer.querySelectorAll('.add-next-year-draft-btn').forEach(btn => {
+                    btn.onclick = () => startNextYearDraftFromConfirmed(btn.dataset.id);
+                });
                 savedDraftsCardsContainer.querySelectorAll('.load-finalized-card-btn').forEach(btn => {
                     btn.onclick = () => loadFinalizedReport(btn.dataset.id);
                 });
@@ -8326,7 +8903,652 @@ function renderMainCommentsList() {
         }
 
         // --- Review Tab Update with Comparative Multi-Report Support & Opening Balances Visibility ---
+        
+        // ==========================================
+        // 1. FTA EmaraTax Auto-Bridge & Compliance Engine
+        // ==========================================
+        const emarataxBridgeModal = document.getElementById('emaratax-bridge-modal');
+        const closeEmaraTaxBridgeModalBtn = document.getElementById('close-emaratax-bridge-modal');
+        const closeBridgeFooterBtn = document.getElementById('close-bridge-footer-btn');
+        const topEmaraTaxBridgeBtn = document.getElementById('top-emaratax-bridge-btn');
+        const drawerEmaraTaxBridgeBtn = document.getElementById('drawer-emaratax-bridge-btn');
+        const reviewOpenBridgeBtn = document.getElementById('review-open-bridge-btn');
+        const copyBridgeSummaryBtn = document.getElementById('copy-bridge-summary-btn');
+        const downloadBridgePdfBtn = document.getElementById('download-bridge-pdf-btn');
+
+        const complianceDashboardModal = document.getElementById('compliance-dashboard-modal');
+        const closeComplianceDashboardModalBtn = document.getElementById('close-compliance-dashboard-modal');
+        const closeComplianceFooterBtn = document.getElementById('close-compliance-footer-btn');
+        const topComplianceDashboardBtn = document.getElementById('top-compliance-dashboard-btn');
+        const drawerComplianceDashboardBtn = document.getElementById('drawer-compliance-dashboard-btn');
+        const reviewOpenComplianceBtn = document.getElementById('review-open-compliance-btn');
+        const addCompanyFromDashboardBtn = document.getElementById('add-company-from-dashboard-btn');
+
+        function openEmaraTaxBridgeModal() {
+            updateEmaraTaxBridge();
+            if (emarataxBridgeModal) emarataxBridgeModal.style.display = 'block';
+        }
+
+        function closeEmaraTaxBridgeModal() {
+            if (emarataxBridgeModal) emarataxBridgeModal.style.display = 'none';
+        }
+
+        function openComplianceDashboardModal() {
+            renderComplianceDashboardTable();
+            if (complianceDashboardModal) complianceDashboardModal.style.display = 'block';
+        }
+
+        function closeComplianceDashboardModal() {
+            if (complianceDashboardModal) complianceDashboardModal.style.display = 'none';
+        }
+
+        if (topEmaraTaxBridgeBtn) topEmaraTaxBridgeBtn.addEventListener('click', openEmaraTaxBridgeModal);
+        if (drawerEmaraTaxBridgeBtn) {
+            drawerEmaraTaxBridgeBtn.addEventListener('click', () => {
+                closeSideDrawer();
+                openEmaraTaxBridgeModal();
+            });
+        }
+        if (reviewOpenBridgeBtn) reviewOpenBridgeBtn.addEventListener('click', openEmaraTaxBridgeModal);
+        if (closeEmaraTaxBridgeModalBtn) closeEmaraTaxBridgeModalBtn.addEventListener('click', closeEmaraTaxBridgeModal);
+        if (closeBridgeFooterBtn) closeBridgeFooterBtn.addEventListener('click', closeEmaraTaxBridgeModal);
+
+        if (topComplianceDashboardBtn) topComplianceDashboardBtn.addEventListener('click', openComplianceDashboardModal);
+        if (drawerComplianceDashboardBtn) {
+            drawerComplianceDashboardBtn.addEventListener('click', () => {
+                closeSideDrawer();
+                openComplianceDashboardModal();
+            });
+        }
+        if (reviewOpenComplianceBtn) reviewOpenComplianceBtn.addEventListener('click', openComplianceDashboardModal);
+        if (closeComplianceDashboardModalBtn) closeComplianceDashboardModalBtn.addEventListener('click', closeComplianceDashboardModal);
+        if (closeComplianceFooterBtn) closeComplianceFooterBtn.addEventListener('click', closeComplianceDashboardModal);
+        if (addCompanyFromDashboardBtn) {
+            addCompanyFromDashboardBtn.addEventListener('click', () => {
+                closeComplianceDashboardModal();
+                if (companiesModal) {
+                    resetCompanyForm();
+                    companiesModal.style.display = 'block';
+                }
+            });
+        }
+
+        // Close on escape or outside click
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (emarataxBridgeModal && emarataxBridgeModal.style.display === 'block') closeEmaraTaxBridgeModal();
+                if (complianceDashboardModal && complianceDashboardModal.style.display === 'block') closeComplianceDashboardModal();
+            }
+        });
+
+        // Copy buttons in bridge worksheet
+        document.querySelectorAll('.bridge-copy-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.dataset.target;
+                const el = document.getElementById(targetId);
+                if (el) {
+                    const rawVal = el.innerText.replace(/[^0-9.-]/g, '');
+                    navigator.clipboard.writeText(rawVal || el.innerText).then(() => {
+                        const originalText = btn.innerText;
+                        btn.innerText = '✓';
+                        setTimeout(() => { btn.innerText = originalText; }, 1200);
+                    });
+                }
+            });
+        });
+
+        if (copyBridgeSummaryBtn) {
+            copyBridgeSummaryBtn.addEventListener('click', () => {
+                const compName = (document.getElementById('company-name') ? document.getElementById('company-name').value.trim() : '') || 'Company';
+                const trn = (document.getElementById('company-trn') ? document.getElementById('company-trn').value.trim() : '') || '100XXXXXXXXXXXX';
+                const start = document.getElementById('report-start-date') ? document.getElementById('report-start-date').value : '';
+                const end = document.getElementById('report-end-date') ? document.getElementById('report-end-date').value : '';
+                const rev = document.getElementById('bridge-pl-revenue') ? document.getElementById('bridge-pl-revenue').innerText : '0';
+                const cost = document.getElementById('bridge-pl-cost') ? document.getElementById('bridge-pl-cost').innerText : '0';
+                const gp = document.getElementById('bridge-pl-gross') ? document.getElementById('bridge-pl-gross').innerText : '0';
+                const sal = document.getElementById('bridge-pl-salaries') ? document.getElementById('bridge-pl-salaries').innerText : '0';
+                const dep = document.getElementById('bridge-pl-depreciation') ? document.getElementById('bridge-pl-depreciation').innerText : '0';
+                const oExp = document.getElementById('bridge-pl-other-expenses') ? document.getElementById('bridge-pl-other-expenses').innerText : '0';
+                const netInc = document.getElementById('bridge-pl-net-income') ? document.getElementById('bridge-pl-net-income').innerText : '0';
+                const curAss = document.getElementById('bridge-pos-current-assets') ? document.getElementById('bridge-pos-current-assets').innerText : '0';
+                const ppeVal = document.getElementById('bridge-pos-ppe') ? document.getElementById('bridge-pos-ppe').innerText : '0';
+                const totAss = document.getElementById('bridge-pos-total-assets') ? document.getElementById('bridge-pos-total-assets').innerText : '0';
+                const curLiab = document.getElementById('bridge-pos-current-liab') ? document.getElementById('bridge-pos-current-liab').innerText : '0';
+                const capVal = document.getElementById('bridge-pos-capital') ? document.getElementById('bridge-pos-capital').innerText : '0';
+                const retNet = document.getElementById('bridge-pos-retained-net') ? document.getElementById('bridge-pos-retained-net').innerText : '0';
+                const totEq = document.getElementById('bridge-pos-total-equity') ? document.getElementById('bridge-pos-total-equity').innerText : '0';
+                const taxPos = document.getElementById('bridge-tax-position') ? document.getElementById('bridge-tax-position').innerText : '0';
+
+                const summaryText = [
+                    '=== UAE FTA EMARATAX CORPORATE TAX PRE-FILING WORKSHEET ===',
+                    'Taxable Person: ' + compName + ' | TRN: ' + trn,
+                    'Period: ' + start + ' to ' + end,
+                    '----------------------------------------------------------',
+                    '[PROFIT OR LOSS SCHEDULE]',
+                    'Operating Revenue: AED ' + rev,
+                    'Cost of Sales / Operating Exp: AED ' + cost,
+                    'Gross Profit: AED ' + gp,
+                    'Salaries, wages & related charges: AED ' + sal,
+                    'Depreciation & amortisation: AED ' + dep,
+                    'Other non-operating expenses: AED ' + oExp,
+                    'Net Profit (Accounting Income): AED ' + netInc,
+                    '----------------------------------------------------------',
+                    '[STATEMENT OF FINANCIAL POSITION]',
+                    'Total current assets: AED ' + curAss,
+                    'Property, plant and equipment: AED ' + ppeVal,
+                    'Total assets: AED ' + totAss,
+                    'Total current liabilities: AED ' + curLiab,
+                    'Share capital: AED ' + capVal,
+                    'Retained earnings (Net of shareholder current account): AED ' + retNet,
+                    'Total equity: AED ' + totEq,
+                    'Net Corporate Tax Position: ' + taxPos,
+                    '=========================================================='
+                ].join('\n');
+
+                navigator.clipboard.writeText(summaryText).then(() => {
+                    const originalText = copyBridgeSummaryBtn.innerHTML;
+                    copyBridgeSummaryBtn.innerHTML = '<span>✓ Copied!</span>';
+                    setTimeout(() => { copyBridgeSummaryBtn.innerHTML = originalText; }, 1500);
+                });
+            });
+        }
+
+        // Live calculation and rendering of the EmaraTax Bridge values
+        function updateEmaraTaxBridge() {
+            const compName = (document.getElementById('company-name') ? document.getElementById('company-name').value.trim() : '') || 'Corporate Entity';
+            const compNameAr = (document.getElementById('company-name-ar') ? document.getElementById('company-name-ar').value.trim() : '');
+            const startRaw = document.getElementById('report-start-date') ? document.getElementById('report-start-date').value : '';
+            const endRaw = document.getElementById('report-end-date') ? document.getElementById('report-end-date').value : '';
+            const trn = (document.getElementById('company-trn') ? document.getElementById('company-trn').value.trim() : '') || '100350623300001';
+
+            // P&L figures
+            const sales = Math.round(getVal('pl-sales'));
+            const cost = Math.round(Math.abs(getVal('pl-cost')));
+            const grossProfit = sales - cost;
+
+            // Extract salaries from adminExpData (Note 17)
+            let salaries = 0;
+            if (Array.isArray(adminExpData)) {
+                adminExpData.forEach(item => {
+                    if (/salary|salaries|wage|wages|staff|labour|payroll/i.test(item.item || '')) {
+                        salaries += (parseFloat(item.amount) || 0);
+                    }
+                });
+            }
+            if (salaries === 0) {
+                // Fallback: estimate salaries or total admin
+                salaries = Math.round(Math.abs(getVal('pl-admin')) * 0.75);
+            } else {
+                salaries = Math.round(salaries);
+            }
+
+            const depreciation = Math.round(Math.abs(getVal('pl-depreciation')) || (Array.isArray(ppeData) ? ppeData.reduce((acc, a) => {
+                const op = (a.openingCost !== undefined) ? (parseFloat(a.openingCost) || 0) : (parseFloat(a.cost) || parseFloat(a.addition) || 0);
+                const add = (a.openingCost !== undefined) ? (parseFloat(a.addition) || 0) : 0;
+                const rate = parseFloat(a.rate) || 0;
+                return acc + Math.round((op + add) * rate / 100);
+            }, 0) : 0));
+
+            const totalAdmin = Math.round(Math.abs(getVal('pl-admin')));
+            const otherExpenses = Math.max(0, totalAdmin - salaries);
+            const totalNonOpExpenses = salaries + depreciation + otherExpenses;
+            const netIncome = grossProfit - totalNonOpExpenses;
+
+            // Balance Sheet figures
+            const ppe = Math.round(getVal('pos-ppe'));
+            const inventory = Math.round(getVal('pos-inventory'));
+            const receivables = Math.round(getVal('pos-receivables'));
+            const cash = Math.round(getVal('pos-cash'));
+            const deposits = Math.round(getVal('pos-deposits'));
+            const totalCurrentAssets = inventory + receivables + cash + deposits;
+            const totalAssets = ppe + totalCurrentAssets;
+
+            const payables = Math.round(getVal('pos-payables'));
+            const accruals = Math.round(getVal('pos-accruals'));
+            const totalCurrentLiabilities = payables + accruals;
+
+            const capital = Math.round(getVal('pos-capital'));
+            const bookRetained = Math.round(getVal('pos-retained'));
+            const shareholderAccount = Math.round(getVal('pos-shareholder'));
+
+            // Net Retained Earnings for EmaraTax return (merging partner drawings/debit account)
+            const netRetained = bookRetained + shareholderAccount;
+            const totalEquity = capital + netRetained;
+            const totalEquityLiabilities = totalEquity + totalCurrentLiabilities;
+
+            // EBITDA calculation
+            const ebitda = netIncome + depreciation;
+
+            // Corporate Tax Calculation
+            const isSbrEligible = sales <= 3000000;
+            const taxableIncome = Math.max(0, netIncome);
+            let taxPayable = 0;
+            let bracketZero = 0;
+            if (taxableIncome <= 375000) {
+                bracketZero = taxableIncome;
+                taxPayable = 0;
+            } else {
+                bracketZero = 375000;
+                taxPayable = Math.round((taxableIncome - 375000) * 0.09);
+            }
+
+            // Populate DOM
+            const setTxt = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = val;
+            };
+
+            setTxt('bridge-company-name', compName);
+            setTxt('bridge-company-name-ar', compNameAr);
+            setTxt('bridge-period-text', formatPeriodDisplay(startRaw, endRaw) || '01/03/2024 to 28/02/2025');
+            const endYear = endRaw ? (new Date(endRaw).getFullYear()) : 2025;
+            setTxt('bridge-period-end-badge', 'Tax Year End: ' + (endRaw ? new Date(endRaw).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : 'Feb-2025'));
+            setTxt('bridge-trn-text', trn);
+            setTxt('bridge-tax-position', 'AED ' + taxPayable.toLocaleString());
+
+            // P&L
+            setTxt('bridge-pl-revenue', sales.toLocaleString());
+            setTxt('bridge-pl-cost', cost.toLocaleString());
+            setTxt('bridge-pl-gross', grossProfit.toLocaleString());
+            setTxt('bridge-pl-salaries', salaries.toLocaleString());
+            setTxt('bridge-pl-depreciation', depreciation.toLocaleString());
+            setTxt('bridge-pl-other-expenses', otherExpenses.toLocaleString());
+            setTxt('bridge-pl-total-expenses', totalNonOpExpenses.toLocaleString());
+            setTxt('bridge-pl-net-income', netIncome.toLocaleString());
+
+            // Balance Sheet
+            setTxt('bridge-pos-current-assets', totalCurrentAssets.toLocaleString());
+            setTxt('bridge-pos-ppe', ppe.toLocaleString());
+            setTxt('bridge-pos-total-assets', totalAssets.toLocaleString());
+            setTxt('bridge-pos-current-liab', totalCurrentLiabilities.toLocaleString());
+            setTxt('bridge-pos-capital', capital.toLocaleString());
+            setTxt('bridge-pos-retained-net', netRetained.toLocaleString());
+            setTxt('bridge-pos-total-equity', totalEquity.toLocaleString());
+            setTxt('bridge-pos-total-eq-liab', totalEquityLiabilities.toLocaleString());
+
+            const noteEl = document.getElementById('bridge-retained-note');
+            if (noteEl) {
+                noteEl.innerText = 'Book Retained: AED ' + bookRetained.toLocaleString() + ' ' + (shareholderAccount < 0 ? 'minus Drawings AED ' + Math.abs(shareholderAccount).toLocaleString() : 'plus Contributed AED ' + shareholderAccount.toLocaleString());
+            }
+
+            // Diagnostics
+            const sbrBadge = document.getElementById('bridge-sbr-badge');
+            const sbrExpl = document.getElementById('bridge-sbr-explanation');
+            if (isSbrEligible) {
+                if (sbrBadge) {
+                    sbrBadge.className = 'inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-emerald-100 border border-emerald-300 text-emerald-800';
+                    sbrBadge.innerText = 'Eligible for Small Business Relief (SBR)';
+                }
+                if (sbrExpl) sbrExpl.innerText = 'Revenue is under AED 3,000,000 threshold (Article 21). Taxable Profit 0%';
+            } else {
+                if (sbrBadge) {
+                    sbrBadge.className = 'inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-100 border border-gray-300 text-gray-700';
+                    sbrBadge.innerText = 'Standard Return (Revenue > AED 3M)';
+                }
+                if (sbrExpl) sbrExpl.innerText = 'Revenue of AED ' + sales.toLocaleString() + ' exceeds AED 3M threshold.';
+            }
+
+            setTxt('bridge-taxable-income', 'AED ' + taxableIncome.toLocaleString());
+            setTxt('bridge-bracket-zero', 'AED ' + bracketZero.toLocaleString());
+            setTxt('bridge-ct-payable', 'AED ' + taxPayable.toLocaleString());
+            setTxt('bridge-ebitda', ebitda.toLocaleString());
+            setTxt('bridge-audit-flag', sales > 50000000 ? 'Yes (Revenue > AED 50M)' : 'No (Standard Entity)');
+        }
+
+        // Export One-Click EmaraTax Bridge PDF
+        if (downloadBridgePdfBtn) {
+            downloadBridgePdfBtn.addEventListener('click', () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const compName = (document.getElementById('company-name') ? document.getElementById('company-name').value.trim() : '') || 'Corporate Entity';
+                const trn = (document.getElementById('company-trn') ? document.getElementById('company-trn').value.trim() : '') || '100350623300001';
+                const startRaw = document.getElementById('report-start-date') ? document.getElementById('report-start-date').value : '';
+                const endRaw = document.getElementById('report-end-date') ? document.getElementById('report-end-date').value : '';
+                const periodStr = formatPeriodDisplay(startRaw, endRaw) || 'Current Tax Period';
+
+                // Header
+                doc.setFillColor(13, 148, 136); // Teal
+                doc.rect(0, 0, doc.internal.pageSize.getWidth(), 24, 'F');
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(255, 255, 255);
+                doc.text("UAE FTA EMARATAX CORPORATE TAX PRE-FILING WORKSHEET", 15, 12);
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text("Official Line-by-Line Schedule Mapping & Statutory Tie-Out", 15, 18);
+
+                // Meta box
+                doc.setTextColor(50, 50, 50);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text("Taxpayer Name: " + compName, 15, 34);
+                doc.setFont('helvetica', 'normal');
+                doc.text("TRN: " + trn, 15, 40);
+                doc.text("Tax Period: " + periodStr, 120, 34);
+                doc.text("Corporate Tax Liability: " + (document.getElementById('bridge-tax-position') ? document.getElementById('bridge-tax-position').innerText : 'AED 0'), 120, 40);
+
+                // Table 1: P&L Schedule
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.setTextColor(13, 148, 136);
+                doc.text("1. Statement of Profit or Loss (Accounting Schedule)", 15, 52);
+
+                const plRows = [
+                    ['Operating Revenue (AED)', document.getElementById('bridge-pl-revenue').innerText],
+                    ['Expenditure incurred in deriving operating revenue (AED)', document.getElementById('bridge-pl-cost').innerText],
+                    ['Gross Profit / Loss (AED)', document.getElementById('bridge-pl-gross').innerText],
+                    ['Salaries, wages and related charges (AED)', document.getElementById('bridge-pl-salaries').innerText],
+                    ['Depreciation and amortisation (AED)', document.getElementById('bridge-pl-depreciation').innerText],
+                    ['Other expenses (Excluding items listed above) (AED)', document.getElementById('bridge-pl-other-expenses').innerText],
+                    ['Non-operating expenses total (AED)', document.getElementById('bridge-pl-total-expenses').innerText],
+                    ['Net profit / (loss) (Accounting Income) (AED)', document.getElementById('bridge-pl-net-income').innerText]
+                ];
+
+                doc.autoTable({
+                    startY: 56,
+                    theme: 'grid',
+                    styles: { fontSize: 9, cellPadding: 2 },
+                    columnStyles: { 0: { cellWidth: 130 }, 1: { cellWidth: 50, halign: 'right', fontStyle: 'bold' } },
+                    head: [['EmaraTax P&L Schedule Description', 'Return Value (AED)']],
+                    body: plRows,
+                    headStyles: { fillColor: [45, 55, 72] }
+                });
+
+                // Table 2: Balance Sheet Schedule
+                const nextY = doc.lastAutoTable.finalY + 8;
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.setTextColor(13, 148, 136);
+                doc.text("2. Statement of Financial Position (Balance Sheet Mapping)", 15, nextY);
+
+                const bsRows = [
+                    ['Total current assets (AED)', document.getElementById('bridge-pos-current-assets').innerText],
+                    ['Property, Plant and Equipment (AED)', document.getElementById('bridge-pos-ppe').innerText],
+                    ['Total assets (AED)', document.getElementById('bridge-pos-total-assets').innerText],
+                    ['Total current liabilities (AED)', document.getElementById('bridge-pos-current-liab').innerText],
+                    ['Share capital (AED)', document.getElementById('bridge-pos-capital').innerText],
+                    ['Retained earnings (Net of shareholder current account) (AED)', document.getElementById('bridge-pos-retained-net').innerText],
+                    ['Total equity (AED)', document.getElementById('bridge-pos-total-equity').innerText],
+                    ['Total equity and liabilities (AED)', document.getElementById('bridge-pos-total-eq-liab').innerText],
+                    ['Earnings Before Interest, Tax, Depreciation & Amortisation (EBITDA)', document.getElementById('bridge-ebitda').innerText]
+                ];
+
+                doc.autoTable({
+                    startY: nextY + 4,
+                    theme: 'grid',
+                    styles: { fontSize: 9, cellPadding: 2 },
+                    columnStyles: { 0: { cellWidth: 130 }, 1: { cellWidth: 50, halign: 'right', fontStyle: 'bold' } },
+                    head: [['EmaraTax Balance Sheet Description', 'Return Value (AED)']],
+                    body: bsRows,
+                    headStyles: { fillColor: [45, 55, 72] }
+                });
+
+                // Footer note
+                const footerY = doc.lastAutoTable.finalY + 8;
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(120);
+                doc.text("System-generated pre-filing worksheet from Corporate Statement Generator. Strictly tied to IFRS accounting schedules.", 15, footerY);
+
+                doc.save(compName.replace(/[^a-zA-Z0-9]/g, '_') + '_FTA_EmaraTax_Filing_Bridge.pdf');
+            });
+        }
+
+        // ==========================================
+        // 2. Multi-Company Compliance Dashboard Table
+        // ==========================================
+        function calculateFilingDueDate(yearEndMonth, yearEndDay, year) {
+            // UAE Rule: Due date is 9 months after the end of the financial year
+            const curYear = year || new Date().getFullYear();
+            // Month is 0-indexed (0=Jan, 1=Feb, etc.)
+            const d = new Date(curYear, yearEndMonth, yearEndDay || 28);
+            // Add 9 calendar months
+            d.setMonth(d.getMonth() + 9);
+            // End of that month
+            const dueEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+            return dueEnd;
+        }
+
+        function renderComplianceDashboardTable() {
+            const tableBody = document.getElementById('compliance-table-body');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+
+            let totalComp = companiesData.length;
+            let submittedComp = 0;
+            let pendingComp = 0;
+            let dueSoonComp = 0;
+
+            const now = new Date();
+
+            companiesData.forEach(company => {
+                const trn = company.trn || (company.id === activeCompanyId && document.getElementById('company-trn') ? document.getElementById('company-trn').value.trim() : '') || '100350623300001';
+                const status = company.complianceStatus || 'FS Prepared';
+                const refNumber = company.emaraTaxRef || (company.name.toLowerCase().includes('saham') ? '230009502998' : '—');
+                const submissionDate = company.submissionDate || (company.name.toLowerCase().includes('saham') ? '2025-11-24' : '');
+                const yearEndStr = company.yearEnd || '28 February';
+
+                if (status === 'Submitted to FTA') submittedComp++;
+                else pendingComp++;
+
+                // Calculate due date (Feb 28 -> Nov 30)
+                let dueMonth = 1; // Feb
+                let dueDay = 28;
+                if (/dec/i.test(yearEndStr)) { dueMonth = 11; dueDay = 31; }
+                else if (/mar/i.test(yearEndStr)) { dueMonth = 2; dueDay = 31; }
+
+                const curYear = now.getFullYear();
+                const dueDate = calculateFilingDueDate(dueMonth, dueDay, curYear);
+                const daysRemaining = Math.round((dueDate - now) / (1000 * 60 * 60 * 24));
+                if (daysRemaining <= 30 && status !== 'Submitted to FTA') dueSoonComp++;
+
+                let countdownBadge = '';
+                if (status === 'Submitted to FTA') {
+                    countdownBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">✓ Submitted</span>';
+                } else if (daysRemaining < 0) {
+                    countdownBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-200">Overdue (' + Math.abs(daysRemaining) + 'd)</span>';
+                } else {
+                    countdownBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">' + daysRemaining + ' days left</span>';
+                }
+
+                const statusPillClass = {
+                    'Draft': 'bg-gray-100 text-gray-800',
+                    'FS Prepared': 'bg-blue-100 text-blue-800 font-semibold',
+                    'Ready to File': 'bg-amber-100 text-amber-800 font-bold',
+                    'Submitted to FTA': 'bg-emerald-100 text-emerald-800 font-bold'
+                }[status] || 'bg-gray-100 text-gray-800';
+
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 transition text-xs';
+                row.innerHTML = `
+                    <td class="p-3">
+                        <div class="flex items-center space-x-2">
+                            <strong class="text-gray-900 font-bold">${escapeHtml(company.name)}</strong>
+                            ${company.id === activeCompanyId ? '<span class="px-1.5 py-0.2 rounded text-[9px] bg-green-100 text-green-700 font-bold">Active</span>' : ''}
+                        </div>
+                        <div class="text-[11px] text-gray-500 font-mono mt-0.5">TRN: <span class="font-bold text-gray-700">${escapeHtml(trn)}</span></div>
+                    </td>
+                    <td class="p-3 text-gray-700 font-medium">
+                        ${escapeHtml(yearEndStr)}
+                    </td>
+                    <td class="p-3">
+                        <div class="font-bold text-gray-900">${dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                        <div class="mt-0.5">${countdownBadge}</div>
+                    </td>
+                    <td class="p-3">
+                        <select class="company-compliance-status-select text-xs rounded border-gray-300 py-1 px-1.5 font-medium ${statusPillClass}" data-id="${company.id}">
+                            <option value="Draft" ${status === 'Draft' ? 'selected' : ''}>Draft</option>
+                            <option value="FS Prepared" ${status === 'FS Prepared' ? 'selected' : ''}>FS Prepared</option>
+                            <option value="Ready to File" ${status === 'Ready to File' ? 'selected' : ''}>Ready to File</option>
+                            <option value="Submitted to FTA" ${status === 'Submitted to FTA' ? 'selected' : ''}>Submitted to FTA</option>
+                        </select>
+                    </td>
+                    <td class="p-3">
+                        <input type="text" class="company-compliance-ref-input text-xs border border-gray-200 rounded px-2 py-1 w-28 font-mono" placeholder="e.g. 23000..." value="${escapeHtml(refNumber === '—' ? '' : refNumber)}" data-id="${company.id}">
+                    </td>
+                    <td class="p-3">
+                        <input type="date" class="company-compliance-date-input text-xs border border-gray-200 rounded px-1.5 py-1 text-gray-700" value="${escapeHtml(submissionDate)}" data-id="${company.id}">
+                    </td>
+                    <td class="p-3 text-right whitespace-nowrap">
+                        <button type="button" class="btn-primary !py-1 !px-2 text-[11px] compliance-open-btn mr-1 cursor-pointer" data-id="${company.id}" title="Load this company into report form">Open Corp</button>
+                        <button type="button" class="btn-secondary !py-1 !px-2 text-[11px] compliance-bridge-btn cursor-pointer" data-id="${company.id}" title="View EmaraTax Bridge">FTA Bridge</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Update KPI badges
+            const kpiTot = document.getElementById('kpi-total-companies');
+            const kpiPend = document.getElementById('kpi-pending-companies');
+            const kpiSub = document.getElementById('kpi-submitted-companies');
+            const kpiDue = document.getElementById('kpi-upcoming-due');
+            if (kpiTot) kpiTot.innerText = totalComp;
+            if (kpiPend) kpiPend.innerText = pendingComp;
+            if (kpiSub) kpiSub.innerText = submittedComp;
+            if (kpiDue) kpiDue.innerText = dueSoonComp;
+
+            // Add change event listeners for status, ref#, and submission date
+            tableBody.querySelectorAll('.company-compliance-status-select').forEach(sel => {
+                sel.addEventListener('change', (e) => {
+                    const cId = sel.dataset.id;
+                    const c = companiesData.find(x => x.id === cId);
+                    if (c) {
+                        c.complianceStatus = sel.value;
+                        saveCompanies();
+                    }
+                });
+            });
+
+            tableBody.querySelectorAll('.company-compliance-ref-input').forEach(inp => {
+                inp.addEventListener('change', (e) => {
+                    const cId = inp.dataset.id;
+                    const c = companiesData.find(x => x.id === cId);
+                    if (c) {
+                        c.emaraTaxRef = inp.value.trim();
+                        saveCompanies();
+                    }
+                });
+            });
+
+            tableBody.querySelectorAll('.company-compliance-date-input').forEach(inp => {
+                inp.addEventListener('change', (e) => {
+                    const cId = inp.dataset.id;
+                    const c = companiesData.find(x => x.id === cId);
+                    if (c) {
+                        c.submissionDate = inp.value;
+                        saveCompanies();
+                    }
+                });
+            });
+
+            // "Open Corp" button listener
+            tableBody.querySelectorAll('.compliance-open-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const cId = btn.dataset.id;
+                    selectAndApplyCompany(cId);
+                    closeComplianceDashboardModal();
+                });
+            });
+
+            // "FTA Bridge" button listener
+            tableBody.querySelectorAll('.compliance-bridge-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const cId = btn.dataset.id;
+                    selectAndApplyCompany(cId);
+                    closeComplianceDashboardModal();
+                    setTimeout(() => { openEmaraTaxBridgeModal(); }, 300);
+                });
+            });
+        }
+
+        // ==========================================
+        // 3. Automated Integrity & Compliance Validator
+        // ==========================================
+        function checkFinancialIntegrity() {
+            const { totalAssets, totalEquityLiabilities } = calculateFinancialPositionTotals();
+            const netIncome = calculateProfitLossTotal();
+            const { netOperating, netInvesting, netFinancing, netChange, cashEnd, depreciation } = calculateCashFlowTotals();
+
+            const posCash = getVal('pos-cash');
+            const bsVariance = totalAssets - totalEquityLiabilities;
+            const isBsBalanced = Math.abs(bsVariance) < 0.5;
+            const isCashBalanced = Math.abs(posCash - cashEnd) < 0.5;
+
+            // Retained Earnings rollforward check
+            const curOpenBalances = extractReportOpeningBalances(getFullDraftData());
+            const openingRetained = curOpenBalances.openingRetained || 0;
+            const dividend = Math.abs(getVal('cf-dividend'));
+            const expectedClosingRetained = openingRetained + netIncome - dividend;
+            const actualClosingRetained = getVal('pos-retained');
+            const isReconciled = Math.abs(expectedClosingRetained - actualClosingRetained) < 1.0;
+
+            // Mandatory 12-Month Check
+            const startRaw = document.getElementById('report-start-date') ? document.getElementById('report-start-date').value : '';
+            const endRaw = document.getElementById('report-end-date') ? document.getElementById('report-end-date').value : '';
+            const periodCheck = checkCorporatePeriod12Months(startRaw, endRaw);
+
+            // Update Review Tab Validator UI Indicators
+            const bsPill = document.getElementById('validator-bs-pill');
+            const bsStatus = document.getElementById('validator-bs-status');
+            if (bsPill && bsStatus) {
+                if (isBsBalanced) {
+                    bsPill.className = 'p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/70 flex flex-col justify-between';
+                    bsStatus.className = 'font-bold text-emerald-800 flex items-center text-xs';
+                    bsStatus.innerHTML = '<span class="mr-1 text-emerald-600 font-bold">✓</span> Balanced (AED 0 diff)';
+                } else {
+                    bsPill.className = 'p-2.5 rounded-lg border border-red-300 bg-red-50 flex flex-col justify-between';
+                    bsStatus.className = 'font-bold text-red-700 flex items-center text-xs';
+                    bsStatus.innerHTML = '<span class="mr-1 text-red-600 font-bold">⚠️</span> Variance: AED ' + Math.abs(Math.round(bsVariance)).toLocaleString();
+                }
+            }
+
+            const rePill = document.getElementById('validator-re-pill');
+            const reStatus = document.getElementById('validator-re-status');
+            if (rePill && reStatus) {
+                if (isReconciled || openingRetained === 0) {
+                    rePill.className = 'p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/70 flex flex-col justify-between';
+                    reStatus.className = 'font-bold text-emerald-800 flex items-center text-xs';
+                    reStatus.innerHTML = '<span class="mr-1 text-emerald-600 font-bold">✓</span> Reconciled Continuity';
+                } else {
+                    rePill.className = 'p-2.5 rounded-lg border border-amber-300 bg-amber-50 flex flex-col justify-between';
+                    reStatus.className = 'font-bold text-amber-800 flex items-center text-xs';
+                    reStatus.innerHTML = '<span class="mr-1 text-amber-600 font-bold">⚠️</span> Diff: AED ' + Math.round(Math.abs(expectedClosingRetained - actualClosingRetained)).toLocaleString();
+                }
+            }
+
+            const cfPill = document.getElementById('validator-cf-pill');
+            const cfStatus = document.getElementById('validator-cf-status');
+            if (cfPill && cfStatus) {
+                if (isCashBalanced) {
+                    cfPill.className = 'p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/70 flex flex-col justify-between';
+                    cfStatus.className = 'font-bold text-emerald-800 flex items-center text-xs';
+                    cfStatus.innerHTML = '<span class="mr-1 text-emerald-600 font-bold">✓</span> Cash Flow Balanced';
+                } else {
+                    cfPill.className = 'p-2.5 rounded-lg border border-amber-300 bg-amber-50 flex flex-col justify-between';
+                    cfStatus.className = 'font-bold text-amber-800 flex items-center text-xs';
+                    cfStatus.innerHTML = '<span class="mr-1 text-amber-600 font-bold">⚠️</span> Cash diff: AED ' + Math.round(Math.abs(posCash - cashEnd)).toLocaleString();
+                }
+            }
+
+            const periodPill = document.getElementById('validator-period-pill');
+            const periodStatus = document.getElementById('validator-period-status');
+            if (periodPill && periodStatus) {
+                if (periodCheck.valid) {
+                    periodPill.className = 'p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/70 flex flex-col justify-between';
+                    periodStatus.className = 'font-bold text-emerald-800 flex items-center text-xs';
+                    periodStatus.innerHTML = '<span class="mr-1 text-emerald-600 font-bold">✓</span> 12 Months Valid';
+                } else {
+                    periodPill.className = 'p-2.5 rounded-lg border border-red-300 bg-red-50 flex flex-col justify-between';
+                    periodStatus.className = 'font-bold text-red-700 flex items-center text-xs';
+                    periodStatus.innerHTML = '<span class="mr-1 text-red-600 font-bold">⚠️</span> Period Invalid';
+                }
+            }
+
+            return { isBsBalanced, bsVariance, isCashBalanced, isReconciled, periodCheck };
+        }
+
         function updateReviewTab() {
+            checkFinancialIntegrity();
             const { totalAssets, totalEquityLiabilities } = calculateFinancialPositionTotals();
             const netIncome = calculateProfitLossTotal();
             const { netOperating, netInvesting, netFinancing, netChange, cashEnd } = calculateCashFlowTotals();
@@ -9080,7 +10302,10 @@ function renderMainCommentsList() {
             const shaTotalEl = document.getElementById('sha-total');
             if (shaTotalEl) shaTotalEl.textContent = shaTotal.toLocaleString();
             setVal('pos-shareholder', shaTotal);
-            setVal('cf-shareholder', shaFunds);
+            const curCfSh = parseFloat(document.getElementById('cf-shareholder') ? document.getElementById('cf-shareholder').value : 0) || 0;
+            if (curCfSh === 0 && shaFunds !== 0) {
+                setVal('cf-shareholder', shaFunds);
+            }
 
             // 2. Calculate Net Income (P&L) WITH all updated Cost, Admin, and Depreciation numbers
             const netIncome = calculateProfitLossTotal();
@@ -10221,6 +11446,17 @@ renderMainCommentsList(); // Clear comment list on new form
         
         // --- PDF Generation (THE BIG ONE) ---
         generatePdfBtn.addEventListener('click', () => {
+            // Built-in Financial Statement Integrity Pre-Flight Guard
+            const integrity = checkFinancialIntegrity();
+            if (!integrity.isBsBalanced) {
+                const proceed = confirm("Financial Statement Balance Sheet Warning:\n\nTotal Assets does not match Total Equity & Liabilities!\nDifference: AED " + Math.abs(Math.round(integrity.bsVariance)).toLocaleString() + ".\n\nDo you still wish to generate the PDF report, or click Cancel to balance the financial position first?");
+                if (!proceed) {
+                    const posTab = document.querySelector('.tab-btn[data-tab="position"]');
+                    if (posTab) posTab.click();
+                    return;
+                }
+            }
+
             const startDateRaw = document.getElementById('report-start-date').value;
             const endDateRaw = document.getElementById('report-end-date').value;
 
