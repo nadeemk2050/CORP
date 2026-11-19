@@ -18,7 +18,7 @@
     <!-- 1. FTA EmaraTax Auto-Bridge Modal (Pre-Filing Worksheet) -->
     <!-- ========================================== -->
     <div id="emaratax-bridge-modal" class="modal" style="display: none;">
-        <div class="modal-content modal-form" style="max-width: 1000px; width: 96vw; max-height: 92vh; display: flex; flex-direction: column;">
+        <div class="modal-content modal-form" style="width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; margin: 0; border-radius: 0; display: flex; flex-direction: column;">
             <div class="modal-header flex items-center justify-between pb-3 border-b border-gray-200 bg-gradient-to-r from-teal-50/80 via-white to-gray-50 p-4 rounded-t-xl shrink-0">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
@@ -240,7 +240,7 @@
     <!-- 2. Multi-Company Compliance Dashboard Modal -->
     <!-- ========================================== -->
     <div id="compliance-dashboard-modal" class="modal" style="display: none;">
-        <div class="modal-content modal-form" style="max-width: 1100px; width: 96vw; max-height: 92vh; display: flex; flex-direction: column;">
+        <div class="modal-content modal-form" style="width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; margin: 0; border-radius: 0; display: flex; flex-direction: column;">
             <div class="modal-header flex items-center justify-between pb-3 border-b border-gray-200 bg-gradient-to-r from-sky-50/80 via-white to-gray-50 p-4 rounded-t-xl shrink-0">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 rounded-xl bg-sky-700 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
@@ -600,12 +600,18 @@
         }
 
     
-        /* Draft Management Full-Width Full-Height Bleeding View */
-        #draft-management-modal {
+        /* Major Portals Full-Width Full-Height Bleeding View */
+        #draft-management-modal,
+        #emaratax-bridge-modal,
+        #compliance-dashboard-modal,
+        #corporate-history-modal {
             padding: 0 !important;
             overflow: hidden !important;
         }
-        #draft-management-modal .modal-content {
+        #draft-management-modal .modal-content,
+        #emaratax-bridge-modal .modal-content,
+        #compliance-dashboard-modal .modal-content,
+        #corporate-history-modal .modal-content {
             width: 100vw !important;
             max-width: 100vw !important;
             height: 100vh !important;
@@ -618,7 +624,10 @@
             padding: 16px 24px !important;
             box-shadow: none !important;
         }
-        #draft-management-modal .modal-body {
+        #draft-management-modal .modal-body,
+        #emaratax-bridge-modal .modal-body,
+        #compliance-dashboard-modal .modal-body,
+        #corporate-history-modal .modal-body {
             flex: 1 1 0% !important;
             min-height: 0 !important;
             overflow-y: auto !important;
@@ -2246,7 +2255,7 @@
 
     <!-- Corporate History Modal -->
     <div id="corporate-history-modal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 1100px; width: 96vw;">
+        <div class="modal-content" style="width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; margin: 0; border-radius: 0; display: flex; flex-direction: column;">
             <div class="modal-header flex justify-between items-center pb-3 border-b border-gray-200">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shadow-xs">
