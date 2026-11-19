@@ -7172,6 +7172,11 @@ const mainCommentList = document.getElementById('main-comment-list');
                                             Load
                                         </button>
                                         <!-- PDF Button -->
+                                        <!-- FTA EmaraTax Auto-Bridge Button -->
+                                        <button type="button" class="btn-secondary !py-1 !px-2.5 text-xs font-bold flex items-center fta-bridge-finalized-card-btn cursor-pointer text-teal-800 bg-teal-50 border-teal-300 hover:bg-teal-100 shadow-2xs whitespace-nowrap" data-id="${escapeHtml(item.id)}" title="View FTA EmaraTax Auto-Bridge Pre-Filing Worksheet for this confirmed report">
+                                            <svg class="w-3.5 h-3.5 mr-1 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            FTA Bridge
+                                        </button>
                                         <button type="button" class="btn-secondary !py-1 !px-2.5 text-xs font-semibold flex items-center pdf-finalized-card-btn cursor-pointer text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100" data-id="${escapeHtml(item.id)}" title="Download Financial Statement PDF">
                                             <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                             PDF
@@ -7222,6 +7227,14 @@ const mainCommentList = document.getElementById('main-comment-list');
 
                 savedDraftsCardsContainer.querySelectorAll('.add-next-year-draft-btn').forEach(btn => {
                     btn.onclick = () => startNextYearDraftFromConfirmed(btn.dataset.id);
+                });
+                savedDraftsCardsContainer.querySelectorAll('.fta-bridge-finalized-card-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        loadFinalizedReport(btn.dataset.id);
+                        setTimeout(() => {
+                            openEmaraTaxBridgeModal();
+                        }, 250);
+                    };
                 });
                 savedDraftsCardsContainer.querySelectorAll('.load-finalized-card-btn').forEach(btn => {
                     btn.onclick = () => loadFinalizedReport(btn.dataset.id);
@@ -7368,6 +7381,11 @@ const mainCommentList = document.getElementById('main-comment-list');
                                         <button type="button" class="btn-primary !py-1 !px-2.5 text-xs font-semibold cwise-load-rep-btn cursor-pointer" data-id="${escapeHtml(rep.id)}">
                                             Load Report
                                         </button>
+                                        <!-- FTA EmaraTax Auto-Bridge Button -->
+                                        <button type="button" class="btn-secondary !py-1 !px-2.5 text-xs font-bold flex items-center cwise-fta-bridge-btn cursor-pointer text-teal-800 bg-teal-50 border-teal-300 hover:bg-teal-100 shadow-2xs whitespace-nowrap" data-id="${escapeHtml(rep.id)}" title="View FTA EmaraTax Auto-Bridge Pre-Filing Worksheet for this confirmed report">
+                                            <svg class="w-3.5 h-3.5 mr-1 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            FTA Bridge
+                                        </button>
                                         <button type="button" class="btn-secondary !py-1 !px-2.5 text-xs font-semibold cwise-pdf-rep-btn cursor-pointer text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100" data-id="${escapeHtml(rep.id)}" title="Download PDF">
                                             Download PDF
                                         </button>
@@ -7400,7 +7418,15 @@ const mainCommentList = document.getElementById('main-comment-list');
             });
 
             // Card action handlers
-            companyWiseListContainer.querySelectorAll('.cwise-load-rep-btn').forEach(btn => {
+            companyWiseListContainer.querySelectorAll('.cwise-fta-bridge-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        loadFinalizedReport(btn.dataset.id);
+                        setTimeout(() => {
+                            openEmaraTaxBridgeModal();
+                        }, 250);
+                    };
+                });
+                companyWiseListContainer.querySelectorAll('.cwise-load-rep-btn').forEach(btn => {
                 btn.onclick = (e) => { e.stopPropagation(); loadFinalizedReport(btn.dataset.id); };
             });
             companyWiseListContainer.querySelectorAll('.cwise-pdf-rep-btn').forEach(btn => {
